@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   CreditCard,
   DollarSign,
@@ -13,8 +13,12 @@ import {
   Receipt,
   Building2,
   ChevronLeft,
-  Menu
+  Menu,
+  LogOut,
+  User
 } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 import {
   Sidebar,
@@ -83,6 +87,9 @@ const menuItems = [
 export function FinancialSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
 
@@ -100,6 +107,23 @@ export function FinancialSidebar() {
     return `${baseClasses} text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50`;
   };
 
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Logout gagal",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logout berhasil",
+        description: "Sampai jumpa lagi!",
+      });
+      navigate('/auth');
+    }
+  };
+
   return (
     <Sidebar
       className="border-r border-sidebar-border transition-all duration-300"
@@ -115,7 +139,7 @@ export function FinancialSidebar() {
             {!isCollapsed && (
               <div>
                 <h1 className="text-lg font-bold text-sidebar-foreground">
-                  FinanceTracker
+                  Keuangan Keluarga
                 </h1>
                 <p className="text-xs text-sidebar-foreground/60">
                   Kelola Keuangan Pribadi
@@ -124,6 +148,27 @@ export function FinancialSidebar() {
             )}
           </div>
         </div>
+
+        {/* User Info */}
+        {user && (
+          <div className="p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 bg-accent rounded-full">
+                <User className="h-4 w-4 text-accent-foreground" />
+              </div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                    {user.user_metadata?.full_name || 'User'}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {user.email}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Navigation Menu */}
         <SidebarGroup className="px-4 py-6">
@@ -155,18 +200,32 @@ export function FinancialSidebar() {
         </SidebarGroup>
 
         {/* Footer */}
-        {!isCollapsed && (
-          <div className="mt-auto p-4 border-t border-sidebar-border">
-            <div className="bg-gradient-primary rounded-lg p-4 text-center">
-              <div className="text-primary-foreground font-medium text-sm mb-1">
-                Total Saldo
-              </div>
-              <div className="text-2xl font-bold text-primary-foreground">
-                Rp 25.750.000
+        <div className="mt-auto">
+          {/* Total Balance */}
+          {!isCollapsed && (
+            <div className="p-4 border-t border-sidebar-border">
+              <div className="bg-gradient-primary rounded-lg p-4 text-center">
+                <div className="text-primary-foreground font-medium text-sm mb-1">
+                  Total Saldo
+                </div>
+                <div className="text-2xl font-bold text-primary-foreground">
+                  Rp 25.750.000
+                </div>
               </div>
             </div>
+          )}
+          
+          {/* Logout Button */}
+          <div className="p-4 border-t border-sidebar-border">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span>Logout</span>}
+            </button>
           </div>
-        )}
+        </div>
       </SidebarContent>
     </Sidebar>
   );
