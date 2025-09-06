@@ -19,10 +19,24 @@ import {
   ShoppingBag,
   Gamepad2,
   Heart,
-  Banknote
+  Banknote,
+  Loader2
 } from "lucide-react";
+import { useState } from "react";
+import { useCategories, CreateCategoryData } from "@/hooks/useCategories";
 
 export default function Categories() {
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "",
+    icon: "",
+    color: "#3B82F6"
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { categories, loading: categoriesLoading, createCategory, updateCategory, deleteCategory } = useCategories();
+
   const categoryIcons = {
     "Utensils": Utensils,
     "Car": Car,
@@ -37,30 +51,6 @@ export default function Categories() {
     "Heart": Heart,
     "Banknote": Banknote
   };
-
-  const categories = [
-    // Income Categories
-    { id: 1, name: "Gaji", type: "income", icon: "DollarSign", color: "bg-success", count: 12 },
-    { id: 2, name: "Freelance", type: "income", icon: "TrendingUp", color: "bg-primary", count: 5 },
-    { id: 3, name: "Investasi", type: "income", icon: "Target", color: "bg-success", count: 3 },
-    { id: 4, name: "Transfer", type: "income", icon: "Banknote", color: "bg-success", count: 8 },
-    
-    // Expense Categories
-    { id: 5, name: "Makanan", type: "expense", icon: "Utensils", color: "bg-danger", count: 45 },
-    { id: 6, name: "Transport", type: "expense", icon: "Car", color: "bg-danger", count: 23 },
-    { id: 7, name: "Tagihan", type: "expense", icon: "Home", color: "bg-warning", count: 15 },
-    { id: 8, name: "Belanja", type: "expense", icon: "ShoppingBag", color: "bg-danger", count: 18 },
-    { id: 9, name: "Hiburan", type: "expense", icon: "Gamepad2", color: "bg-danger", count: 12 },
-    { id: 10, name: "Kesehatan", type: "expense", icon: "Heart", color: "bg-warning", count: 7 },
-    
-    // Savings Categories
-    { id: 11, name: "Dana Darurat", type: "savings", icon: "Target", color: "bg-primary", count: 6 },
-    { id: 12, name: "Liburan", type: "savings", icon: "Car", color: "bg-primary", count: 4 },
-    
-    // Debt Categories
-    { id: 13, name: "Kartu Kredit", type: "debt", icon: "CreditCard", color: "bg-warning", count: 8 },
-    { id: 14, name: "KTA", type: "debt", icon: "Building2", color: "bg-warning", count: 3 }
-  ];
 
   const getCategoryIcon = (iconName: string) => {
     const IconComponent = categoryIcons[iconName as keyof typeof categoryIcons] || DollarSign;
@@ -87,11 +77,60 @@ export default function Categories() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.type) return;
+
+    setLoading(true);
+    const categoryData: CreateCategoryData = {
+      name: formData.name,
+      type: formData.type as 'income' | 'expense' | 'savings' | 'debt',
+      icon: formData.icon || 'DollarSign',
+      color: formData.color,
+    };
+
+    let result;
+    if (editingId) {
+      result = await updateCategory(editingId, categoryData);
+    } else {
+      result = await createCategory(categoryData);
+    }
+
+    if (!result.error) {
+      setFormData({ name: "", type: "", icon: "", color: "#3B82F6" });
+      setEditingId(null);
+    }
+    setLoading(false);
+  };
+
+  const handleEdit = (category: any) => {
+    setFormData({
+      name: category.name,
+      type: category.type,
+      icon: category.icon || '',
+      color: category.color || '#3B82F6'
+    });
+    setEditingId(category.id);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({ name: "", type: "", icon: "", color: "#3B82F6" });
+    setEditingId(null);
+  };
+
   const groupedCategories = categories.reduce((acc, category) => {
     if (!acc[category.type]) acc[category.type] = [];
     acc[category.type].push(category);
     return acc;
   }, {} as Record<string, typeof categories>);
+
+  if (categoriesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -111,61 +150,90 @@ export default function Categories() {
         {/* Category Form */}
         <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
-            <CardTitle className="text-lg">Form Kategori</CardTitle>
-            <CardDescription>Tambah atau edit kategori</CardDescription>
+            <CardTitle className="text-lg">
+              {editingId ? "Edit Kategori" : "Form Kategori"}
+            </CardTitle>
+            <CardDescription>
+              {editingId ? "Edit kategori yang ada" : "Tambah kategori baru"}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nama Kategori</Label>
-              <Input id="name" placeholder="Masukkan nama kategori" />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tipe Kategori</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih tipe kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="income">Pemasukan</SelectItem>
-                  <SelectItem value="expense">Pengeluaran</SelectItem>
-                  <SelectItem value="savings">Tabungan</SelectItem>
-                  <SelectItem value="debt">Utang</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ikon</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih ikon" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DollarSign">💰 Uang</SelectItem>
-                  <SelectItem value="Utensils">🍽️ Makanan</SelectItem>
-                  <SelectItem value="Car">🚗 Transport</SelectItem>
-                  <SelectItem value="Home">🏠 Rumah</SelectItem>
-                  <SelectItem value="ShoppingBag">🛍️ Belanja</SelectItem>
-                  <SelectItem value="Gamepad2">🎮 Hiburan</SelectItem>
-                  <SelectItem value="Heart">❤️ Kesehatan</SelectItem>
-                  <SelectItem value="Target">🎯 Target</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Warna</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {['bg-success', 'bg-danger', 'bg-warning', 'bg-primary', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'].map((color) => (
-                  <button key={color} className={`w-8 h-8 rounded-lg ${color} hover:scale-110 transition-transform`} />
-                ))}
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Kategori</Label>
+                <Input 
+                  id="name" 
+                  placeholder="Masukkan nama kategori"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  required
+                />
               </div>
-            </div>
 
-            <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-              Simpan Kategori
-            </Button>
+              <div className="space-y-2">
+                <Label>Tipe Kategori</Label>
+                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih tipe kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="income">Pemasukan</SelectItem>
+                    <SelectItem value="expense">Pengeluaran</SelectItem>
+                    <SelectItem value="savings">Tabungan</SelectItem>
+                    <SelectItem value="debt">Utang</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Ikon</Label>
+                <Select value={formData.icon} onValueChange={(value) => setFormData({...formData, icon: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih ikon" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DollarSign">💰 Uang</SelectItem>
+                    <SelectItem value="Utensils">🍽️ Makanan</SelectItem>
+                    <SelectItem value="Car">🚗 Transport</SelectItem>
+                    <SelectItem value="Home">🏠 Rumah</SelectItem>
+                    <SelectItem value="ShoppingBag">🛍️ Belanja</SelectItem>
+                    <SelectItem value="Gamepad2">🎮 Hiburan</SelectItem>
+                    <SelectItem value="Heart">❤️ Kesehatan</SelectItem>
+                    <SelectItem value="Target">🎯 Target</SelectItem>
+                    <SelectItem value="Building2">🏢 Bank</SelectItem>
+                    <SelectItem value="CreditCard">💳 Kredit</SelectItem>
+                    <SelectItem value="TrendingUp">📈 Investasi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Warna</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'].map((color) => (
+                    <button 
+                      key={color}
+                      type="button"
+                      className={`w-8 h-8 rounded-lg hover:scale-110 transition-transform border-2 ${formData.color === color ? 'border-foreground' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setFormData({...formData, color})}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {editingId ? "Update Kategori" : "Simpan Kategori"}
+                </Button>
+                {editingId && (
+                  <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                    Batal
+                  </Button>
+                )}
+              </div>
+            </form>
           </CardContent>
         </Card>
 
@@ -182,27 +250,24 @@ export default function Categories() {
                       </Badge>
                       <span>({typeCategories.length} kategori)</span>
                     </CardTitle>
-                    <CardDescription>
-                      Total transaksi: {typeCategories.reduce((sum, cat) => sum + cat.count, 0)}
-                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {typeCategories.map((category) => {
-                    const IconComponent = getCategoryIcon(category.icon);
+                    const IconComponent = getCategoryIcon(category.icon || 'DollarSign');
                     return (
                       <div key={category.id} className="p-4 border border-border rounded-lg hover:bg-surface/50 transition-colors group">
                         <div className="flex items-center justify-between mb-3">
-                          <div className={`p-2 rounded-lg ${category.color}/10`}>
-                            <IconComponent className={`h-5 w-5 ${category.color.replace('bg-', 'text-')}`} />
+                          <div className="p-2 rounded-lg" style={{ backgroundColor: `${category.color}20` }}>
+                            <IconComponent className="h-5 w-5" style={{ color: category.color }} />
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(category)}>
                               <Edit className="h-3 w-3" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-danger hover:text-danger">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-danger hover:text-danger" onClick={() => deleteCategory(category.id)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
@@ -210,7 +275,7 @@ export default function Categories() {
                         <div>
                           <h3 className="font-medium text-foreground">{category.name}</h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {category.count} transaksi
+                            Dibuat {new Date(category.created_at).toLocaleDateString('id-ID')}
                           </p>
                         </div>
                       </div>
@@ -220,6 +285,14 @@ export default function Categories() {
               </CardContent>
             </Card>
           ))}
+          
+          {categories.length === 0 && (
+            <Card className="shadow-card border-0">
+              <CardContent className="p-8 text-center text-muted-foreground">
+                Belum ada kategori. Tambahkan kategori pertama Anda untuk mulai mengatur keuangan.
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

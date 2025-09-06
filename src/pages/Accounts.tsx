@@ -14,12 +14,24 @@ import {
   EyeOff,
   ArrowUpRight,
   ArrowDownRight,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
+import { useAccounts, CreateAccountData } from "@/hooks/useAccounts";
 
 export default function Accounts() {
   const [showBalance, setShowBalance] = useState(true);
+  const [formData, setFormData] = useState({
+    name: "",
+    bank_name: "",
+    account_number: "",
+    initial_balance: ""
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useAccounts();
 
   const bankLogos = {
     "BCA": "🟦",
@@ -32,79 +44,62 @@ export default function Accounts() {
     "OCBC": "🟩"
   };
 
-  const accounts = [
-    {
-      id: 1,
-      bank: "BCA",
-      accountName: "Tabungan Utama",
-      accountNumber: "1234567890",
-      balance: 15750000,
-      type: "savings",
-      lastTransaction: "2024-12-15",
-      monthlyChange: 8.5,
-      isActive: true
-    },
-    {
-      id: 2,
-      bank: "Mandiri",
-      accountName: "Giro Bisnis",
-      accountNumber: "0987654321",
-      balance: 8500000,
-      type: "checking",
-      lastTransaction: "2024-12-14",
-      monthlyChange: -2.1,
-      isActive: true
-    },
-    {
-      id: 3,
-      bank: "BRI",
-      accountName: "Tabungan Haji",
-      accountNumber: "1122334455",
-      balance: 1500000,
-      type: "savings",
-      lastTransaction: "2024-12-10",
-      monthlyChange: 15.2,
-      isActive: true
-    },
-    {
-      id: 4,
-      bank: "BNI",
-      accountName: "Deposito 12 Bulan",
-      accountNumber: "5566778899",
-      balance: 25000000,
-      type: "deposit",
-      lastTransaction: "2024-11-15",
-      monthlyChange: 0.8,
-      isActive: false
-    }
-  ];
-
-  const getAccountTypeLabel = (type: string) => {
-    switch (type) {
-      case 'savings': return 'Tabungan';
-      case 'checking': return 'Giro';
-      case 'deposit': return 'Deposito';
-      case 'credit': return 'Kartu Kredit';
-      default: return type;
-    }
-  };
-
-  const getAccountTypeColor = (type: string) => {
-    switch (type) {
-      case 'savings': return 'bg-success-bg text-success-foreground';
-      case 'checking': return 'bg-primary/10 text-primary';
-      case 'deposit': return 'bg-warning-bg text-warning-foreground';
-      case 'credit': return 'bg-danger-bg text-danger-foreground';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
   const formatBalance = (balance: number) => {
     if (!showBalance) return "••••••••";
     return `Rp ${balance.toLocaleString('id-ID')}`;
   };
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.bank_name || !formData.initial_balance) return;
+
+    setLoading(true);
+    const accountData: CreateAccountData = {
+      name: formData.name,
+      bank_name: formData.bank_name,
+      account_number: formData.account_number,
+      initial_balance: parseFloat(formData.initial_balance),
+    };
+
+    let result;
+    if (editingId) {
+      result = await updateAccount(editingId, accountData);
+    } else {
+      result = await createAccount(accountData);
+    }
+
+    if (!result.error) {
+      setFormData({ name: "", bank_name: "", account_number: "", initial_balance: "" });
+      setEditingId(null);
+    }
+    setLoading(false);
+  };
+
+  const handleEdit = (account: any) => {
+    setFormData({
+      name: account.name,
+      bank_name: account.bank_name,
+      account_number: account.account_number || '',
+      initial_balance: account.initial_balance.toString()
+    });
+    setEditingId(account.id);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({ name: "", bank_name: "", account_number: "", initial_balance: "" });
+    setEditingId(null);
+  };
+
+  const totalBalance = accounts.reduce((sum, account) => sum + account.current_balance, 0);
+  const activeAccounts = accounts.filter(acc => acc.is_active);
+
+  if (accountsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -133,62 +128,79 @@ export default function Accounts() {
         {/* Account Form */}
         <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
-            <CardTitle className="text-lg">Form Rekening</CardTitle>
-            <CardDescription>Tambah rekening bank baru</CardDescription>
+            <CardTitle className="text-lg">
+              {editingId ? "Edit Rekening" : "Form Rekening"}
+            </CardTitle>
+            <CardDescription>
+              {editingId ? "Edit rekening yang ada" : "Tambah rekening bank baru"}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="bank">Bank</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih bank" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BCA">🟦 BCA</SelectItem>
-                  <SelectItem value="Mandiri">🟨 Bank Mandiri</SelectItem>
-                  <SelectItem value="BRI">🟫 BRI</SelectItem>
-                  <SelectItem value="BNI">🟧 BNI</SelectItem>
-                  <SelectItem value="CIMB">🟥 CIMB Niaga</SelectItem>
-                  <SelectItem value="Permata">🟪 Permata Bank</SelectItem>
-                  <SelectItem value="Danamon">⬜ Danamon</SelectItem>
-                  <SelectItem value="OCBC">🟩 OCBC NISP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="bank">Bank</Label>
+                <Select value={formData.bank_name} onValueChange={(value) => setFormData({...formData, bank_name: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BCA">🟦 BCA</SelectItem>
+                    <SelectItem value="Mandiri">🟨 Bank Mandiri</SelectItem>
+                    <SelectItem value="BRI">🟫 BRI</SelectItem>
+                    <SelectItem value="BNI">🟧 BNI</SelectItem>
+                    <SelectItem value="CIMB">🟥 CIMB Niaga</SelectItem>
+                    <SelectItem value="Permata">🟪 Permata Bank</SelectItem>
+                    <SelectItem value="Danamon">⬜ Danamon</SelectItem>
+                    <SelectItem value="OCBC">🟩 OCBC NISP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="accountName">Nama Rekening</Label>
-              <Input id="accountName" placeholder="Contoh: Tabungan Utama" />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountName">Nama Rekening</Label>
+                <Input 
+                  id="accountName" 
+                  placeholder="Contoh: Tabungan Utama"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="accountNumber">Nomor Rekening</Label>
-              <Input id="accountNumber" placeholder="1234567890" />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountNumber">Nomor Rekening</Label>
+                <Input 
+                  id="accountNumber" 
+                  placeholder="1234567890"
+                  value={formData.account_number}
+                  onChange={(e) => setFormData({...formData, account_number: e.target.value})}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Jenis Rekening</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih jenis rekening" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="savings">Tabungan</SelectItem>
-                  <SelectItem value="checking">Giro</SelectItem>
-                  <SelectItem value="deposit">Deposito</SelectItem>
-                  <SelectItem value="credit">Kartu Kredit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="balance">Saldo Initial</Label>
+                <Input 
+                  id="balance" 
+                  type="number" 
+                  placeholder="0"
+                  value={formData.initial_balance}
+                  onChange={(e) => setFormData({...formData, initial_balance: e.target.value})}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="balance">Saldo Initial</Label>
-              <Input id="balance" type="number" placeholder="0" />
-            </div>
-
-            <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-              Simpan Rekening
-            </Button>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {editingId ? "Update Rekening" : "Simpan Rekening"}
+                </Button>
+                {editingId && (
+                  <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                    Batal
+                  </Button>
+                )}
+              </div>
+            </form>
           </CardContent>
         </Card>
 
@@ -213,7 +225,7 @@ export default function Accounts() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm opacity-90 mb-1">Rekening Aktif</p>
-                    <p className="text-2xl font-bold">{accounts.filter(acc => acc.isActive).length}</p>
+                    <p className="text-2xl font-bold">{activeAccounts.length}</p>
                   </div>
                   <CreditCard className="h-8 w-8 opacity-80" />
                 </div>
@@ -224,12 +236,10 @@ export default function Accounts() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Perubahan Bulan Ini</p>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="h-4 w-4 text-success" />
-                      <p className="text-2xl font-bold text-success">+12.8%</p>
-                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Rekening</p>
+                    <p className="text-2xl font-bold text-foreground">{accounts.length}</p>
                   </div>
+                  <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
@@ -239,65 +249,64 @@ export default function Accounts() {
           <Card className="shadow-card border-0">
             <CardHeader>
               <CardTitle className="text-lg">Daftar Rekening</CardTitle>
-              <CardDescription>Semua rekening bank Anda</CardDescription>
+              <CardDescription>Semua rekening bank Anda ({accounts.length} rekening)</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-0">
-                {accounts.map((account, index) => (
-                  <div key={account.id} className={`p-6 hover:bg-surface/50 transition-colors group ${index !== accounts.length - 1 ? 'border-b border-border' : ''}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="text-3xl">
-                          {bankLogos[account.bank as keyof typeof bankLogos]}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-3 mb-1">
-                            <h3 className="font-semibold text-foreground">{account.accountName}</h3>
-                            <Badge className={getAccountTypeColor(account.type)}>
-                              {getAccountTypeLabel(account.type)}
-                            </Badge>
-                            {account.isActive && (
-                              <Badge className="bg-success-bg text-success-foreground">
-                                Aktif
-                              </Badge>
-                            )}
+                {accounts.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    Belum ada rekening. Tambahkan rekening pertama Anda untuk mulai melacak keuangan.
+                  </div>
+                ) : (
+                  accounts.map((account, index) => (
+                    <div key={account.id} className={`p-6 hover:bg-surface/50 transition-colors group ${index !== accounts.length - 1 ? 'border-b border-border' : ''}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="text-3xl">
+                            {bankLogos[account.bank_name as keyof typeof bankLogos] || "🏦"}
                           </div>
-                          <p className="text-sm text-muted-foreground">{account.bank} • •••• {account.accountNumber.slice(-4)}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Transaksi terakhir: {new Date(account.lastTransaction).toLocaleDateString('id-ID')}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-foreground">
-                            {formatBalance(account.balance)}
-                          </p>
-                          <div className="flex items-center justify-end gap-1 mt-1">
-                            {account.monthlyChange >= 0 ? (
-                              <ArrowUpRight className="h-4 w-4 text-success" />
-                            ) : (
-                              <ArrowDownRight className="h-4 w-4 text-danger" />
-                            )}
-                            <span className={`text-sm font-medium ${account.monthlyChange >= 0 ? 'text-success' : 'text-danger'}`}>
-                              {account.monthlyChange >= 0 ? '+' : ''}{account.monthlyChange}%
-                            </span>
+                          <div>
+                            <div className="flex items-center gap-3 mb-1">
+                              <h3 className="font-semibold text-foreground">{account.name}</h3>
+                              {account.is_active && (
+                                <Badge className="bg-success-bg text-success-foreground">
+                                  Aktif
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {account.bank_name} {account.account_number && `• •••• ${account.account_number.slice(-4)}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Dibuat: {new Date(account.created_at).toLocaleDateString('id-ID')}
+                            </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-danger hover:text-danger">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div className="flex items-center gap-6">
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground mb-1">Saldo Saat Ini</p>
+                            <p className="text-2xl font-bold text-foreground">
+                              {formatBalance(account.current_balance)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Awal: {formatBalance(account.initial_balance)}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(account)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-danger hover:text-danger" onClick={() => deleteAccount(account.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

@@ -11,17 +11,54 @@ import {
   DollarSign,
   Target,
   PieChart,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useSavings } from "@/hooks/useSavings";
+import { useDebts } from "@/hooks/useDebts";
 
 export default function Dashboard() {
   const currentMonth = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  
+  const { transactions, loading: transactionsLoading } = useTransactions();
+  const { accounts, loading: accountsLoading } = useAccounts();
+  const { savingsGoals, loading: savingsLoading } = useSavings();
+  const { debts, loading: debtsLoading } = useDebts();
+
+  // Calculate real statistics
+  const currentMonthTransactions = transactions.filter(t => {
+    const transactionDate = new Date(t.transaction_date);
+    const currentDate = new Date();
+    return transactionDate.getMonth() === currentDate.getMonth() && 
+           transactionDate.getFullYear() === currentDate.getFullYear();
+  });
+
+  const totalIncome = currentMonthTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalExpense = currentMonthTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalBalance = accounts.reduce((sum, acc) => sum + acc.current_balance, 0);
+  const totalDebt = debts.filter(d => !d.is_paid_off).reduce((sum, d) => sum + d.remaining_amount, 0);
+
+  if (transactionsLoading || accountsLoading || savingsLoading || debtsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   const stats = [
     {
       title: "Total Pemasukan",
-      value: "Rp 12.500.000",
+      value: `Rp ${totalIncome.toLocaleString('id-ID')}`,
       change: "+8.5%",
       changeType: "increase" as const,
       icon: TrendingUp,
@@ -30,7 +67,7 @@ export default function Dashboard() {
     },
     {
       title: "Total Pengeluaran", 
-      value: "Rp 8.750.000",
+      value: `Rp ${totalExpense.toLocaleString('id-ID')}`,
       change: "-2.1%",
       changeType: "decrease" as const,
       icon: TrendingDown,
@@ -39,7 +76,7 @@ export default function Dashboard() {
     },
     {
       title: "Saldo Tersedia",
-      value: "Rp 25.750.000",
+      value: `Rp ${totalBalance.toLocaleString('id-ID')}`,
       change: "+15.2%",
       changeType: "increase" as const,
       icon: Wallet,
@@ -47,9 +84,9 @@ export default function Dashboard() {
       iconColor: "text-primary"
     },
     {
-      title: "Kartu Kredit",
-      value: "Rp 2.100.000",
-      change: "dari limit 5jt",
+      title: "Total Utang",
+      value: `Rp ${totalDebt.toLocaleString('id-ID')}`,
+      change: `${debts.filter(d => !d.is_paid_off).length} utang aktif`,
       changeType: "neutral" as const,
       icon: CreditCard,
       bgColor: "bg-warning-bg",
