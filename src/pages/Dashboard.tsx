@@ -102,12 +102,6 @@ export default function Dashboard() {
     { id: 5, description: "Beli Bensin", amount: -150000, type: "expense", date: "12 Des 2024", category: "Transport" }
   ];
 
-  const savingsGoals = [
-    { title: "Dana Darurat", current: 15000000, target: 30000000, color: "bg-success" },
-    { title: "Liburan Bali", current: 3500000, target: 8000000, color: "bg-primary" },
-    { title: "Laptop Baru", current: 8500000, target: 12000000, color: "bg-warning" }
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -209,21 +203,21 @@ export default function Dashboard() {
             {savingsGoals.map((goal, index) => (
               <div key={index} className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="font-medium text-foreground">{goal.title}</p>
+                  <p className="font-medium text-foreground">{goal.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {Math.round((goal.current / goal.target) * 100)}%
+                    {Math.round((goal.current_amount / goal.target_amount) * 100)}%
                   </p>
                 </div>
                 <Progress 
-                  value={(goal.current / goal.target) * 100} 
+                  value={(goal.current_amount / goal.target_amount) * 100} 
                   className="h-2"
                 />
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    Rp {goal.current.toLocaleString('id-ID')}
+                    Rp {goal.current_amount.toLocaleString('id-ID')}
                   </span>
                   <span className="text-muted-foreground">
-                    Rp {goal.target.toLocaleString('id-ID')}
+                    Rp {goal.target_amount.toLocaleString('id-ID')}
                   </span>
                 </div>
               </div>
