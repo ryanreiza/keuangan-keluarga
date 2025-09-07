@@ -25,7 +25,6 @@ export const useFinancialData = () => {
     ]);
   };
 
-
   // Enhanced create functions that refresh related data
   const createTransactionWithRefresh = async (data: any) => {
     const result = await transactionsHook.createTransaction(data);
