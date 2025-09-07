@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useAccounts } from "@/hooks/useAccounts";
 import {
   CreditCard,
   DollarSign,
@@ -90,8 +91,11 @@ export function FinancialSidebar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { accounts } = useAccounts();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
+  
+  const totalBalance = accounts.reduce((sum, account) => sum + account.current_balance, 0);
 
   const isActive = (path: string) => {
     if (path === "/" && currentPath === "/") return true;
@@ -209,7 +213,7 @@ export function FinancialSidebar() {
                   Total Saldo
                 </div>
                 <div className="text-2xl font-bold text-primary-foreground">
-                  Rp 25.750.000
+                  Rp {totalBalance.toLocaleString('id-ID')}
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Plus, 
   Edit, 
@@ -19,6 +20,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAccounts, CreateAccountData } from "@/hooks/useAccounts";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Accounts() {
   const [showBalance, setShowBalance] = useState(true);
@@ -30,18 +34,33 @@ export default function Accounts() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deletePassword, setDeletePassword] = useState<string>('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
   const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useAccounts();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const bankLogos = {
-    "BCA": "🟦",
-    "Mandiri": "🟨", 
-    "BRI": "🟫",
-    "BNI": "🟧",
-    "CIMB": "🟥",
-    "Permata": "🟪",
-    "Danamon": "⬜",
-    "OCBC": "🟩"
+  const bankOptions = [
+    { value: 'BCA', label: 'Bank Central Asia (BCA)', emoji: '🟦' },
+    { value: 'Mandiri', label: 'Bank Mandiri', emoji: '🟨' },
+    { value: 'BRI', label: 'Bank Rakyat Indonesia (BRI)', emoji: '🟫' },
+    { value: 'BNI', label: 'Bank Negara Indonesia (BNI)', emoji: '🟧' },
+    { value: 'CIMB', label: 'CIMB Niaga', emoji: '🟥' },
+    { value: 'Permata', label: 'Permata Bank', emoji: '🟪' },
+    { value: 'Danamon', label: 'Bank Danamon', emoji: '⬜' },
+    { value: 'OCBC', label: 'OCBC NISP', emoji: '🟩' },
+    { value: 'Panin', label: 'Panin Bank', emoji: '🔶' },
+    { value: 'Mega', label: 'Bank Mega', emoji: '🟫' },
+    { value: 'BTPN', label: 'Bank BTPN', emoji: '🟨' },
+    { value: 'Muamalat', label: 'Bank Muamalat', emoji: '🟢' },
+    { value: 'Lainnya', label: 'Bank Lainnya', emoji: '🏦' }
+  ];
+  
+  const getBankEmoji = (bankName: string) => {
+    const bank = bankOptions.find(b => b.value === bankName);
+    return bank?.emoji || '🏦';
   };
 
   const formatBalance = (balance: number) => {
@@ -88,6 +107,55 @@ export default function Accounts() {
   const handleCancelEdit = () => {
     setFormData({ name: "", bank_name: "", account_number: "", initial_balance: "" });
     setEditingId(null);
+  };
+
+  const handleDeleteWithPassword = async () => {
+    if (!user || !deletingId || !deletePassword.trim()) {
+      toast({
+        title: "Error",
+        description: "Password diperlukan untuk menghapus rekening",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      // Verify password
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: deletePassword,
+      });
+
+      if (authError) {
+        toast({
+          title: "Password salah",
+          description: "Password yang Anda masukkan tidak benar",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // If password is correct, delete the account
+      await deleteAccount(deletingId);
+      
+      // Reset state
+      setDeletingId(null);
+      setDeletePassword('');
+      
+      toast({
+        title: "Rekening dihapus",
+        description: "Rekening berhasil dihapus dari sistem",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Terjadi kesalahan saat menghapus rekening",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.current_balance, 0);
@@ -144,14 +212,14 @@ export default function Accounts() {
                     <SelectValue placeholder="Pilih bank" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="BCA">🟦 BCA</SelectItem>
-                    <SelectItem value="Mandiri">🟨 Bank Mandiri</SelectItem>
-                    <SelectItem value="BRI">🟫 BRI</SelectItem>
-                    <SelectItem value="BNI">🟧 BNI</SelectItem>
-                    <SelectItem value="CIMB">🟥 CIMB Niaga</SelectItem>
-                    <SelectItem value="Permata">🟪 Permata Bank</SelectItem>
-                    <SelectItem value="Danamon">⬜ Danamon</SelectItem>
-                    <SelectItem value="OCBC">🟩 OCBC NISP</SelectItem>
+                    {bankOptions.map((bank) => (
+                      <SelectItem key={bank.value} value={bank.value}>
+                        <div className="flex items-center gap-2">
+                          <span>{bank.emoji}</span>
+                          <span>{bank.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -263,7 +331,7 @@ export default function Accounts() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="text-3xl">
-                            {bankLogos[account.bank_name as keyof typeof bankLogos] || "🏦"}
+                            {getBankEmoji(account.bank_name)}
                           </div>
                           <div>
                             <div className="flex items-center gap-3 mb-1">
@@ -298,9 +366,55 @@ export default function Accounts() {
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(account)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-danger hover:text-danger" onClick={() => deleteAccount(account.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-danger hover:text-danger"
+                                  onClick={() => setDeletingId(account.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Konfirmasi Hapus Rekening</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tindakan ini akan menghapus rekening "{account.name}" secara permanen. 
+                                    Masukkan password Anda untuk konfirmasi.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="space-y-2">
+                                  <Label htmlFor="delete-password">Password</Label>
+                                  <Input
+                                    id="delete-password"
+                                    type="password"
+                                    placeholder="Masukkan password Anda"
+                                    value={deletePassword}
+                                    onChange={(e) => setDeletePassword(e.target.value)}
+                                    disabled={deleteLoading}
+                                  />
+                                </div>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel 
+                                    onClick={() => {
+                                      setDeletingId(null);
+                                      setDeletePassword('');
+                                    }}
+                                  >
+                                    Batal
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeleteWithPassword}
+                                    disabled={deleteLoading || !deletePassword.trim()}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    {deleteLoading ? "Menghapus..." : "Hapus Rekening"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </div>
                       </div>

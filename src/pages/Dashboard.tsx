@@ -15,18 +15,21 @@ import {
   Loader2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { useTransactions } from "@/hooks/useTransactions";
-import { useAccounts } from "@/hooks/useAccounts";
-import { useSavings } from "@/hooks/useSavings";
-import { useDebts } from "@/hooks/useDebts";
+import { useFinancialData } from "@/hooks/useFinancialData";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const currentMonth = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
   
-  const { transactions, loading: transactionsLoading } = useTransactions();
-  const { accounts, loading: accountsLoading } = useAccounts();
-  const { savingsGoals, loading: savingsLoading } = useSavings();
-  const { debts, loading: debtsLoading } = useDebts();
+  const { 
+    transactions, 
+    accounts, 
+    savingsGoals, 
+    debts, 
+    categories,
+    loading,
+    refreshAllData 
+  } = useFinancialData();
 
   // Calculate real statistics
   const currentMonthTransactions = transactions.filter(t => {
@@ -47,7 +50,12 @@ export default function Dashboard() {
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.current_balance, 0);
   const totalDebt = debts.filter(d => !d.is_paid_off).reduce((sum, d) => sum + d.remaining_amount, 0);
 
-  if (transactionsLoading || accountsLoading || savingsLoading || debtsLoading) {
+  // Calculate progress statistics
+  const totalSavingsTarget = savingsGoals.reduce((sum, goal) => sum + goal.target_amount, 0);
+  const totalSavingsCurrent = savingsGoals.reduce((sum, goal) => sum + goal.current_amount, 0);
+  const activeSavingsGoals = savingsGoals.filter(goal => !goal.is_achieved);
+  
+  if (loading.transactions || loading.accounts || loading.savings || loading.debts || loading.categories) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
