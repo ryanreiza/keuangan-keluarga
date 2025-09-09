@@ -26,6 +26,7 @@ export default function Transactions() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const { transactions, loading: transactionsLoading, createTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -57,6 +58,7 @@ export default function Transactions() {
         account_id: "",
       });
       setDate(new Date());
+      setShowForm(false);
     }
     setLoading(false);
   };
@@ -92,16 +94,20 @@ export default function Transactions() {
         </div>
         <div className="flex items-center gap-3">
           <ResetTransactionsDialog onReset={resetAllTransactions} />
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+          <Button 
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            onClick={() => setShowForm(!showForm)}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Tambah Transaksi
+            {showForm ? "Tutup Form" : "Tambah Transaksi"}
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Transaction Form */}
-        <Card className="xl:col-span-1 shadow-card border-0">
+        {showForm && (
+          <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
             <CardTitle className="text-lg">Form Transaksi</CardTitle>
             <CardDescription>Tambah transaksi baru</CardDescription>
@@ -209,9 +215,10 @@ export default function Transactions() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         {/* Transaction List */}
-        <Card className="xl:col-span-3 shadow-card border-0">
+        <Card className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} shadow-card border-0`}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>

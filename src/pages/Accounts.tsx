@@ -37,6 +37,7 @@ export default function Accounts() {
   const [deletePassword, setDeletePassword] = useState<string>('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [showForm, setShowForm] = useState(false);
 
   const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useAccounts();
   const { user } = useAuth();
@@ -91,6 +92,7 @@ export default function Accounts() {
     if (!result.error) {
       setFormData({ name: "", bank_name: "", account_number: "", initial_balance: "" });
       setEditingId(null);
+      if (!editingId) setShowForm(false);
     }
     setLoading(false);
   };
@@ -103,11 +105,13 @@ export default function Accounts() {
       initial_balance: account.initial_balance.toString()
     });
     setEditingId(account.id);
+    setShowForm(true);
   };
 
   const handleCancelEdit = () => {
     setFormData({ name: "", bank_name: "", account_number: "", initial_balance: "" });
     setEditingId(null);
+    setShowForm(false);
   };
 
   const handleDeleteWithPassword = async () => {
@@ -186,16 +190,20 @@ export default function Accounts() {
           >
             {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+          <Button 
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            onClick={() => setShowForm(!showForm)}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Tambah Rekening
+            {showForm ? "Tutup Form" : "Tambah Rekening"}
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Account Form */}
-        <Card className="xl:col-span-1 shadow-card border-0">
+        {showForm && (
+          <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
             <CardTitle className="text-lg">
               {editingId ? "Edit Rekening" : "Form Rekening"}
@@ -272,9 +280,10 @@ export default function Accounts() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         {/* Accounts Overview */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-primary shadow-card border-0">

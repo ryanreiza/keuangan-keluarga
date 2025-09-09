@@ -34,6 +34,7 @@ export default function Categories() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const { categories, loading: categoriesLoading, createCategory, updateCategory, deleteCategory } = useCategories();
 
@@ -99,6 +100,7 @@ export default function Categories() {
     if (!result.error) {
       setFormData({ name: "", type: "", icon: "", color: "#3B82F6" });
       setEditingId(null);
+      if (!editingId) setShowForm(false);
     }
     setLoading(false);
   };
@@ -111,11 +113,13 @@ export default function Categories() {
       color: category.color || '#3B82F6'
     });
     setEditingId(category.id);
+    setShowForm(true);
   };
 
   const handleCancelEdit = () => {
     setFormData({ name: "", type: "", icon: "", color: "#3B82F6" });
     setEditingId(null);
+    setShowForm(false);
   };
 
   const groupedCategories = categories.reduce((acc, category) => {
@@ -140,15 +144,19 @@ export default function Categories() {
           <h1 className="text-3xl font-bold text-foreground">Kategori Keuangan</h1>
           <p className="text-muted-foreground mt-1">Kelola kategori pemasukan, pengeluaran, tabungan, dan utang</p>
         </div>
-        <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+        <Button 
+          className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+          onClick={() => setShowForm(!showForm)}
+        >
           <Plus className="h-4 w-4 mr-2" />
-          Tambah Kategori
+          {showForm ? "Tutup Form" : "Tambah Kategori"}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Category Form */}
-        <Card className="xl:col-span-1 shadow-card border-0">
+        {showForm && (
+          <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
             <CardTitle className="text-lg">
               {editingId ? "Edit Kategori" : "Form Kategori"}
@@ -236,9 +244,10 @@ export default function Categories() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         {/* Categories List */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {Object.entries(groupedCategories).map(([type, typeCategories]) => (
             <Card key={type} className="shadow-card border-0">
               <CardHeader>
