@@ -15,99 +15,186 @@ import {
   Download,
   Eye
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useFinancialData } from "@/hooks/useFinancialData";
+import { format, startOfYear, endOfYear, eachMonthOfInterval, subYears, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 export default function Annual() {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const { transactions, accounts, savingsGoals, categories, loading } = useFinancialData();
 
-  // Mock data untuk demonstrasi
-  const annualData = {
-    "2024": {
-      totalIncome: 145000000,
-      totalExpense: 98500000,
-      totalSavings: 46500000,
-      monthlyAverage: {
-        income: 12083333,
-        expense: 8208333,
-        savings: 3875000
-      },
-      monthlyData: [
-        { month: "Jan", income: 12500000, expense: 8200000, savings: 4300000 },
-        { month: "Feb", income: 11800000, expense: 7900000, savings: 3900000 },
-        { month: "Mar", income: 13200000, expense: 9100000, savings: 4100000 },
-        { month: "Apr", income: 12000000, expense: 8500000, savings: 3500000 },
-        { month: "May", income: 11500000, expense: 7800000, savings: 3700000 },
-        { month: "Jun", income: 12800000, expense: 8900000, savings: 3900000 },
-        { month: "Jul", income: 11900000, expense: 8100000, savings: 3800000 },
-        { month: "Aug", income: 12400000, expense: 8300000, savings: 4100000 },
-        { month: "Sep", income: 12200000, expense: 8000000, savings: 4200000 },
-        { month: "Oct", income: 11700000, expense: 7700000, savings: 4000000 },
-        { month: "Nov", income: 12000000, expense: 8200000, savings: 3800000 },
-        { month: "Dec", income: 13000000, expense: 8800000, savings: 4200000 }
-      ],
-      categoryExpenses: [
-        { category: "Makanan", amount: 24000000, percentage: 24.4 },
-        { category: "Transport", amount: 18500000, percentage: 18.8 },
-        { category: "Tagihan", amount: 15000000, percentage: 15.2 },
-        { category: "Belanja", amount: 12000000, percentage: 12.2 },
-        { category: "Hiburan", amount: 10500000, percentage: 10.7 },
-        { category: "Kesehatan", amount: 8500000, percentage: 8.6 },
-        { category: "Pendidikan", amount: 6000000, percentage: 6.1 },
-        { category: "Lainnya", amount: 4000000, percentage: 4.1 }
-      ]
-    },
-    "2023": {
-      totalIncome: 128000000,
-      totalExpense: 89000000,
-      totalSavings: 39000000,
-      monthlyAverage: {
-        income: 10666667,
-        expense: 7416667,
-        savings: 3250000
-      },
-      monthlyData: [
-        { month: "Jan", income: 10500000, expense: 7200000, savings: 3300000 },
-        { month: "Feb", income: 10200000, expense: 7100000, savings: 3100000 },
-        { month: "Mar", income: 10800000, expense: 7500000, savings: 3300000 },
-        { month: "Apr", income: 10600000, expense: 7300000, savings: 3300000 },
-        { month: "May", income: 10400000, expense: 7000000, savings: 3400000 },
-        { month: "Jun", income: 10900000, expense: 7600000, savings: 3300000 },
-        { month: "Jul", income: 10500000, expense: 7200000, savings: 3300000 },
-        { month: "Aug", income: 10700000, expense: 7400000, savings: 3300000 },
-        { month: "Sep", income: 10600000, expense: 7300000, savings: 3300000 },
-        { month: "Oct", income: 10300000, expense: 7000000, savings: 3300000 },
-        { month: "Nov", income: 10800000, expense: 7500000, savings: 3300000 },
-        { month: "Dec", income: 11700000, expense: 7900000, savings: 3800000 }
-      ],
-      categoryExpenses: [
-        { category: "Makanan", amount: 21500000, percentage: 24.2 },
-        { category: "Transport", amount: 16000000, percentage: 18.0 },
-        { category: "Tagihan", amount: 13500000, percentage: 15.2 },
-        { category: "Belanja", amount: 10500000, percentage: 11.8 },
-        { category: "Hiburan", amount: 9500000, percentage: 10.7 },
-        { category: "Kesehatan", amount: 7500000, percentage: 8.4 },
-        { category: "Pendidikan", amount: 5500000, percentage: 6.2 },
-        { category: "Lainnya", amount: 4500000, percentage: 5.1 }
-      ]
+  // Calculate annual data from real transactions
+  const annualData = useMemo(() => {
+    if (!transactions || transactions.length === 0) {
+      return {
+        currentYear: {
+          totalIncome: 0,
+          totalExpense: 0,
+          totalSavings: 0,
+          monthlyAverage: { income: 0, expense: 0, savings: 0 },
+          monthlyData: [],
+          categoryExpenses: []
+        },
+        previousYear: {
+          totalIncome: 0,
+          totalExpense: 0,
+          totalSavings: 0
+        }
+      };
     }
-  };
 
-  const currentYearData = annualData[selectedYear as keyof typeof annualData];
-  const previousYearData = annualData["2023"];
+    const currentYear = parseInt(selectedYear);
+    const previousYear = currentYear - 1;
+    
+    const currentYearStart = startOfYear(new Date(currentYear, 0, 1));
+    const currentYearEnd = endOfYear(new Date(currentYear, 0, 1));
+    const previousYearStart = startOfYear(new Date(previousYear, 0, 1));
+    const previousYearEnd = endOfYear(new Date(previousYear, 0, 1));
 
-  const incomeGrowth = currentYearData && previousYearData 
+    // Filter transactions for current year
+    const currentYearTransactions = transactions.filter(t => {
+      const transactionDate = parseISO(t.transaction_date);
+      return transactionDate >= currentYearStart && transactionDate <= currentYearEnd;
+    });
+
+    // Filter transactions for previous year
+    const previousYearTransactions = transactions.filter(t => {
+      const transactionDate = parseISO(t.transaction_date);
+      return transactionDate >= previousYearStart && transactionDate <= previousYearEnd;
+    });
+
+    // Calculate current year metrics
+    const currentIncome = currentYearTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    
+    const currentExpense = currentYearTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const currentSavings = currentIncome - currentExpense;
+
+    // Calculate previous year metrics
+    const previousIncome = previousYearTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    
+    const previousExpense = previousYearTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const previousSavings = previousIncome - previousExpense;
+
+    // Generate monthly data for current year
+    const monthsInYear = eachMonthOfInterval({ start: currentYearStart, end: currentYearEnd });
+    const monthlyData = monthsInYear.map(month => {
+      const monthStart = startOfMonth(month);
+      const monthEnd = endOfMonth(month);
+      
+      const monthTransactions = currentYearTransactions.filter(t => {
+        const transactionDate = parseISO(t.transaction_date);
+        return transactionDate >= monthStart && transactionDate <= monthEnd;
+      });
+      
+      const monthIncome = monthTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      const monthExpense = monthTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      return {
+        month: format(month, 'MMM'),
+        income: monthIncome,
+        expense: monthExpense,
+        savings: monthIncome - monthExpense
+      };
+    });
+
+    // Category breakdown for expenses
+    const categoryMap = new Map();
+    currentYearTransactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        const categoryName = t.categories?.name || 'Lainnya';
+        const current = categoryMap.get(categoryName) || 0;
+        categoryMap.set(categoryName, current + Number(t.amount));
+      });
+
+    const categoryExpenses = Array.from(categoryMap.entries())
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        percentage: currentExpense > 0 ? (amount / currentExpense * 100) : 0
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8);
+
+    // Monthly averages
+    const monthlyAverage = {
+      income: monthlyData.length > 0 ? currentIncome / monthlyData.length : 0,
+      expense: monthlyData.length > 0 ? currentExpense / monthlyData.length : 0,
+      savings: monthlyData.length > 0 ? currentSavings / monthlyData.length : 0
+    };
+
+    return {
+      currentYear: {
+        totalIncome: currentIncome,
+        totalExpense: currentExpense,
+        totalSavings: currentSavings,
+        monthlyAverage,
+        monthlyData,
+        categoryExpenses
+      },
+      previousYear: {
+        totalIncome: previousIncome,
+        totalExpense: previousExpense,
+        totalSavings: previousSavings
+      }
+    };
+  }, [transactions, selectedYear]);
+
+  // Generate year options (current year and 4 previous years)
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const options = [];
+    for (let i = 0; i < 5; i++) {
+      const year = currentYear - i;
+      options.push(year.toString());
+    }
+    return options;
+  }, []);
+
+  const { currentYear: currentYearData, previousYear: previousYearData } = annualData;
+
+  const incomeGrowth = previousYearData.totalIncome > 0 
     ? ((currentYearData.totalIncome - previousYearData.totalIncome) / previousYearData.totalIncome * 100)
     : 0;
 
-  const expenseGrowth = currentYearData && previousYearData
+  const expenseGrowth = previousYearData.totalExpense > 0
     ? ((currentYearData.totalExpense - previousYearData.totalExpense) / previousYearData.totalExpense * 100)
     : 0;
 
-  const savingsGrowth = currentYearData && previousYearData
-    ? ((currentYearData.totalSavings - previousYearData.totalSavings) / previousYearData.totalSavings * 100)
+  const savingsGrowth = previousYearData.totalSavings !== 0
+    ? ((currentYearData.totalSavings - previousYearData.totalSavings) / Math.abs(previousYearData.totalSavings) * 100)
     : 0;
 
-  const savingsRate = (currentYearData.totalSavings / currentYearData.totalIncome) * 100;
+  const savingsRate = currentYearData.totalIncome > 0 ? (currentYearData.totalSavings / currentYearData.totalIncome) * 100 : 0;
+
+  if (loading.transactions || loading.accounts || loading.categories) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Memuat data dashboard tahunan...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -123,9 +210,11 @@ export default function Annual() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2022">2022</SelectItem>
+              {yearOptions.map(year => (
+                <SelectItem key={year} value={year}>
+                  {year}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline">
