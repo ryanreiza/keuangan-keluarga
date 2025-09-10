@@ -34,6 +34,7 @@ export default function Debts() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const { debts, loading: debtsLoading, createDebt, updateDebt, deleteDebt } = useDebts();
 
@@ -93,6 +94,7 @@ export default function Debts() {
         due_date: "" 
       });
       setEditingId(null);
+      setShowForm(false);
     }
     setLoading(false);
   };
@@ -107,6 +109,7 @@ export default function Debts() {
       due_date: debt.due_date ? format(new Date(debt.due_date), "yyyy-MM-dd") : ""
     });
     setEditingId(debt.id);
+    setShowForm(true);
   };
 
   const handleCancelEdit = () => {
@@ -119,6 +122,7 @@ export default function Debts() {
       due_date: "" 
     });
     setEditingId(null);
+    setShowForm(false);
   };
 
   const activeDebts = debts.filter(debt => !debt.is_paid_off);
@@ -141,14 +145,18 @@ export default function Debts() {
           <h1 className="text-3xl font-bold text-foreground">Pelacak Utang</h1>
           <p className="text-muted-foreground mt-1">Kelola dan pantau semua utang dan kewajiban pembayaran</p>
         </div>
-        <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+        <Button 
+          className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+          onClick={() => setShowForm(!showForm)}
+        >
           <Plus className="h-4 w-4 mr-2" />
-          Tambah Utang
+          {showForm ? 'Sembunyikan Form' : 'Tambah Utang'}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Debt Form */}
+        {showForm && (
         <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
             <CardTitle className="text-lg">
@@ -242,9 +250,10 @@ export default function Debts() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         {/* Summary & Debts */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-card shadow-card border-0">

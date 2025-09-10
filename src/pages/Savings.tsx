@@ -33,6 +33,7 @@ export default function Savings() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const { savingsGoals, loading: savingsLoading, createSavingsGoal, updateSavingsGoal, deleteSavingsGoal } = useSavings();
   const { categories } = useCategories();
@@ -78,6 +79,7 @@ export default function Savings() {
     if (!result.error) {
       setFormData({ name: "", target_amount: "", current_amount: "", target_date: "", category_id: "" });
       setEditingId(null);
+      setShowForm(false);
     }
     setLoading(false);
   };
@@ -91,11 +93,13 @@ export default function Savings() {
       category_id: goal.category_id
     });
     setEditingId(goal.id);
+    setShowForm(true);
   };
 
   const handleCancelEdit = () => {
     setFormData({ name: "", target_amount: "", current_amount: "", target_date: "", category_id: "" });
     setEditingId(null);
+    setShowForm(false);
   };
 
   const activeGoals = savingsGoals.filter(goal => !goal.is_achieved);
@@ -118,14 +122,18 @@ export default function Savings() {
           <h1 className="text-3xl font-bold text-foreground">Pelacak Tabungan</h1>
           <p className="text-muted-foreground mt-1">Kelola target tabungan dan pantau progress pencapaian</p>
         </div>
-        <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+        <Button 
+          className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+          onClick={() => setShowForm(!showForm)}
+        >
           <Plus className="h-4 w-4 mr-2" />
-          Tambah Target
+          {showForm ? 'Sembunyikan Form' : 'Tambah Target'}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Goal Form */}
+        {showForm && (
         <Card className="xl:col-span-1 shadow-card border-0">
           <CardHeader>
             <CardTitle className="text-lg">
@@ -211,9 +219,10 @@ export default function Savings() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         {/* Summary & Goals */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-primary shadow-card border-0">
