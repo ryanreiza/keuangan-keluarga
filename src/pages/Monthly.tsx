@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Calendar,
   TrendingUp, 
@@ -17,16 +21,39 @@ import {
   Eye,
   CreditCard,
   Wallet,
-  TrendingUp as GrowthIcon
+  Plus,
+  TrendingUp as GrowthIcon,
+  Zap,
+  FileText,
+  Calculator,
+  Briefcase
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameDay, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { useToast } from "@/hooks/use-toast";
 
 export default function Monthly() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
-  const { transactions, accounts, savingsGoals, categories, loading } = useFinancialData();
+  const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
+  const [transactionForm, setTransactionForm] = useState({
+    description: '',
+    amount: '',
+    type: 'expense',
+    category_id: '',
+    account_id: '',
+    transaction_date: format(new Date(), 'yyyy-MM-dd')
+  });
+  const { toast } = useToast();
+  const { 
+    transactions, 
+    accounts, 
+    savingsGoals, 
+    categories, 
+    loading, 
+    createTransaction 
+  } = useFinancialData();
 
   // Calculate current and previous month data
   const monthlyData = useMemo(() => {
@@ -209,6 +236,67 @@ export default function Monthly() {
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.current_balance), 0) || 0;
   const totalSavingsGoals = savingsGoals?.reduce((sum, goal) => sum + Number(goal.current_amount), 0) || 0;
 
+  // Recent transactions for the selected month
+  const recentTransactions = useMemo(() => {
+    if (!transactions) return [];
+    const currentDate = new Date(selectedMonth + '-01');
+    const currentMonthStart = startOfMonth(currentDate);
+    const currentMonthEnd = endOfMonth(currentDate);
+    
+    return transactions
+      .filter(t => {
+        const transactionDate = parseISO(t.transaction_date);
+        return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd;
+      })
+      .sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime())
+      .slice(0, 5);
+  }, [transactions, selectedMonth]);
+
+  // Handle add transaction
+  const handleAddTransaction = async () => {
+    if (!transactionForm.description || !transactionForm.amount || !transactionForm.category_id || !transactionForm.account_id) {
+      toast({
+        title: "Error",
+        description: "Mohon lengkapi semua field yang diperlukan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await createTransaction({
+        description: transactionForm.description,
+        amount: parseFloat(transactionForm.amount),
+        type: transactionForm.type,
+        category_id: transactionForm.category_id,
+        account_id: transactionForm.account_id,
+        transaction_date: transactionForm.transaction_date
+      });
+
+      if (!result.error) {
+        toast({
+          title: "Berhasil",
+          description: "Transaksi berhasil ditambahkan",
+        });
+        setIsAddTransactionOpen(false);
+        setTransactionForm({
+          description: '',
+          amount: '',
+          type: 'expense',
+          category_id: '',
+          account_id: '',
+          transaction_date: format(new Date(), 'yyyy-MM-dd')
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal menambahkan transaksi",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading.transactions || loading.accounts || loading.categories) {
     return (
       <div className="space-y-6">
@@ -243,13 +331,107 @@ export default function Monthly() {
               ))}
             </SelectContent>
           </Select>
+          <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Transaksi
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Tambah Transaksi Baru</DialogTitle>
+                <DialogDescription>
+                  Tambahkan transaksi pemasukan atau pengeluaran baru
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Deskripsi</Label>
+                  <Input
+                    id="description"
+                    placeholder="Contoh: Gaji, Makan siang, dll"
+                    value={transactionForm.description}
+                    onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Jumlah</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="0"
+                      value={transactionForm.amount}
+                      onChange={(e) => setTransactionForm(prev => ({ ...prev, amount: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Tipe</Label>
+                    <Select value={transactionForm.type} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, type: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income">Pemasukan</SelectItem>
+                        <SelectItem value="expense">Pengeluaran</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Kategori</Label>
+                  <Select value={transactionForm.category_id} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, category_id: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories?.filter(cat => cat.type === transactionForm.type).map(category => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="account">Rekening</Label>
+                  <Select value={transactionForm.account_id} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, account_id: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih rekening" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts?.map(account => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name} - {account.bank_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Tanggal</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={transactionForm.transaction_date}
+                    onChange={(e) => setTransactionForm(prev => ({ ...prev, transaction_date: e.target.value }))}
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button variant="outline" onClick={() => setIsAddTransactionOpen(false)}>
+                    Batal
+                  </Button>
+                  <Button onClick={handleAddTransaction} className="bg-gradient-primary text-primary-foreground">
+                    Tambah Transaksi
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export
-          </Button>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <Eye className="h-4 w-4 mr-2" />
-            Lihat Detail
           </Button>
         </div>
       </div>
@@ -386,16 +568,97 @@ export default function Monthly() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Transactions */}
+        <Card className="shadow-card border-0">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Transaksi Terbaru
+            </CardTitle>
+            <CardDescription>5 transaksi terakhir bulan ini</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {recentTransactions.length > 0 ? (
+              recentTransactions.map((transaction, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${transaction.type === 'income' ? 'bg-success/10' : 'bg-danger/10'}`}>
+                      {transaction.type === 'income' ? (
+                        <ArrowUpRight className={`h-4 w-4 ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`} />
+                      ) : (
+                        <ArrowDownRight className={`h-4 w-4 ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`} />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{transaction.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {transaction.categories?.name} • {format(parseISO(transaction.transaction_date), 'dd MMM', { locale: id })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-medium text-sm ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`}>
+                      {transaction.type === 'income' ? '+' : '-'}Rp {Number(transaction.amount).toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Belum ada transaksi bulan ini</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="shadow-card border-0">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Aksi Cepat
+            </CardTitle>
+            <CardDescription>Tindakan keuangan yang sering digunakan</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tambah Transaksi
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+            <Button variant="outline" className="w-full justify-start">
+              <Calculator className="h-4 w-4 mr-2" />
+              Kalkulator Anggaran
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Target className="h-4 w-4 mr-2" />
+              Set Target Tabungan
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Briefcase className="h-4 w-4 mr-2" />
+              Lihat Laporan
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Download className="h-4 w-4 mr-2" />
+              Export Data
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Category Breakdown */}
         <Card className="shadow-card border-0">
           <CardHeader>
             <CardTitle className="text-xl">Pengeluaran per Kategori</CardTitle>
-            <CardDescription>Distribusi pengeluaran bulan ini</CardDescription>
+            <CardDescription>Top 5 kategori pengeluaran</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {monthlyData.currentMonth.categoryBreakdown.length > 0 ? (
-              monthlyData.currentMonth.categoryBreakdown.map((category, index) => (
+              monthlyData.currentMonth.categoryBreakdown.slice(0, 5).map((category, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">{category.category}</span>
@@ -417,16 +680,18 @@ export default function Monthly() {
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Account Activity */}
-        <Card className="shadow-card border-0">
-          <CardHeader>
-            <CardTitle className="text-xl">Aktivitas Rekening</CardTitle>
-            <CardDescription>Ringkasan transaksi per rekening bulan ini</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {monthlyData.currentMonth.accountActivity.length > 0 ? (
-              monthlyData.currentMonth.accountActivity.map((account, index) => (
+      {/* Account Activity */}
+      <Card className="shadow-card border-0">
+        <CardHeader>
+          <CardTitle className="text-xl">Aktivitas Rekening</CardTitle>
+          <CardDescription>Ringkasan transaksi per rekening bulan ini</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {monthlyData.currentMonth.accountActivity.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {monthlyData.currentMonth.accountActivity.map((account, index) => (
                 <div key={index} className="p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -456,16 +721,16 @@ export default function Monthly() {
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Wallet className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Belum ada aktivitas rekening bulan ini</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Wallet className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Belum ada aktivitas rekening bulan ini</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Financial Health & Insights */}
       <Card className="shadow-card border-0">
