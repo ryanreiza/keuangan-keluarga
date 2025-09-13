@@ -209,6 +209,7 @@ export type Database = {
           category_id: string
           created_at: string
           description: string | null
+          destination_account_id: string | null
           id: string
           transaction_date: string
           type: string
@@ -221,6 +222,7 @@ export type Database = {
           category_id: string
           created_at?: string
           description?: string | null
+          destination_account_id?: string | null
           id?: string
           transaction_date?: string
           type: string
@@ -233,6 +235,7 @@ export type Database = {
           category_id?: string
           created_at?: string
           description?: string | null
+          destination_account_id?: string | null
           id?: string
           transaction_date?: string
           type?: string

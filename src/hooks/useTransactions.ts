@@ -11,6 +11,7 @@ export interface Transaction {
   transaction_date: string;
   category_id: string;
   account_id: string;
+  destination_account_id?: string; // For transfer transactions
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -25,9 +26,10 @@ export interface Transaction {
 export interface CreateTransactionData {
   description: string;
   amount: number;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   category_id: string;
   account_id: string;
+  destination_account_id?: string; // Required only for transfer type
   transaction_date: string;
 }
 
@@ -65,40 +67,54 @@ export const useTransactions = () => {
   };
 
   const createTransaction = async (transactionData: CreateTransactionData) => {
-    if (!user) return { error: 'No user found' };
+    if (!user) return { error: 'User not authenticated' };
 
     try {
+      const insertData: any = {
+        description: transactionData.description,
+        amount: transactionData.amount,
+        type: transactionData.type,
+        category_id: transactionData.category_id,
+        account_id: transactionData.account_id,
+        transaction_date: transactionData.transaction_date,
+        user_id: user.id,
+      };
+
+      // Add destination_account_id for transfer transactions
+      if (transactionData.type === 'transfer' && transactionData.destination_account_id) {
+        insertData.destination_account_id = transactionData.destination_account_id;
+      }
+
       const { data, error } = await supabase
         .from('transactions')
-        .insert([
-          {
-            ...transactionData,
-            user_id: user.id,
-          }
-        ])
+        .insert([insertData])
         .select(`
           *,
           categories(name),
           accounts(name)
-        `)
-        .single();
+        `);
 
       if (error) throw error;
 
-      setTransactions([data, ...transactions]);
-      toast({
-        title: "Transaction created",
-        description: "Your transaction has been saved successfully.",
-      });
+      if (data && data[0]) {
+        setTransactions(prev => [data[0], ...prev]);
+        toast({
+          title: "Berhasil",
+          description: transactionData.type === 'transfer' 
+            ? "Transfer antar rekening berhasil ditambahkan"
+            : "Transaksi berhasil ditambahkan",
+        });
+      }
       
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error creating transaction:', error);
       toast({
-        title: "Error creating transaction",
-        description: error.message,
+        title: "Error",
+        description: "Gagal menambahkan transaksi",
         variant: "destructive",
       });
-      return { error: error.message };
+      return { data: null, error };
     }
   };
 

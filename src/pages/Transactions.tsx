@@ -10,7 +10,7 @@ import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loade
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useTransactions, CreateTransactionData } from "@/hooks/useTransactions";
+import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
@@ -23,6 +23,7 @@ export default function Transactions() {
     type: "",
     category_id: "",
     account_id: "",
+    destination_account_id: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,19 +35,43 @@ export default function Transactions() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.description || !formData.amount || !formData.type || !formData.category_id || !formData.account_id) {
+    if (!formData.description || !formData.amount || !formData.type || !formData.account_id) {
       return;
     }
 
+    // Validate transfer-specific requirements
+    if (formData.type === 'transfer') {
+      if (!formData.destination_account_id) {
+        return;
+      }
+      if (formData.account_id === formData.destination_account_id) {
+        return;
+      }
+    } else {
+      // For non-transfer transactions, category is required
+      if (!formData.category_id) {
+        return;
+      }
+    }
+
     setLoading(true);
-    const transactionData: CreateTransactionData = {
+    const transactionData: any = {
       description: formData.description,
       amount: parseFloat(formData.amount),
-      type: formData.type as 'income' | 'expense',
-      category_id: formData.category_id,
+      type: formData.type,
       account_id: formData.account_id,
       transaction_date: format(date, "yyyy-MM-dd"),
     };
+
+    // Add category for non-transfer transactions (use a default for transfers)
+    if (formData.type === 'transfer') {
+      // Find or use a default "Transfer" category
+      const transferCategory = categories?.find(cat => cat.name === 'Transfer') || categories?.[0];
+      transactionData.category_id = transferCategory?.id || formData.category_id;
+      transactionData.destination_account_id = formData.destination_account_id;
+    } else {
+      transactionData.category_id = formData.category_id;
+    }
 
     const result = await createTransaction(transactionData);
     if (!result.error) {
@@ -56,6 +81,7 @@ export default function Transactions() {
         type: "",
         category_id: "",
         account_id: "",
+        destination_account_id: "",
       });
       setDate(new Date());
       setShowForm(false);
@@ -139,48 +165,69 @@ export default function Transactions() {
 
               <div className="space-y-2">
                 <Label>Tipe</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: ""})}>
+                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: ""})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih tipe transaksi" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background border border-border z-50">
                     <SelectItem value="income">Pemasukan</SelectItem>
                     <SelectItem value="expense">Pengeluaran</SelectItem>
+                    <SelectItem value="transfer">Transfer Antar Rekening</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Kategori</Label>
-                <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})} disabled={!formData.type}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.type !== 'transfer' && (
+                <div className="space-y-2">
+                  <Label>Kategori</Label>
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})} disabled={!formData.type}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {availableCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
-                <Label>Rekening</Label>
+                <Label>{formData.type === 'transfer' ? 'Rekening Asal' : 'Rekening'}</Label>
                 <Select value={formData.account_id} onValueChange={(value) => setFormData({...formData, account_id: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih rekening" />
+                    <SelectValue placeholder={formData.type === 'transfer' ? 'Pilih rekening asal' : 'Pilih rekening'} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background border border-border z-50">
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
-                        {account.bank_name} - {account.name}
+                        {account.name} - {account.bank_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.type === 'transfer' && (
+                <div className="space-y-2">
+                  <Label>Rekening Tujuan</Label>
+                  <Select value={formData.destination_account_id} onValueChange={(value) => setFormData({...formData, destination_account_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih rekening tujuan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {accounts.filter(account => account.id !== formData.account_id).map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name} - {account.bank_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Tanggal</Label>
@@ -229,53 +276,84 @@ export default function Transactions() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    className="pl-10 w-64" 
-                    placeholder="Cari transaksi..."
+                    placeholder="Cari transaksi..." 
+                    className="pl-10 w-64"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="sm">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="space-y-0">
-              {filteredTransactions.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  {searchTerm ? "Tidak ada transaksi yang cocok dengan pencarian" : "Belum ada transaksi"}
-                </div>
-              ) : (
+          <CardContent>
+            <div className="space-y-4">
+              {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((transaction, index) => (
-                  <div key={transaction.id} className={`flex items-center justify-between p-4 hover:bg-surface/50 transition-colors ${index !== filteredTransactions.length - 1 ? 'border-b border-border' : ''}`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${transaction.type === 'income' ? 'bg-success-bg' : 'bg-danger-bg'}`}>
+                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${
+                        transaction.type === 'income' 
+                          ? 'bg-success/10' 
+                          : transaction.type === 'expense'
+                          ? 'bg-danger/10'
+                          : 'bg-primary/10'
+                      }`}>
                         {transaction.type === 'income' ? (
                           <ArrowUpRight className="h-4 w-4 text-success" />
-                        ) : (
+                        ) : transaction.type === 'expense' ? (
                           <ArrowDownRight className="h-4 w-4 text-danger" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4 text-primary" />
                         )}
                       </div>
                       <div>
                         <p className="font-medium text-foreground">{transaction.description}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(transaction.transaction_date).toLocaleDateString('id-ID')}
-                          </p>
-                          <Badge variant="secondary" className="text-xs">{transaction.categories?.name}</Badge>
-                          <Badge variant="outline" className="text-xs">{transaction.accounts?.name}</Badge>
-                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {transaction.type === 'transfer' 
+                            ? `Transfer antar rekening`
+                            : transaction.categories?.name
+                          } • {transaction.accounts?.name}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-semibold text-lg ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                        {transaction.type === 'income' ? '+' : '-'}Rp {Math.abs(transaction.amount).toLocaleString('id-ID')}
+                      <Badge variant={
+                        transaction.type === 'income' 
+                          ? 'default' 
+                          : transaction.type === 'expense'
+                          ? 'destructive'
+                          : 'secondary'
+                      } className="mb-1">
+                        {transaction.type === 'income' ? 'Pemasukan' : 
+                         transaction.type === 'expense' ? 'Pengeluaran' : 'Transfer'}
+                      </Badge>
+                      <p className={`font-bold ${
+                        transaction.type === 'income' 
+                          ? 'text-success' 
+                          : transaction.type === 'expense'
+                          ? 'text-danger'
+                          : 'text-primary'
+                      }`}>
+                        {transaction.type === 'income' 
+                          ? '+' 
+                          : transaction.type === 'expense' 
+                          ? '-' 
+                          : ''
+                        }Rp {transaction.amount.toLocaleString("id-ID")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.transaction_date).toLocaleDateString("id-ID")}
                       </p>
                     </div>
                   </div>
                 ))
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Tidak ada transaksi yang ditemukan</p>
+                </div>
               )}
             </div>
           </CardContent>

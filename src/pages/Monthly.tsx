@@ -43,6 +43,7 @@ export default function Monthly() {
     type: 'expense',
     category_id: '',
     account_id: '',
+    destination_account_id: '',
     transaction_date: format(new Date(), 'yyyy-MM-dd')
   });
   const { toast } = useToast();
@@ -101,7 +102,7 @@ export default function Monthly() {
       return transactionDate >= previousMonthStart && transactionDate <= previousMonthEnd;
     });
 
-    // Calculate current month metrics
+    // Calculate current month metrics (exclude transfers from income/expense)
     const currentIncome = currentTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -110,7 +111,7 @@ export default function Monthly() {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    // Calculate previous month metrics
+    // Calculate previous month metrics (exclude transfers from income/expense)
     const previousIncome = previousTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -254,7 +255,7 @@ export default function Monthly() {
 
   // Handle add transaction
   const handleAddTransaction = async () => {
-    if (!transactionForm.description || !transactionForm.amount || !transactionForm.category_id || !transactionForm.account_id) {
+    if (!transactionForm.description || !transactionForm.amount || !transactionForm.account_id) {
       toast({
         title: "Error",
         description: "Mohon lengkapi semua field yang diperlukan",
@@ -263,20 +264,63 @@ export default function Monthly() {
       return;
     }
 
+    // Validate transfer-specific requirements
+    if (transactionForm.type === 'transfer') {
+      if (!transactionForm.destination_account_id) {
+        toast({
+          title: "Error",
+          description: "Mohon pilih rekening tujuan untuk transfer",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (transactionForm.account_id === transactionForm.destination_account_id) {
+        toast({
+          title: "Error",
+          description: "Rekening asal dan tujuan tidak boleh sama",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // For non-transfer transactions, category is required
+      if (!transactionForm.category_id) {
+        toast({
+          title: "Error",
+          description: "Mohon pilih kategori untuk transaksi ini",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
-      const result = await createTransaction({
+      const transactionData: any = {
         description: transactionForm.description,
         amount: parseFloat(transactionForm.amount),
         type: transactionForm.type,
-        category_id: transactionForm.category_id,
         account_id: transactionForm.account_id,
         transaction_date: transactionForm.transaction_date
-      });
+      };
+
+      // Add category for non-transfer transactions (use a default for transfers)
+      if (transactionForm.type === 'transfer') {
+        // Find or use a default "Transfer" category
+        const transferCategory = categories?.find(cat => cat.name === 'Transfer') || categories?.[0];
+        transactionData.category_id = transferCategory?.id || transactionForm.category_id;
+        transactionData.destination_account_id = transactionForm.destination_account_id;
+      } else {
+        transactionData.category_id = transactionForm.category_id;
+      }
+
+      const result = await createTransaction(transactionData);
 
       if (!result.error) {
         toast({
           title: "Berhasil",
-          description: "Transaksi berhasil ditambahkan",
+          description: transactionForm.type === 'transfer' 
+            ? "Transfer antar rekening berhasil ditambahkan"
+            : "Transaksi berhasil ditambahkan",
         });
         setIsAddTransactionOpen(false);
         setTransactionForm({
@@ -285,6 +329,7 @@ export default function Monthly() {
           type: 'expense',
           category_id: '',
           account_id: '',
+          destination_account_id: '',
           transaction_date: format(new Date(), 'yyyy-MM-dd')
         });
       }
@@ -368,39 +413,44 @@ export default function Monthly() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="type">Tipe</Label>
-                    <Select value={transactionForm.type} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, type: value }))}>
+                    <Select value={transactionForm.type} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, type: value, category_id: '', destination_account_id: '' }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background border border-border z-50">
                         <SelectItem value="income">Pemasukan</SelectItem>
                         <SelectItem value="expense">Pengeluaran</SelectItem>
+                        <SelectItem value="transfer">Transfer Antar Rekening</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
+                
+                {transactionForm.type !== 'transfer' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Kategori</Label>
+                    <Select value={transactionForm.category_id} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, category_id: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih kategori" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-border z-50">
+                        {categories?.filter(cat => cat.type === transactionForm.type).map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
-                  <Label htmlFor="category">Kategori</Label>
-                  <Select value={transactionForm.category_id} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, category_id: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.filter(cat => cat.type === transactionForm.type).map(category => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account">Rekening</Label>
+                  <Label htmlFor="account">{transactionForm.type === 'transfer' ? 'Rekening Asal' : 'Rekening'}</Label>
                   <Select value={transactionForm.account_id} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, account_id: value }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih rekening" />
+                      <SelectValue placeholder={transactionForm.type === 'transfer' ? 'Pilih rekening asal' : 'Pilih rekening'} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background border border-border z-50">
                       {accounts?.map(account => (
                         <SelectItem key={account.id} value={account.id}>
                           {account.name} - {account.bank_name}
@@ -409,6 +459,24 @@ export default function Monthly() {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {transactionForm.type === 'transfer' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="destination_account">Rekening Tujuan</Label>
+                    <Select value={transactionForm.destination_account_id} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, destination_account_id: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih rekening tujuan" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-border z-50">
+                        {accounts?.filter(account => account.id !== transactionForm.account_id).map(account => (
+                          <SelectItem key={account.id} value={account.id}>
+                            {account.name} - {account.bank_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="date">Tanggal</Label>
                   <Input
@@ -583,23 +651,45 @@ export default function Monthly() {
               recentTransactions.map((transaction, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${transaction.type === 'income' ? 'bg-success/10' : 'bg-danger/10'}`}>
+                    <div className={`p-2 rounded-lg ${
+                      transaction.type === 'income' 
+                        ? 'bg-success/10' 
+                        : transaction.type === 'expense' 
+                        ? 'bg-danger/10' 
+                        : 'bg-primary/10'
+                    }`}>
                       {transaction.type === 'income' ? (
-                        <ArrowUpRight className={`h-4 w-4 ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`} />
+                        <ArrowUpRight className="h-4 w-4 text-success" />
+                      ) : transaction.type === 'expense' ? (
+                        <ArrowDownRight className="h-4 w-4 text-danger" />
                       ) : (
-                        <ArrowDownRight className={`h-4 w-4 ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`} />
+                        <Calculator className="h-4 w-4 text-primary" />
                       )}
                     </div>
                     <div>
                       <p className="font-medium text-sm">{transaction.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        {transaction.categories?.name} • {format(parseISO(transaction.transaction_date), 'dd MMM', { locale: id })}
+                        {transaction.type === 'transfer' 
+                          ? `Transfer antar rekening`
+                          : transaction.categories?.name
+                        } • {format(parseISO(transaction.transaction_date), 'dd MMM', { locale: id })}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-medium text-sm ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                      {transaction.type === 'income' ? '+' : '-'}Rp {Number(transaction.amount).toLocaleString('id-ID')}
+                    <p className={`font-medium text-sm ${
+                      transaction.type === 'income' 
+                        ? 'text-success' 
+                        : transaction.type === 'expense' 
+                        ? 'text-danger' 
+                        : 'text-primary'
+                    }`}>
+                      {transaction.type === 'income' 
+                        ? '+' 
+                        : transaction.type === 'expense' 
+                        ? '-' 
+                        : ''
+                      }Rp {Number(transaction.amount).toLocaleString('id-ID')}
                     </p>
                   </div>
                 </div>
