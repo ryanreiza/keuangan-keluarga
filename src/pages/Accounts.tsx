@@ -49,6 +49,7 @@ export default function Accounts() {
     { value: 'BRI', label: 'Bank Rakyat Indonesia (BRI)', emoji: '🟫' },
     { value: 'BNI', label: 'Bank Negara Indonesia (BNI)', emoji: '🟧' },
     { value: 'BSI', label: 'Bank Syariah Indonesia (BSI)', emoji: '🟩' },
+    { value: 'Bank Aceh', label: 'Bank Aceh Syariah', emoji: '🔶' },
     { value: 'CIMB', label: 'CIMB Niaga', emoji: '🟥' },
     { value: 'Permata', label: 'Permata Bank', emoji: '🟪' },
     { value: 'Danamon', label: 'Bank Danamon', emoji: '⬜' },
