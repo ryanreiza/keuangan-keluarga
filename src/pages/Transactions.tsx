@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2 } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
+import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
@@ -28,8 +29,10 @@ export default function Transactions() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<{ id: string; description: string } | null>(null);
 
-  const { transactions, loading: transactionsLoading, createTransaction, resetAllTransactions } = useTransactions();
+  const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
 
@@ -101,6 +104,18 @@ export default function Transactions() {
   const availableCategories = formData.type === 'income' ? incomeCategories : 
                              formData.type === 'expense' ? expenseCategories : 
                              categories;
+
+  const handleDeleteClick = (id: string, description: string) => {
+    setSelectedTransaction({ id, description });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedTransaction) {
+      deleteTransaction(selectedTransaction.id);
+      setSelectedTransaction(null);
+    }
+  };
 
   if (transactionsLoading || categoriesLoading || accountsLoading) {
     return (
@@ -292,8 +307,8 @@ export default function Transactions() {
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((transaction, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
+                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg group">
+                    <div className="flex items-center gap-3 flex-1">
                       <div className={`p-2 rounded-lg ${
                         transaction.type === 'income' 
                           ? 'bg-success/10' 
@@ -348,6 +363,14 @@ export default function Transactions() {
                         {new Date(transaction.transaction_date).toLocaleDateString("id-ID")}
                       </p>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                      onClick={() => handleDeleteClick(transaction.id, transaction.description || 'Transaksi')}
+                    >
+                      <Trash2 className="h-4 w-4 text-danger" />
+                    </Button>
                   </div>
                 ))
               ) : (
@@ -359,6 +382,13 @@ export default function Transactions() {
           </CardContent>
         </Card>
       </div>
+
+      <DeleteTransactionDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        transactionDescription={selectedTransaction?.description || ''}
+      />
     </div>
   );
 }
