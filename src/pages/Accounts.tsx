@@ -58,6 +58,7 @@ export default function Accounts() {
     { value: 'Mega', label: 'Bank Mega', emoji: '🟫' },
     { value: 'BTPN', label: 'Bank BTPN', emoji: '🟨' },
     { value: 'Muamalat', label: 'Bank Muamalat', emoji: '🟢' },
+    { value: 'Dompet', label: 'Cash di Dompet', emoji: '⬜' },
     { value: 'Lainnya', label: 'Bank Lainnya', emoji: '🏦' }
   ];
   
