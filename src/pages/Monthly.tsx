@@ -33,6 +33,7 @@ import { useFinancialData } from "@/hooks/useFinancialData";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameDay, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
+import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
 
 export default function Monthly() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -586,6 +587,22 @@ export default function Monthly() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Budget Tracking Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MonthlyBudgetTracker
+          categories={categories || []}
+          transactions={transactions || []}
+          selectedMonth={selectedMonth}
+          type="expense"
+        />
+        <MonthlyBudgetTracker
+          categories={categories || []}
+          transactions={transactions || []}
+          selectedMonth={selectedMonth}
+          type="income"
+        />
       </div>
 
       {/* Daily Trend Chart */}
