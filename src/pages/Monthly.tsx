@@ -238,21 +238,6 @@ export default function Monthly() {
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.current_balance), 0) || 0;
   const totalSavingsGoals = savingsGoals?.reduce((sum, goal) => sum + Number(goal.current_amount), 0) || 0;
 
-  // Recent transactions for the selected month
-  const recentTransactions = useMemo(() => {
-    if (!transactions) return [];
-    const currentDate = new Date(selectedMonth + '-01');
-    const currentMonthStart = startOfMonth(currentDate);
-    const currentMonthEnd = endOfMonth(currentDate);
-    
-    return transactions
-      .filter(t => {
-        const transactionDate = parseISO(t.transaction_date);
-        return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd;
-      })
-      .sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime())
-      .slice(0, 5);
-  }, [transactions, selectedMonth]);
 
   // Handle add transaction
   const handleAddTransaction = async () => {
@@ -653,73 +638,7 @@ export default function Monthly() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Transactions */}
-        <Card className="shadow-card border-0">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Transaksi Terbaru
-            </CardTitle>
-            <CardDescription>5 transaksi terakhir bulan ini</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((transaction, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      transaction.type === 'income' 
-                        ? 'bg-success/10' 
-                        : transaction.type === 'expense' 
-                        ? 'bg-danger/10' 
-                        : 'bg-primary/10'
-                    }`}>
-                      {transaction.type === 'income' ? (
-                        <ArrowUpRight className="h-4 w-4 text-success" />
-                      ) : transaction.type === 'expense' ? (
-                        <ArrowDownRight className="h-4 w-4 text-danger" />
-                      ) : (
-                        <Calculator className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{transaction.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {transaction.type === 'transfer' 
-                          ? `Transfer antar rekening`
-                          : transaction.categories?.name
-                        } • {format(parseISO(transaction.transaction_date), 'dd MMM', { locale: id })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-medium text-sm ${
-                      transaction.type === 'income' 
-                        ? 'text-success' 
-                        : transaction.type === 'expense' 
-                        ? 'text-danger' 
-                        : 'text-primary'
-                    }`}>
-                      {transaction.type === 'income' 
-                        ? '+' 
-                        : transaction.type === 'expense' 
-                        ? '-' 
-                        : ''
-                      }Rp {Number(transaction.amount).toLocaleString('id-ID')}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Belum ada transaksi bulan ini</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
         <Card className="shadow-card border-0">
           <CardHeader>
