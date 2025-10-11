@@ -17,9 +17,11 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { Link } from "react-router-dom";
+import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
 
 export default function Dashboard() {
   const currentMonth = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  const selectedMonth = new Date().toISOString().slice(0, 7); // Format: yyyy-MM
   
   const { 
     transactions, 
@@ -152,6 +154,22 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Expense Summary Table */}
+      <Card className="shadow-card border-0">
+        <CardHeader>
+          <CardTitle className="text-xl">Ringkasan Pengeluaran Bulanan</CardTitle>
+          <CardDescription>Target vs Realisasi pengeluaran per kategori bulan ini</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MonthlyBudgetTracker 
+            type="expense" 
+            categories={categories}
+            transactions={currentMonthTransactions}
+            selectedMonth={selectedMonth}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Transactions */}
