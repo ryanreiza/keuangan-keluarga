@@ -116,6 +116,20 @@ export default function MonthlyBudgetTracker({
     }).format(amount);
   };
 
+  // Calculate totals
+  const totalExpected = useMemo(() => {
+    return filteredCategories.reduce((sum, cat) => sum + (expectedAmounts[cat.id] || 0), 0);
+  }, [filteredCategories, expectedAmounts]);
+
+  const totalActual = useMemo(() => {
+    return filteredCategories.reduce((sum, cat) => sum + (actualAmounts[cat.id] || 0), 0);
+  }, [filteredCategories, actualAmounts]);
+
+  const totalProgress = useMemo(() => {
+    if (totalExpected === 0) return 0;
+    return Math.round((totalActual / totalExpected) * 100);
+  }, [totalExpected, totalActual]);
+
   const title = type === 'expense' ? 'Ringkasan Pengeluaran' : 'Ringkasan Pemasukan';
   const bgColor = type === 'expense' ? 'bg-red-50 dark:bg-red-950/20' : 'bg-green-50 dark:bg-green-950/20';
   const borderColor = type === 'expense' ? 'border-red-200 dark:border-red-800' : 'border-green-200 dark:border-green-800';
@@ -208,6 +222,32 @@ export default function MonthlyBudgetTracker({
                 </tr>
               )}
             </tbody>
+            {filteredCategories.length > 0 && (
+              <tfoot>
+                <tr className="border-t-2 border-border bg-muted/50">
+                  <td className="py-3 px-2 font-bold text-base">Total</td>
+                  <td className="text-right py-3 px-2 font-bold text-base">
+                    {formatCurrency(totalExpected)}
+                  </td>
+                  <td className="text-right py-3 px-2 font-bold text-base">
+                    {formatCurrency(totalActual)}
+                  </td>
+                  <td className="py-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                        <div 
+                          className={`h-full transition-all ${getProgressColor(totalExpected, totalActual)}`}
+                          style={{ width: `${Math.min(totalProgress, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold w-12 text-right">
+                        {totalProgress}%
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </CardContent>
