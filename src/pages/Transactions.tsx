@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, Calendar as CalendarMonth } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Format: yyyy-MM
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -35,6 +36,22 @@ export default function Transactions() {
   const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
+
+  // Generate list of months (current month + 11 previous months)
+  const generateMonthOptions = () => {
+    const options = [];
+    const today = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+      options.push({ value, label });
+    }
+    return options;
+  };
+
+  const monthOptions = generateMonthOptions();
+  const selectedMonthLabel = monthOptions.find(m => m.value === selectedMonth)?.label || "Semua";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,11 +109,19 @@ export default function Transactions() {
     setLoading(false);
   };
 
-  const filteredTransactions = transactions.filter(transaction =>
-    transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter transactions by selected month and search term
+  const filteredTransactions = transactions.filter(transaction => {
+    const transactionDate = new Date(transaction.transaction_date);
+    const [year, month] = selectedMonth.split('-');
+    const matchesMonth = transactionDate.getMonth() === parseInt(month) - 1 && 
+                        transactionDate.getFullYear() === parseInt(year);
+    
+    const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesMonth && matchesSearch;
+  });
 
   // Filter categories by type
   const incomeCategories = categories.filter(cat => cat.type === 'income');
@@ -128,12 +153,25 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Transaksi</h1>
-          <p className="text-muted-foreground mt-1">Kelola semua transaksi keuangan Anda</p>
+          <p className="text-muted-foreground mt-1">Kelola transaksi bulan {selectedMonthLabel}</p>
         </div>
         <div className="flex items-center gap-3">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[200px]">
+              <CalendarMonth className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <ResetTransactionsDialog onReset={resetAllTransactions} />
           <Button 
             className="bg-gradient-primary text-primary-foreground hover:opacity-90"
