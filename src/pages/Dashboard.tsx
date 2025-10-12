@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,23 +12,16 @@ import {
   Target,
   PieChart,
   BarChart3,
-  Loader2,
-  Calendar
+  Loader2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { Link } from "react-router-dom";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export default function Dashboard() {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Format: yyyy-MM
+  const currentMonth = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  const selectedMonth = new Date().toISOString().slice(0, 7); // Format: yyyy-MM
   
   const { 
     transactions, 
@@ -41,27 +33,12 @@ export default function Dashboard() {
     refreshAllData 
   } = useFinancialData();
 
-  // Generate list of months (current month + 11 previous months)
-  const generateMonthOptions = () => {
-    const options = [];
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const value = date.toISOString().slice(0, 7);
-      const label = date.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
-      options.push({ value, label });
-    }
-    return options;
-  };
-
-  const monthOptions = generateMonthOptions();
-  const selectedMonthLabel = monthOptions.find(m => m.value === selectedMonth)?.label || "";
-
   // Calculate real statistics
   const currentMonthTransactions = transactions.filter(t => {
-    // Extract YYYY-MM from transaction_date string for consistent comparison
-    const transactionMonth = t.transaction_date.substring(0, 7); // Gets YYYY-MM
-    return transactionMonth === selectedMonth;
+    const transactionDate = new Date(t.transaction_date);
+    const currentDate = new Date();
+    return transactionDate.getMonth() === currentDate.getMonth() && 
+           transactionDate.getFullYear() === currentDate.getFullYear();
   });
 
   const totalIncome = currentMonthTransactions
@@ -138,30 +115,15 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard Keuangan</h1>
-          <p className="text-muted-foreground mt-1">Ringkasan keuangan bulan {selectedMonthLabel}</p>
+          <p className="text-muted-foreground mt-1">Ringkasan keuangan bulan {currentMonth}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[200px]">
-              <Calendar className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Tambah Transaksi
-          </Button>
-        </div>
+        <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+          <DollarSign className="h-4 w-4 mr-2" />
+          Tambah Transaksi
+        </Button>
       </div>
 
       {/* Stats Overview */}

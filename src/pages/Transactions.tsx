@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, Calendar as CalendarMonth } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,6 @@ import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Format: yyyy-MM
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -36,22 +35,6 @@ export default function Transactions() {
   const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
-
-  // Generate list of months (current month + 11 previous months)
-  const generateMonthOptions = () => {
-    const options = [];
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const value = date.toISOString().slice(0, 7);
-      const label = date.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
-      options.push({ value, label });
-    }
-    return options;
-  };
-
-  const monthOptions = generateMonthOptions();
-  const selectedMonthLabel = monthOptions.find(m => m.value === selectedMonth)?.label || "Semua";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,19 +58,12 @@ export default function Transactions() {
     }
 
     setLoading(true);
-    
-    // Format date correctly in local timezone to prevent timezone shifts
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-    
     const transactionData: any = {
       description: formData.description,
       amount: parseFloat(formData.amount),
       type: formData.type,
       account_id: formData.account_id,
-      transaction_date: formattedDate,
+      transaction_date: format(date, "yyyy-MM-dd"),
     };
 
     // Add category for non-transfer transactions (use a default for transfers)
@@ -116,18 +92,11 @@ export default function Transactions() {
     setLoading(false);
   };
 
-  // Filter transactions by selected month and search term
-  const filteredTransactions = transactions.filter(transaction => {
-    // Extract YYYY-MM from transaction_date string for consistent comparison
-    const transactionMonth = transaction.transaction_date.substring(0, 7); // Gets YYYY-MM
-    const matchesMonth = transactionMonth === selectedMonth;
-    
-    const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesMonth && matchesSearch;
-  });
+  const filteredTransactions = transactions.filter(transaction =>
+    transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Filter categories by type
   const incomeCategories = categories.filter(cat => cat.type === 'income');
@@ -159,25 +128,12 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Transaksi</h1>
-          <p className="text-muted-foreground mt-1">Kelola transaksi bulan {selectedMonthLabel}</p>
+          <p className="text-muted-foreground mt-1">Kelola semua transaksi keuangan Anda</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[200px]">
-              <CalendarMonth className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <ResetTransactionsDialog onReset={resetAllTransactions} />
           <Button 
             className="bg-gradient-primary text-primary-foreground hover:opacity-90"
@@ -403,8 +359,8 @@ export default function Transactions() {
                           : ''
                         }Rp {transaction.amount.toLocaleString("id-ID")}
                       </p>
-                       <p className="text-xs text-muted-foreground">
-                        {transaction.transaction_date.split('-').reverse().join('/')}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.transaction_date).toLocaleDateString("id-ID")}
                       </p>
                     </div>
                     <Button
