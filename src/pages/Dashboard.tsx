@@ -59,10 +59,9 @@ export default function Dashboard() {
 
   // Calculate real statistics
   const currentMonthTransactions = transactions.filter(t => {
-    const transactionDate = new Date(t.transaction_date);
-    const [year, month] = selectedMonth.split('-');
-    return transactionDate.getMonth() === parseInt(month) - 1 && 
-           transactionDate.getFullYear() === parseInt(year);
+    // Extract YYYY-MM from transaction_date string for consistent comparison
+    const transactionMonth = t.transaction_date.substring(0, 7); // Gets YYYY-MM
+    return transactionMonth === selectedMonth;
   });
 
   const totalIncome = currentMonthTransactions

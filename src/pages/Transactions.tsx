@@ -111,10 +111,9 @@ export default function Transactions() {
 
   // Filter transactions by selected month and search term
   const filteredTransactions = transactions.filter(transaction => {
-    const transactionDate = new Date(transaction.transaction_date);
-    const [year, month] = selectedMonth.split('-');
-    const matchesMonth = transactionDate.getMonth() === parseInt(month) - 1 && 
-                        transactionDate.getFullYear() === parseInt(year);
+    // Extract YYYY-MM from transaction_date string for consistent comparison
+    const transactionMonth = transaction.transaction_date.substring(0, 7); // Gets YYYY-MM
+    const matchesMonth = transactionMonth === selectedMonth;
     
     const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
