@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -18,10 +19,12 @@ import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { Link } from "react-router-dom";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 export default function Dashboard() {
-  const currentMonth = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
-  const selectedMonth = new Date().toISOString().slice(0, 7); // Format: yyyy-MM
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   
   const { 
     transactions, 
@@ -33,12 +36,37 @@ export default function Dashboard() {
     refreshAllData 
   } = useFinancialData();
 
-  // Calculate real statistics
+  // Generate month options based on actual transaction dates
+  const monthOptions = useMemo(() => {
+    if (!transactions || transactions.length === 0) {
+      // Return current month as default if no transactions
+      return [{
+        value: format(new Date(), 'yyyy-MM'),
+        label: format(new Date(), 'MMMM yyyy', { locale: id })
+      }];
+    }
+
+    // Extract unique months from transactions
+    const uniqueMonths = new Set<string>();
+    transactions.forEach(t => {
+      const monthKey = t.transaction_date.slice(0, 7); // Get YYYY-MM
+      uniqueMonths.add(monthKey);
+    });
+
+    // Convert to array and sort in descending order (newest first)
+    const sortedMonths = Array.from(uniqueMonths).sort((a, b) => b.localeCompare(a));
+
+    // Format for display
+    return sortedMonths.map(monthKey => ({
+      value: monthKey,
+      label: format(new Date(monthKey + '-01'), 'MMMM yyyy', { locale: id })
+    }));
+  }, [transactions]);
+
+  // Calculate real statistics for selected month
   const currentMonthTransactions = transactions.filter(t => {
-    const transactionDate = new Date(t.transaction_date);
-    const currentDate = new Date();
-    return transactionDate.getMonth() === currentDate.getMonth() && 
-           transactionDate.getFullYear() === currentDate.getFullYear();
+    const transactionMonth = t.transaction_date.slice(0, 7);
+    return transactionMonth === selectedMonth;
   });
 
   const totalIncome = currentMonthTransactions
@@ -118,12 +146,28 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard Keuangan</h1>
-          <p className="text-muted-foreground mt-1">Ringkasan keuangan bulan {currentMonth}</p>
+          <p className="text-muted-foreground mt-1">
+            Ringkasan keuangan {monthOptions.find(opt => opt.value === selectedMonth)?.label || ''}
+          </p>
         </div>
-        <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
-          <DollarSign className="h-4 w-4 mr-2" />
-          Tambah Transaksi
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Tambah Transaksi
+          </Button>
+        </div>
       </div>
 
       {/* Stats Overview */}
