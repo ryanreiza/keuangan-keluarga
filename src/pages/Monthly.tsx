@@ -218,18 +218,32 @@ export default function Monthly() {
     };
   }, [transactions, selectedMonth]);
 
-  // Generate month options (last 12 months)
+  // Generate month options based on actual transaction dates
   const monthOptions = useMemo(() => {
-    const options = [];
-    for (let i = 0; i < 12; i++) {
-      const date = subMonths(new Date(), i);
-      options.push({
-        value: format(date, 'yyyy-MM'),
-        label: format(date, 'MMMM yyyy', { locale: id })
-      });
+    if (!transactions || transactions.length === 0) {
+      // Return current month as default if no transactions
+      return [{
+        value: format(new Date(), 'yyyy-MM'),
+        label: format(new Date(), 'MMMM yyyy', { locale: id })
+      }];
     }
-    return options;
-  }, []);
+
+    // Extract unique months from transactions
+    const uniqueMonths = new Set<string>();
+    transactions.forEach(t => {
+      const monthKey = t.transaction_date.slice(0, 7); // Get YYYY-MM
+      uniqueMonths.add(monthKey);
+    });
+
+    // Convert to array and sort in descending order (newest first)
+    const sortedMonths = Array.from(uniqueMonths).sort((a, b) => b.localeCompare(a));
+
+    // Format for display
+    return sortedMonths.map(monthKey => ({
+      value: monthKey,
+      label: format(new Date(monthKey + '-01'), 'MMMM yyyy', { locale: id })
+    }));
+  }, [transactions]);
 
   const savingsRate = monthlyData.currentMonth.totalIncome > 0 
     ? (monthlyData.currentMonth.totalSavings / monthlyData.currentMonth.totalIncome * 100) 

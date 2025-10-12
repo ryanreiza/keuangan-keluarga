@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
+import { id } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
@@ -18,6 +19,7 @@ import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -92,11 +94,43 @@ export default function Transactions() {
     setLoading(false);
   };
 
-  const filteredTransactions = transactions.filter(transaction =>
-    transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Generate month options based on actual transaction dates
+  const monthOptions = useMemo(() => {
+    if (!transactions || transactions.length === 0) {
+      // Return current month as default if no transactions
+      return [{
+        value: format(new Date(), 'yyyy-MM'),
+        label: format(new Date(), 'MMMM yyyy', { locale: id })
+      }];
+    }
+
+    // Extract unique months from transactions
+    const uniqueMonths = new Set<string>();
+    transactions.forEach(t => {
+      const monthKey = t.transaction_date.slice(0, 7); // Get YYYY-MM
+      uniqueMonths.add(monthKey);
+    });
+
+    // Convert to array and sort in descending order (newest first)
+    const sortedMonths = Array.from(uniqueMonths).sort((a, b) => b.localeCompare(a));
+
+    // Format for display
+    return sortedMonths.map(monthKey => ({
+      value: monthKey,
+      label: format(new Date(monthKey + '-01'), 'MMMM yyyy', { locale: id })
+    }));
+  }, [transactions]);
+
+  const filteredTransactions = transactions.filter(transaction => {
+    const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const transactionMonth = transaction.transaction_date.slice(0, 7);
+    const matchesMonth = transactionMonth === selectedMonth;
+    
+    return matchesSearch && matchesMonth;
+  });
 
   // Filter categories by type
   const incomeCategories = categories.filter(cat => cat.type === 'income');
@@ -131,9 +165,23 @@ export default function Transactions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Transaksi</h1>
-          <p className="text-muted-foreground mt-1">Kelola semua transaksi keuangan Anda</p>
+          <p className="text-muted-foreground mt-1">
+            {monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Kelola semua transaksi keuangan Anda'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <ResetTransactionsDialog onReset={resetAllTransactions} />
           <Button 
             className="bg-gradient-primary text-primary-foreground hover:opacity-90"
