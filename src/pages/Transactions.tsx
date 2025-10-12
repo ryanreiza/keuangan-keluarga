@@ -75,12 +75,19 @@ export default function Transactions() {
     }
 
     setLoading(true);
+    
+    // Format date correctly in local timezone to prevent timezone shifts
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
     const transactionData: any = {
       description: formData.description,
       amount: parseFloat(formData.amount),
       type: formData.type,
       account_id: formData.account_id,
-      transaction_date: format(date, "yyyy-MM-dd"),
+      transaction_date: formattedDate,
     };
 
     // Add category for non-transfer transactions (use a default for transfers)
@@ -396,8 +403,8 @@ export default function Transactions() {
                           : ''
                         }Rp {transaction.amount.toLocaleString("id-ID")}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(transaction.transaction_date).toLocaleDateString("id-ID")}
+                       <p className="text-xs text-muted-foreground">
+                        {transaction.transaction_date.split('-').reverse().join('/')}
                       </p>
                     </div>
                     <Button
