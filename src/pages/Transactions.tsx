@@ -73,7 +73,7 @@ export default function Transactions() {
       amount: parseFloat(formData.amount),
       type: formData.type,
       account_id: formData.account_id,
-      transaction_date: format(date, "yyyy-MM-dd"),
+      transaction_date: date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
     };
 
     // Add category for non-transfer transactions (use a default for transfers and debt payments)
