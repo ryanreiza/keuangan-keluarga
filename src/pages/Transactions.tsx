@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
+import { useDebts } from "@/hooks/useDebts";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
 import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 
@@ -27,6 +28,7 @@ export default function Transactions() {
     category_id: "",
     account_id: "",
     destination_account_id: "",
+    debt_id: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,6 +39,7 @@ export default function Transactions() {
   const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
+  const { debts, loading: debtsLoading } = useDebts();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +55,13 @@ export default function Transactions() {
       if (formData.account_id === formData.destination_account_id) {
         return;
       }
+    } else if (formData.type === 'debt_payment') {
+      // For debt payment transactions, debt_id is required
+      if (!formData.debt_id) {
+        return;
+      }
     } else {
-      // For non-transfer transactions, category is required
+      // For non-transfer and non-debt-payment transactions, category is required
       if (!formData.category_id) {
         return;
       }
@@ -68,12 +76,17 @@ export default function Transactions() {
       transaction_date: format(date, "yyyy-MM-dd"),
     };
 
-    // Add category for non-transfer transactions (use a default for transfers)
+    // Add category for non-transfer transactions (use a default for transfers and debt payments)
     if (formData.type === 'transfer') {
       // Find or use a default "Transfer" category
       const transferCategory = categories?.find(cat => cat.name === 'Transfer') || categories?.[0];
       transactionData.category_id = transferCategory?.id || formData.category_id;
       transactionData.destination_account_id = formData.destination_account_id;
+    } else if (formData.type === 'debt_payment') {
+      // Find or use a default "Debt Payment" category
+      const debtCategory = categories?.find(cat => cat.name === 'Pembayaran Utang') || expenseCategories?.[0];
+      transactionData.category_id = debtCategory?.id || formData.category_id;
+      transactionData.debt_id = formData.debt_id;
     } else {
       transactionData.category_id = formData.category_id;
     }
@@ -87,6 +100,7 @@ export default function Transactions() {
         category_id: "",
         account_id: "",
         destination_account_id: "",
+        debt_id: "",
       });
       setDate(new Date());
       setShowForm(false);
@@ -151,7 +165,10 @@ export default function Transactions() {
     }
   };
 
-  if (transactionsLoading || categoriesLoading || accountsLoading) {
+  // Filter out paid off debts
+  const activeDebts = debts?.filter(debt => !debt.is_paid_off) || [];
+
+  if (transactionsLoading || categoriesLoading || accountsLoading || debtsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -228,7 +245,7 @@ export default function Transactions() {
 
               <div className="space-y-2">
                 <Label>Tipe</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: ""})}>
+                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: "", debt_id: ""})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih tipe transaksi" />
                   </SelectTrigger>
@@ -236,11 +253,12 @@ export default function Transactions() {
                     <SelectItem value="income">Pemasukan</SelectItem>
                     <SelectItem value="expense">Pengeluaran</SelectItem>
                     <SelectItem value="transfer">Transfer Antar Rekening</SelectItem>
+                    <SelectItem value="debt_payment">Bayar Utang</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.type !== 'transfer' && (
+              {formData.type !== 'transfer' && formData.type !== 'debt_payment' && (
                 <div className="space-y-2">
                   <Label>Kategori</Label>
                   <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})} disabled={!formData.type}>
@@ -258,11 +276,43 @@ export default function Transactions() {
                 </div>
               )}
 
+              {formData.type === 'debt_payment' && (
+                <div className="space-y-2">
+                  <Label>Pilih Utang</Label>
+                  <Select value={formData.debt_id} onValueChange={(value) => setFormData({...formData, debt_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih utang yang akan dibayar" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {activeDebts.length > 0 ? (
+                        activeDebts.map((debt) => (
+                          <SelectItem key={debt.id} value={debt.id}>
+                            {debt.creditor_name} - Sisa: Rp {debt.remaining_amount.toLocaleString("id-ID")}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Tidak ada utang aktif
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label>{formData.type === 'transfer' ? 'Rekening Asal' : 'Rekening'}</Label>
+                <Label>
+                  {formData.type === 'transfer' ? 'Rekening Asal' : 
+                   formData.type === 'debt_payment' ? 'Rekening Pembayaran' : 
+                   'Rekening'}
+                </Label>
                 <Select value={formData.account_id} onValueChange={(value) => setFormData({...formData, account_id: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder={formData.type === 'transfer' ? 'Pilih rekening asal' : 'Pilih rekening'} />
+                    <SelectValue placeholder={
+                      formData.type === 'transfer' ? 'Pilih rekening asal' : 
+                      formData.type === 'debt_payment' ? 'Pilih rekening pembayaran' : 
+                      'Pilih rekening'
+                    } />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border z-50">
                     {accounts.map((account) => (
@@ -360,13 +410,13 @@ export default function Transactions() {
                       <div className={`p-2 rounded-lg ${
                         transaction.type === 'income' 
                           ? 'bg-success/10' 
-                          : transaction.type === 'expense'
+                          : transaction.type === 'expense' || transaction.type === 'debt_payment'
                           ? 'bg-danger/10'
                           : 'bg-primary/10'
                       }`}>
                         {transaction.type === 'income' ? (
                           <ArrowUpRight className="h-4 w-4 text-success" />
-                        ) : transaction.type === 'expense' ? (
+                        ) : transaction.type === 'expense' || transaction.type === 'debt_payment' ? (
                           <ArrowDownRight className="h-4 w-4 text-danger" />
                         ) : (
                           <ArrowUpRight className="h-4 w-4 text-primary" />
@@ -377,6 +427,8 @@ export default function Transactions() {
                         <p className="text-sm text-muted-foreground">
                           {transaction.type === 'transfer' 
                             ? `Transfer antar rekening`
+                            : transaction.type === 'debt_payment'
+                            ? `Pembayaran Utang`
                             : transaction.categories?.name
                           } • {transaction.accounts?.name}
                         </p>
@@ -386,23 +438,24 @@ export default function Transactions() {
                       <Badge variant={
                         transaction.type === 'income' 
                           ? 'default' 
-                          : transaction.type === 'expense'
+                          : transaction.type === 'expense' || transaction.type === 'debt_payment'
                           ? 'destructive'
                           : 'secondary'
                       } className="mb-1">
                         {transaction.type === 'income' ? 'Pemasukan' : 
-                         transaction.type === 'expense' ? 'Pengeluaran' : 'Transfer'}
+                         transaction.type === 'expense' ? 'Pengeluaran' : 
+                         transaction.type === 'debt_payment' ? 'Bayar Utang' : 'Transfer'}
                       </Badge>
                       <p className={`font-bold ${
                         transaction.type === 'income' 
                           ? 'text-success' 
-                          : transaction.type === 'expense'
+                          : transaction.type === 'expense' || transaction.type === 'debt_payment'
                           ? 'text-danger'
                           : 'text-primary'
                       }`}>
                         {transaction.type === 'income' 
                           ? '+' 
-                          : transaction.type === 'expense' 
+                          : transaction.type === 'expense' || transaction.type === 'debt_payment'
                           ? '-' 
                           : ''
                         }Rp {transaction.amount.toLocaleString("id-ID")}

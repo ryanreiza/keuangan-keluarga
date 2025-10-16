@@ -12,6 +12,7 @@ export interface Transaction {
   category_id: string;
   account_id: string;
   destination_account_id?: string; // For transfer transactions
+  debt_id?: string; // For debt payment transactions
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -26,10 +27,11 @@ export interface Transaction {
 export interface CreateTransactionData {
   description: string;
   amount: number;
-  type: 'income' | 'expense' | 'transfer';
+  type: 'income' | 'expense' | 'transfer' | 'debt_payment';
   category_id: string;
   account_id: string;
   destination_account_id?: string; // Required only for transfer type
+  debt_id?: string; // Required only for debt_payment type
   transaction_date: string;
 }
 
@@ -85,6 +87,11 @@ export const useTransactions = () => {
         insertData.destination_account_id = transactionData.destination_account_id;
       }
 
+      // Add debt_id for debt payment transactions
+      if (transactionData.type === 'debt_payment' && transactionData.debt_id) {
+        insertData.debt_id = transactionData.debt_id;
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .insert([insertData])
@@ -102,6 +109,8 @@ export const useTransactions = () => {
           title: "Berhasil",
           description: transactionData.type === 'transfer' 
             ? "Transfer antar rekening berhasil ditambahkan"
+            : transactionData.type === 'debt_payment'
+            ? "Pembayaran utang berhasil ditambahkan"
             : "Transaksi berhasil ditambahkan",
         });
       }
