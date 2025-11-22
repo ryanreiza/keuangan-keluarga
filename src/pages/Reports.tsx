@@ -1,17 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useMonthlyBudgets } from '@/hooks/useMonthlyBudgets';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { format, subMonths, startOfMonth } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { FileBarChart } from 'lucide-react';
+import { FileBarChart, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 export default function Reports() {
   const [monthsToShow, setMonthsToShow] = useState<number>(6);
   const [viewType, setViewType] = useState<'expense' | 'income'>('expense');
+  const [isExporting, setIsExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
   const { transactions, categories, loading: dataLoading } = useFinancialData();
   const { budgets, loading: budgetsLoading } = useMonthlyBudgets();
@@ -127,6 +135,135 @@ export default function Reports() {
     return null;
   };
 
+  const exportToPDF = async () => {
+    if (!reportRef.current) return;
+    
+    setIsExporting(true);
+    toast({
+      title: "Memproses...",
+      description: "Sedang membuat file PDF",
+    });
+
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= 297; // A4 height in mm
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+      }
+
+      const fileName = `Laporan_${viewType === 'expense' ? 'Pengeluaran' : 'Pemasukan'}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "Berhasil!",
+        description: "Laporan PDF telah diunduh",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Gagal",
+        description: "Tidak dapat membuat PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const exportToExcel = () => {
+    setIsExporting(true);
+    toast({
+      title: "Memproses...",
+      description: "Sedang membuat file Excel",
+    });
+
+    try {
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Monthly Summary
+      const monthlySummary = chartData.map(item => ({
+        'Bulan': item.month,
+        'Yang Diharapkan': item.expected,
+        'Yang Sebenarnya': item.actual,
+        'Selisih': item.difference
+      }));
+      const ws1 = XLSX.utils.json_to_sheet(monthlySummary);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Ringkasan Bulanan');
+
+      // Sheet 2: Category Breakdown
+      if (categoryData.length > 0) {
+        const categoryBreakdown = categoryData.map(item => ({
+          'Kategori': item.name,
+          'Yang Diharapkan': item.expected,
+          'Yang Sebenarnya': item.actual,
+          'Selisih': item.actual - item.expected
+        }));
+        const ws2 = XLSX.utils.json_to_sheet(categoryBreakdown);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Per Kategori');
+      }
+
+      // Sheet 3: Summary Statistics
+      const summaryStats = [
+        {
+          'Keterangan': 'Total Yang Diharapkan',
+          'Jumlah': chartData.reduce((sum, item) => sum + item.expected, 0)
+        },
+        {
+          'Keterangan': 'Total Yang Sebenarnya',
+          'Jumlah': chartData.reduce((sum, item) => sum + item.actual, 0)
+        },
+        {
+          'Keterangan': 'Selisih Total',
+          'Jumlah': chartData.reduce((sum, item) => sum + item.difference, 0)
+        }
+      ];
+      const ws3 = XLSX.utils.json_to_sheet(summaryStats);
+      XLSX.utils.book_append_sheet(wb, ws3, 'Ringkasan Total');
+
+      // Save file
+      const fileName = `Laporan_${viewType === 'expense' ? 'Pengeluaran' : 'Pemasukan'}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast({
+        title: "Berhasil!",
+        description: "Laporan Excel telah diunduh",
+      });
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+      toast({
+        title: "Gagal",
+        description: "Tidak dapat membuat Excel",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (dataLoading || budgetsLoading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
@@ -142,7 +279,7 @@ export default function Reports() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary rounded-lg">
             <FileBarChart className="h-6 w-6 text-primary-foreground" />
@@ -151,6 +288,25 @@ export default function Reports() {
             <h1 className="text-3xl font-bold">Laporan Keuangan</h1>
             <p className="text-muted-foreground">Analisis perbandingan budget vs aktual</p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            onClick={exportToExcel} 
+            disabled={isExporting}
+            variant="outline"
+            className="gap-2"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Export Excel
+          </Button>
+          <Button 
+            onClick={exportToPDF} 
+            disabled={isExporting}
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Export PDF
+          </Button>
         </div>
       </div>
 
@@ -188,8 +344,10 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Budget vs Actual Trend */}
-      <Card>
+      {/* Report Content */}
+      <div ref={reportRef} className="space-y-6">
+        {/* Budget vs Actual Trend */}
+        <Card>
         <CardHeader>
           <CardTitle>Tren Budget vs Aktual</CardTitle>
         </CardHeader>
@@ -311,8 +469,8 @@ export default function Reports() {
         </Card>
       )}
 
-      {/* Summary Statistics */}
-      <div className="grid gap-4 md:grid-cols-3">
+        {/* Summary Statistics */}
+        <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Total Yang Diharapkan</CardTitle>
@@ -347,6 +505,7 @@ export default function Reports() {
             </p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
