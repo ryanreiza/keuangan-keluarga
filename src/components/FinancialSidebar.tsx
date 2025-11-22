@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   Menu,
   LogOut,
-  User
+  User,
+  FileBarChart
 } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -82,6 +83,12 @@ const menuItems = [
     url: "/annual",
     icon: Calendar,
     description: "Analisis keuangan tahunan"
+  },
+  {
+    title: "Laporan Budget",
+    url: "/reports",
+    icon: FileBarChart,
+    description: "Perbandingan budget vs aktual"
   }
 ];
 

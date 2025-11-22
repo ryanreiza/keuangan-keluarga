@@ -15,6 +15,7 @@ import AccountDashboard from "./pages/AccountDashboard";
 import Savings from "./pages/Savings";
 import Debts from "./pages/Debts";
 import Annual from "./pages/Annual";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,13 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Annual />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Reports />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
