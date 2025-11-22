@@ -95,9 +95,10 @@ export default function MonthlyBudgetTracker({
   };
 
   const getProgressColor = (expected: number, actual: number) => {
+    if (expected === 0) return 'bg-primary';
     const progress = (actual / expected) * 100;
     if (type === 'expense') {
-      if (progress > 100) return 'bg-destructive';
+      if (progress > 100) return 'bg-red-500 dark:bg-red-600';
       if (progress > 80) return 'bg-yellow-500';
       return 'bg-primary';
     } else {
