@@ -276,6 +276,9 @@ export default function Reports() {
     );
   }
 
+  // Check if there's any data to display
+  const hasData = chartData.some(item => item.actual > 0 || item.expected > 0);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -344,10 +347,27 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Report Content */}
-      <div ref={reportRef} className="space-y-6">
-        {/* Budget vs Actual Trend */}
+      {/* No Data Message */}
+      {!hasData && (
         <Card>
+          <CardContent className="py-12 text-center">
+            <FileBarChart className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Tidak Ada Data</h3>
+            <p className="text-muted-foreground mb-4">
+              Belum ada data {viewType === 'expense' ? 'pengeluaran' : 'pemasukan'} untuk periode {monthsToShow} bulan terakhir.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Pastikan Anda sudah menambahkan transaksi dan budget untuk kategori {viewType === 'expense' ? 'pengeluaran' : 'pemasukan'}.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Report Content */}
+      {hasData && (
+        <div ref={reportRef} className="space-y-6">
+          {/* Budget vs Actual Trend */}
+          <Card>
         <CardHeader>
           <CardTitle>Tren Budget vs Aktual</CardTitle>
         </CardHeader>
@@ -507,6 +527,7 @@ export default function Reports() {
         </Card>
       </div>
       </div>
+      )}
     </div>
   );
 }
