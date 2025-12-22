@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { id } from 'date-fns/locale';
@@ -35,6 +36,7 @@ export default function Transactions() {
   const [showForm, setShowForm] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<{ id: string; description: string } | null>(null);
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' | 'name-asc' | 'name-desc'>('date-desc');
 
   const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -139,16 +141,38 @@ export default function Transactions() {
     }));
   }, [transactions]);
 
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const transactionMonth = transaction.transaction_date.slice(0, 7);
-    const matchesMonth = transactionMonth === selectedMonth;
-    
-    return matchesSearch && matchesMonth;
-  });
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions.filter(transaction => {
+      const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.accounts?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const transactionMonth = transaction.transaction_date.slice(0, 7);
+      const matchesMonth = transactionMonth === selectedMonth;
+      
+      return matchesSearch && matchesMonth;
+    });
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-desc':
+          return new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime();
+        case 'date-asc':
+          return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+        case 'amount-desc':
+          return b.amount - a.amount;
+        case 'amount-asc':
+          return a.amount - b.amount;
+        case 'name-asc':
+          return (a.description || '').localeCompare(b.description || '');
+        case 'name-desc':
+          return (b.description || '').localeCompare(a.description || '');
+        default:
+          return 0;
+      }
+    });
+  }, [transactions, searchTerm, selectedMonth, sortBy]);
 
   // Filter categories by type
   const incomeCategories = categories.filter(cat => cat.type === 'income');
@@ -399,9 +423,61 @@ export default function Transactions() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Urutkan</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setSortBy('date-desc')}
+                      className={sortBy === 'date-desc' ? 'bg-accent' : ''}
+                    >
+                      <ArrowDown className="h-4 w-4 mr-2" />
+                      Tanggal Terbaru
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setSortBy('date-asc')}
+                      className={sortBy === 'date-asc' ? 'bg-accent' : ''}
+                    >
+                      <ArrowUp className="h-4 w-4 mr-2" />
+                      Tanggal Terlama
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setSortBy('amount-desc')}
+                      className={sortBy === 'amount-desc' ? 'bg-accent' : ''}
+                    >
+                      <SortDesc className="h-4 w-4 mr-2" />
+                      Jumlah Terbesar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setSortBy('amount-asc')}
+                      className={sortBy === 'amount-asc' ? 'bg-accent' : ''}
+                    >
+                      <SortAsc className="h-4 w-4 mr-2" />
+                      Jumlah Terkecil
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setSortBy('name-asc')}
+                      className={sortBy === 'name-asc' ? 'bg-accent' : ''}
+                    >
+                      <SortAsc className="h-4 w-4 mr-2" />
+                      Nama A-Z
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setSortBy('name-desc')}
+                      className={sortBy === 'name-desc' ? 'bg-accent' : ''}
+                    >
+                      <SortDesc className="h-4 w-4 mr-2" />
+                      Nama Z-A
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </CardHeader>
