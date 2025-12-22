@@ -68,10 +68,14 @@ export default function Transactions() {
     }
 
     setLoading(true);
+    
+    // For debt_payment, save as 'expense' type for proper financial reporting
+    const actualType = formData.type === 'debt_payment' ? 'expense' : formData.type;
+    
     const transactionData: any = {
       description: formData.description,
       amount: parseFloat(formData.amount),
-      type: formData.type,
+      type: actualType,
       account_id: formData.account_id,
       transaction_date: date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
     };
@@ -83,7 +87,7 @@ export default function Transactions() {
       transactionData.category_id = transferCategory?.id || formData.category_id;
       transactionData.destination_account_id = formData.destination_account_id;
     } else if (formData.type === 'debt_payment') {
-      // Find or use a default "Debt Payment" category
+      // Find or use a default "Debt Payment" category - saved as expense
       const debtCategory = categories?.find(cat => cat.name === 'Pembayaran Utang') || expenseCategories?.[0];
       transactionData.category_id = debtCategory?.id || formData.category_id;
       transactionData.debt_id = formData.debt_id;
