@@ -26,7 +26,8 @@ import {
   Zap,
   FileText,
   Calculator,
-  Briefcase
+  Briefcase,
+  Copy
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
@@ -251,6 +252,58 @@ export default function Monthly() {
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.current_balance), 0) || 0;
   const totalSavingsGoals = savingsGoals?.reduce((sum, goal) => sum + Number(goal.current_amount), 0) || 0;
+
+  // Generate expense summary text for copy
+  const generateExpenseSummary = () => {
+    const monthLabel = format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: id });
+    const categoryBreakdown = monthlyData.currentMonth.categoryBreakdown;
+    
+    let summary = `📊 RINGKASAN PENGELUARAN BULANAN\n`;
+    summary += `📅 Periode: ${monthLabel}\n`;
+    summary += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    
+    summary += `💰 TOTAL PENGELUARAN: Rp ${monthlyData.currentMonth.totalExpense.toLocaleString('id-ID')}\n`;
+    summary += `📈 Perubahan: ${monthlyData.growth.expense >= 0 ? '+' : ''}${monthlyData.growth.expense.toFixed(1)}% vs bulan lalu\n\n`;
+    
+    summary += `📋 RINCIAN PER KATEGORI:\n`;
+    summary += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+    
+    if (categoryBreakdown.length > 0) {
+      categoryBreakdown.forEach((cat, index) => {
+        summary += `${index + 1}. ${cat.category}\n`;
+        summary += `   Rp ${cat.amount.toLocaleString('id-ID')} (${cat.percentage.toFixed(1)}%)\n`;
+      });
+    } else {
+      summary += `Belum ada data pengeluaran\n`;
+    }
+    
+    summary += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+    summary += `📊 STATISTIK BULAN INI:\n`;
+    summary += `• Total Pemasukan: Rp ${monthlyData.currentMonth.totalIncome.toLocaleString('id-ID')}\n`;
+    summary += `• Total Pengeluaran: Rp ${monthlyData.currentMonth.totalExpense.toLocaleString('id-ID')}\n`;
+    summary += `• Sisa/Tabungan: Rp ${monthlyData.currentMonth.totalSavings.toLocaleString('id-ID')}\n`;
+    summary += `• Jumlah Transaksi: ${monthlyData.currentMonth.transactionCount}\n`;
+    summary += `• Rasio Tabungan: ${savingsRate.toFixed(1)}%\n`;
+    
+    return summary;
+  };
+
+  const handleCopyExpenseSummary = async () => {
+    const summary = generateExpenseSummary();
+    try {
+      await navigator.clipboard.writeText(summary);
+      toast({
+        title: "Berhasil Disalin",
+        description: "Ringkasan pengeluaran bulanan telah disalin ke clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Gagal Menyalin",
+        description: "Tidak dapat menyalin ke clipboard",
+        variant: "destructive",
+      });
+    }
+  };
 
 
   // Handle add transaction
@@ -545,7 +598,19 @@ export default function Monthly() {
                   </span>
                 </div>
               </div>
-              <TrendingDown className="h-8 w-8 text-danger" />
+              <div className="flex flex-col items-center gap-2">
+                <TrendingDown className="h-8 w-8 text-danger" />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleCopyExpenseSummary}
+                  className="text-xs"
+                  title="Salin Ringkasan Pengeluaran"
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  Salin
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
