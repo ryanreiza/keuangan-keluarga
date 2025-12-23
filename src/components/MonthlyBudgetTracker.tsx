@@ -6,10 +6,13 @@ import { useMonthlyBudgets } from '@/hooks/useMonthlyBudgets';
 import { Category } from '@/hooks/useCategories';
 import { Transaction } from '@/hooks/useTransactions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Copy } from 'lucide-react';
+import { Copy, ClipboardPaste } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+
+// Storage key for copied budget data
+const COPIED_BUDGET_KEY = 'copiedBudgetData';
 
 interface MonthlyBudgetTrackerProps {
   categories: Category[];
@@ -142,54 +145,83 @@ export default function MonthlyBudgetTracker({
   const bgColor = type === 'expense' ? 'bg-red-50 dark:bg-red-950/20' : 'bg-green-50 dark:bg-green-950/20';
   const borderColor = type === 'expense' ? 'border-red-200 dark:border-red-800' : 'border-green-200 dark:border-green-800';
 
-  // Generate summary text for copy
-  const generateSummaryText = () => {
-    const typeLabel = type === 'expense' ? 'PENGELUARAN' : 'PEMASUKAN';
-    let summary = `📊 RINGKASAN ${typeLabel} BULANAN\n`;
-    summary += `📅 Periode: ${monthLabel}\n`;
-    summary += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  // Copy only expected amounts to localStorage for pasting to other months
+  const handleCopyExpected = () => {
+    const budgetData: Record<string, { categoryName: string; amount: number }> = {};
     
-    summary += `📋 RINCIAN PER KATEGORI:\n`;
-    summary += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+    filteredCategories.forEach(cat => {
+      const expected = expectedAmounts[cat.id] || 0;
+      if (expected > 0) {
+        budgetData[cat.id] = {
+          categoryName: cat.name,
+          amount: expected
+        };
+      }
+    });
+
+    const dataToStore = {
+      type,
+      sourceMonth: monthLabel,
+      budgets: budgetData
+    };
+
+    localStorage.setItem(COPIED_BUDGET_KEY + '_' + type, JSON.stringify(dataToStore));
     
-    if (filteredCategories.length > 0) {
-      filteredCategories.forEach((cat, index) => {
-        const expected = expectedAmounts[cat.id] || 0;
-        const actual = actualAmounts[cat.id] || 0;
-        const progress = expected > 0 ? Math.round((actual / expected) * 100) : 0;
-        summary += `${index + 1}. ${cat.name}\n`;
-        summary += `   Target: ${formatCurrency(expected)}\n`;
-        summary += `   Aktual: ${formatCurrency(actual)} (${progress}%)\n`;
-      });
-    } else {
-      summary += `Belum ada kategori\n`;
-    }
-    
-    summary += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-    summary += `📊 TOTAL:\n`;
-    summary += `• Target: ${formatCurrency(totalExpected)}\n`;
-    summary += `• Aktual: ${formatCurrency(totalActual)}\n`;
-    summary += `• Progress: ${totalProgress}%\n`;
-    
-    return summary;
+    toast({
+      title: "Berhasil Disalin",
+      description: `Target ${type === 'expense' ? 'pengeluaran' : 'pemasukan'} dari ${monthLabel} telah disalin. Pilih bulan lain dan klik Tempel.`,
+    });
   };
 
-  const handleCopySummary = async () => {
-    const summary = generateSummaryText();
-    try {
-      await navigator.clipboard.writeText(summary);
+  // Paste copied budget data to current month
+  const handlePasteExpected = async () => {
+    const stored = localStorage.getItem(COPIED_BUDGET_KEY + '_' + type);
+    
+    if (!stored) {
       toast({
-        title: "Berhasil Disalin",
-        description: `Ringkasan ${type === 'expense' ? 'pengeluaran' : 'pemasukan'} telah disalin ke clipboard`,
+        title: "Tidak Ada Data",
+        description: "Belum ada data yang disalin. Salin terlebih dahulu dari bulan lain.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const data = JSON.parse(stored);
+      const budgetData = data.budgets as Record<string, { categoryName: string; amount: number }>;
+      
+      // Apply each budget to current month
+      for (const [categoryId, budget] of Object.entries(budgetData)) {
+        // Check if category still exists
+        const categoryExists = filteredCategories.find(cat => cat.id === categoryId);
+        if (categoryExists) {
+          await upsertBudget({
+            category_id: categoryId,
+            month,
+            year,
+            expected_amount: budget.amount
+          });
+        }
+      }
+
+      toast({
+        title: "Berhasil Ditempel",
+        description: `Target ${type === 'expense' ? 'pengeluaran' : 'pemasukan'} dari ${data.sourceMonth} telah diterapkan ke ${monthLabel}.`,
       });
     } catch (error) {
       toast({
-        title: "Gagal Menyalin",
-        description: "Tidak dapat menyalin ke clipboard",
+        title: "Gagal Menempel",
+        description: "Terjadi kesalahan saat menerapkan data",
         variant: "destructive",
       });
     }
   };
+
+  // Check if there's copied data available
+  const hasCopiedData = useMemo(() => {
+    const stored = localStorage.getItem(COPIED_BUDGET_KEY + '_' + type);
+    return !!stored;
+  }, [type]);
 
   if (loading) {
     return (
@@ -212,16 +244,28 @@ export default function MonthlyBudgetTracker({
     <Card className={`${bgColor} ${borderColor}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg">{title}</CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleCopySummary}
-          className="text-xs"
-          title={`Salin Ringkasan ${type === 'expense' ? 'Pengeluaran' : 'Pemasukan'}`}
-        >
-          <Copy className="h-3 w-3 mr-1" />
-          Salin
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleCopyExpected}
+            className="text-xs"
+            title={`Salin Target ${type === 'expense' ? 'Pengeluaran' : 'Pemasukan'}`}
+          >
+            <Copy className="h-3 w-3 mr-1" />
+            Salin
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handlePasteExpected}
+            className="text-xs"
+            title={`Tempel Target ${type === 'expense' ? 'Pengeluaran' : 'Pemasukan'}`}
+          >
+            <ClipboardPaste className="h-3 w-3 mr-1" />
+            Tempel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
