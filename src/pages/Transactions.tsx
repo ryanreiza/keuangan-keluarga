@@ -90,8 +90,15 @@ export default function Transactions() {
       transactionData.destination_account_id = formData.destination_account_id;
     } else if (formData.type === 'debt_payment') {
       // Find or use a default "Debt Payment" category - saved as expense
-      const debtCategory = categories?.find(cat => cat.name === 'Pembayaran Utang') || expenseCategories?.[0];
-      transactionData.category_id = debtCategory?.id || formData.category_id;
+      // Priority: "Pembayaran Utang" category, then any expense category
+      const debtCategory = categories?.find(cat => cat.name === 'Pembayaran Utang' && cat.type === 'expense') || 
+                          expenseCategories?.[0];
+      if (!debtCategory) {
+        console.error('No expense category found for debt payment');
+        setLoading(false);
+        return;
+      }
+      transactionData.category_id = debtCategory.id;
       transactionData.debt_id = formData.debt_id;
     } else {
       transactionData.category_id = formData.category_id;
