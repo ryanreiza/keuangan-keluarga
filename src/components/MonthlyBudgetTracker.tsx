@@ -1,10 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useMonthlyBudgets } from '@/hooks/useMonthlyBudgets';
 import { Category } from '@/hooks/useCategories';
 import { Transaction } from '@/hooks/useTransactions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { id as localeId } from 'date-fns/locale';
 
 interface MonthlyBudgetTrackerProps {
   categories: Category[];
@@ -21,9 +26,11 @@ export default function MonthlyBudgetTracker({
 }: MonthlyBudgetTrackerProps) {
   const { budgets, loading, upsertBudget } = useMonthlyBudgets();
   const [localExpected, setLocalExpected] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   const month = parseInt(selectedMonth.split('-')[1]);
   const year = parseInt(selectedMonth.split('-')[0]);
+  const monthLabel = format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: localeId });
 
   // Filter categories by type
   const filteredCategories = useMemo(() => {
@@ -135,6 +142,55 @@ export default function MonthlyBudgetTracker({
   const bgColor = type === 'expense' ? 'bg-red-50 dark:bg-red-950/20' : 'bg-green-50 dark:bg-green-950/20';
   const borderColor = type === 'expense' ? 'border-red-200 dark:border-red-800' : 'border-green-200 dark:border-green-800';
 
+  // Generate summary text for copy
+  const generateSummaryText = () => {
+    const typeLabel = type === 'expense' ? 'PENGELUARAN' : 'PEMASUKAN';
+    let summary = `📊 RINGKASAN ${typeLabel} BULANAN\n`;
+    summary += `📅 Periode: ${monthLabel}\n`;
+    summary += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    
+    summary += `📋 RINCIAN PER KATEGORI:\n`;
+    summary += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+    
+    if (filteredCategories.length > 0) {
+      filteredCategories.forEach((cat, index) => {
+        const expected = expectedAmounts[cat.id] || 0;
+        const actual = actualAmounts[cat.id] || 0;
+        const progress = expected > 0 ? Math.round((actual / expected) * 100) : 0;
+        summary += `${index + 1}. ${cat.name}\n`;
+        summary += `   Target: ${formatCurrency(expected)}\n`;
+        summary += `   Aktual: ${formatCurrency(actual)} (${progress}%)\n`;
+      });
+    } else {
+      summary += `Belum ada kategori\n`;
+    }
+    
+    summary += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+    summary += `📊 TOTAL:\n`;
+    summary += `• Target: ${formatCurrency(totalExpected)}\n`;
+    summary += `• Aktual: ${formatCurrency(totalActual)}\n`;
+    summary += `• Progress: ${totalProgress}%\n`;
+    
+    return summary;
+  };
+
+  const handleCopySummary = async () => {
+    const summary = generateSummaryText();
+    try {
+      await navigator.clipboard.writeText(summary);
+      toast({
+        title: "Berhasil Disalin",
+        description: `Ringkasan ${type === 'expense' ? 'pengeluaran' : 'pemasukan'} telah disalin ke clipboard`,
+      });
+    } catch (error) {
+      toast({
+        title: "Gagal Menyalin",
+        description: "Tidak dapat menyalin ke clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Card className={`${bgColor} ${borderColor}`}>
@@ -154,8 +210,18 @@ export default function MonthlyBudgetTracker({
 
   return (
     <Card className={`${bgColor} ${borderColor}`}>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg">{title}</CardTitle>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleCopySummary}
+          className="text-xs"
+          title={`Salin Ringkasan ${type === 'expense' ? 'Pengeluaran' : 'Pemasukan'}`}
+        >
+          <Copy className="h-3 w-3 mr-1" />
+          Salin
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
