@@ -102,6 +102,11 @@ export default function Transactions() {
       transactionData.debt_id = formData.debt_id;
     } else {
       transactionData.category_id = formData.category_id;
+      // If expense type with "Bayar Utang" category, also link to debt
+      const selectedCategory = categories?.find(cat => cat.id === formData.category_id);
+      if (formData.type === 'expense' && selectedCategory?.name === 'Bayar Utang' && formData.debt_id) {
+        transactionData.debt_id = formData.debt_id;
+      }
     }
 
     const result = await createTransaction(transactionData);
@@ -296,7 +301,7 @@ export default function Transactions() {
               {formData.type !== 'transfer' && formData.type !== 'debt_payment' && (
                 <div className="space-y-2">
                   <Label>Kategori</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})} disabled={!formData.type}>
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value, debt_id: ""})} disabled={!formData.type}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih kategori" />
                     </SelectTrigger>
@@ -306,6 +311,31 @@ export default function Transactions() {
                           {category.name}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Show debt selection when expense type AND "Bayar Utang" category is selected */}
+              {formData.type === 'expense' && categories.find(cat => cat.id === formData.category_id)?.name === 'Bayar Utang' && (
+                <div className="space-y-2">
+                  <Label>Pilih Utang yang akan dibayar</Label>
+                  <Select value={formData.debt_id} onValueChange={(value) => setFormData({...formData, debt_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih utang yang akan dibayar" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {activeDebts.length > 0 ? (
+                        activeDebts.map((debt) => (
+                          <SelectItem key={debt.id} value={debt.id}>
+                            {debt.creditor_name} - Sisa: Rp {debt.remaining_amount.toLocaleString("id-ID")}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Tidak ada utang aktif
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
