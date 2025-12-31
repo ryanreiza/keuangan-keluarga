@@ -21,7 +21,6 @@ import {
 import { useState } from "react";
 import { useAccounts, CreateAccountData } from "@/hooks/useAccounts";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Accounts() {
@@ -34,7 +33,6 @@ export default function Accounts() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [deletePassword, setDeletePassword] = useState<string>('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [showForm, setShowForm] = useState(false);
@@ -116,11 +114,11 @@ export default function Accounts() {
     setShowForm(false);
   };
 
-  const handleDeleteWithPassword = async () => {
-    if (!user || !deletingId || !deletePassword.trim()) {
+  const handleDeleteAccount = async () => {
+    if (!user || !deletingId) {
       toast({
         title: "Error",
-        description: "Password diperlukan untuk menghapus rekening",
+        description: "Tidak dapat menghapus rekening",
         variant: "destructive",
       });
       return;
@@ -128,27 +126,12 @@ export default function Accounts() {
 
     setDeleteLoading(true);
     try {
-      // Verify password
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: user.email!,
-        password: deletePassword,
-      });
-
-      if (authError) {
-        toast({
-          title: "Password salah",
-          description: "Password yang Anda masukkan tidak benar",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // If password is correct, delete the account
+      // Proceed with deletion - user is already authenticated via session
+      // RLS policies ensure users can only delete their own accounts
       await deleteAccount(deletingId);
       
       // Reset state
       setDeletingId(null);
-      setDeletePassword('');
       
       toast({
         title: "Rekening dihapus",
@@ -391,35 +374,23 @@ export default function Accounts() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Konfirmasi Hapus Rekening</AlertDialogTitle>
+                                  <AlertDialogTitle>Hapus Rekening</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Tindakan ini akan menghapus rekening "{account.name}" secara permanen. 
-                                    Masukkan password Anda untuk konfirmasi.
+                                    Apakah Anda yakin ingin melanjutkan?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <div className="space-y-2">
-                                  <Label htmlFor="delete-password">Password</Label>
-                                  <Input
-                                    id="delete-password"
-                                    type="password"
-                                    placeholder="Masukkan password Anda"
-                                    value={deletePassword}
-                                    onChange={(e) => setDeletePassword(e.target.value)}
-                                    disabled={deleteLoading}
-                                  />
-                                </div>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel 
                                     onClick={() => {
                                       setDeletingId(null);
-                                      setDeletePassword('');
                                     }}
                                   >
                                     Batal
                                   </AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={handleDeleteWithPassword}
-                                    disabled={deleteLoading || !deletePassword.trim()}
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleteLoading}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     {deleteLoading ? "Menghapus..." : "Hapus Rekening"}
