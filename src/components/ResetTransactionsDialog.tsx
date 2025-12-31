@@ -11,11 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { RotateCcw } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface ResetTransactionsDialogProps {
@@ -23,51 +19,16 @@ interface ResetTransactionsDialogProps {
 }
 
 export function ResetTransactionsDialog({ onReset }: ResetTransactionsDialogProps) {
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const handleReset = async () => {
-    if (!password.trim()) {
-      toast({
-        title: "Password required",
-        description: "Please enter your account password to confirm reset.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user?.email) {
-      toast({
-        title: "Error",
-        description: "User email not found.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Verify password by attempting to sign in
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: password,
-      });
-
-      if (authError) {
-        toast({
-          title: "Invalid password",
-          description: "The password you entered is incorrect.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Password is correct, proceed with reset
+      // Proceed with reset - user is already authenticated via session
+      // RLS policies ensure users can only reset their own transactions
       const { error: resetError } = await onReset();
       
       if (resetError) {
@@ -82,7 +43,6 @@ export function ResetTransactionsDialog({ onReset }: ResetTransactionsDialogProp
           description: "All transactions have been cleared successfully.",
         });
         setOpen(false);
-        setPassword("");
       }
     } catch (error: any) {
       toast({
@@ -111,31 +71,17 @@ export function ResetTransactionsDialog({ onReset }: ResetTransactionsDialogProp
           </AlertDialogTitle>
           <AlertDialogDescription>
             Tindakan ini akan menghapus <strong>SEMUA</strong> data transaksi Anda dan tidak dapat dibatalkan. 
-            Saldo rekening akan kembali ke saldo awal. Masukkan password akun Anda untuk konfirmasi.
+            Saldo rekening akan kembali ke saldo awal. Apakah Anda yakin ingin melanjutkan?
           </AlertDialogDescription>
         </AlertDialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Password Akun</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Masukkan password akun Anda"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-        </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setPassword("")}>
+          <AlertDialogCancel>
             Batal
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleReset}
-            disabled={loading || !password.trim()}
+            disabled={loading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {loading ? "Memproses..." : "Reset Semua Transaksi"}
