@@ -293,19 +293,20 @@ export default function Debts() {
             </Card>
           </div>
 
-          {/* Debts List */}
+          {/* Active Debts List */}
           <Card className="shadow-card border-0">
             <CardHeader>
-              <CardTitle className="text-lg">Daftar Utang & Kewajiban</CardTitle>
-              <CardDescription>Semua utang dan jadwal pembayaran ({debts.length} utang)</CardDescription>
+              <CardTitle className="text-lg">Daftar Utang Aktif</CardTitle>
+              <CardDescription>Utang yang masih harus dibayar ({activeDebts.length} utang aktif)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {debts.length === 0 ? (
+              {activeDebts.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  Belum ada utang tercatat. Semoga tetap bebas utang! 🎉
+                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-success" />
+                  <p>Tidak ada utang aktif. Semoga tetap bebas utang! 🎉</p>
                 </div>
               ) : (
-                debts.map((debt) => {
+                activeDebts.map((debt) => {
                   const progress = getProgress(debt.remaining_amount, debt.total_amount);
                   const daysUntilDue = getDaysUntilDue(debt.due_date);
                   const StatusIcon = getStatusIcon(debt.is_paid_off, daysUntilDue);
@@ -325,8 +326,7 @@ export default function Debts() {
                               <h3 className="text-lg font-semibold text-foreground">{debt.creditor_name}</h3>
                               <Badge className={getStatusColor(debt.is_paid_off, daysUntilDue)}>
                                 <StatusIcon className="h-3 w-3 mr-1" />
-                                {debt.is_paid_off ? 'Lunas' : 
-                                 daysUntilDue <= 0 ? 'Terlambat' : 
+                                {daysUntilDue <= 0 ? 'Terlambat' : 
                                  daysUntilDue <= 7 ? 'Segera Jatuh Tempo' : 'Aktif'}
                               </Badge>
                             </div>
@@ -352,7 +352,7 @@ export default function Debts() {
                               </div>
                             </div>
 
-                            {!debt.is_paid_off && debt.due_date && (
+                            {debt.due_date && (
                               <div className="flex items-center gap-6 text-sm mb-4">
                                 <div className={`flex items-center gap-2 ${
                                   daysUntilDue <= 0 ? 'text-danger' : 
@@ -386,25 +386,60 @@ export default function Debts() {
                         </div>
                       </div>
 
-                      {!debt.is_paid_off && (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Progress Pembayaran</span>
-                            <span className="font-medium text-foreground">{progress.toFixed(1)}%</span>
-                          </div>
-                          <Progress value={progress} className="h-3" />
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            <span>Rp {(debt.total_amount - debt.remaining_amount).toLocaleString('id-ID')} dibayar</span>
-                            <span>Rp {debt.total_amount.toLocaleString('id-ID')} total</span>
-                          </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Progress Pembayaran</span>
+                          <span className="font-medium text-foreground">{progress.toFixed(1)}%</span>
                         </div>
-                      )}
+                        <Progress value={progress} className="h-3" />
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>Rp {(debt.total_amount - debt.remaining_amount).toLocaleString('id-ID')} dibayar</span>
+                          <span>Rp {debt.total_amount.toLocaleString('id-ID')} total</span>
+                        </div>
+                      </div>
                     </div>
                   );
                 })
               )}
             </CardContent>
           </Card>
+
+          {/* Paid Off Debts List */}
+          {debts.filter(d => d.is_paid_off).length > 0 && (
+            <Card className="shadow-card border-0">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                  Utang Lunas
+                </CardTitle>
+                <CardDescription>Utang yang sudah selesai dibayar ({debts.filter(d => d.is_paid_off).length} utang)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {debts.filter(d => d.is_paid_off).map((debt) => (
+                  <div key={debt.id} className="p-4 border border-success/30 bg-success/5 rounded-lg group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-success/10 rounded-lg">
+                          <CheckCircle className="h-5 w-5 text-success" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">{debt.creditor_name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Total: Rp {debt.total_amount.toLocaleString('id-ID')} - <span className="text-success font-medium">Lunas</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => deleteDebt(debt.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
