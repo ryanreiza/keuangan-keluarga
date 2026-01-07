@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
@@ -132,13 +132,6 @@ export default function Dashboard() {
     }
   ];
 
-  const recentTransactions = [
-    { id: 1, description: "Gaji Bulanan", amount: 8500000, type: "income", date: "15 Des 2024", category: "Gaji" },
-    { id: 2, description: "Belanja Groceries", amount: -450000, type: "expense", date: "14 Des 2024", category: "Makanan" },
-    { id: 3, description: "Transfer dari Ayah", amount: 2000000, type: "income", date: "13 Des 2024", category: "Transfer" },
-    { id: 4, description: "Bayar Listrik", amount: -320000, type: "expense", date: "12 Des 2024", category: "Tagihan" },
-    { id: 5, description: "Beli Bensin", amount: -150000, type: "expense", date: "12 Des 2024", category: "Transport" }
-  ];
 
   return (
     <div className="space-y-6">
@@ -215,86 +208,40 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Transactions */}
-        <Card className="lg:col-span-2 shadow-card border-0">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">Transaksi Terbaru</CardTitle>
-                <CardDescription>5 transaksi terakhir bulan ini</CardDescription>
+      {/* Savings Goals */}
+      <Card className="shadow-card border-0">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Target Tabungan
+          </CardTitle>
+          <CardDescription>Progress target bulan ini</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {savingsGoals.map((goal, index) => (
+            <div key={index} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-medium text-foreground">{goal.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {Math.round((goal.current_amount / goal.target_amount) * 100)}%
+                </p>
               </div>
-              <Button variant="outline" size="sm">
-                Lihat Semua
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="space-y-0">
-              {recentTransactions.map((transaction, index) => (
-                <div key={transaction.id} className={`flex items-center justify-between p-4 ${index !== recentTransactions.length - 1 ? 'border-b border-border' : ''}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${transaction.type === 'income' ? 'bg-success-bg' : 'bg-danger-bg'}`}>
-                      {transaction.type === 'income' ? (
-                        <ArrowUpRight className="h-4 w-4 text-success" />
-                      ) : (
-                        <ArrowDownRight className="h-4 w-4 text-danger" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{transaction.description}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-muted-foreground">{transaction.date}</p>
-                        <Badge variant="secondary" className="text-xs">{transaction.category}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <div className={`text-right ${transaction.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                    <p className="font-semibold">
-                      {transaction.type === 'income' ? '+' : ''}{transaction.amount.toLocaleString('id-ID')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Savings Goals */}
-        <Card className="shadow-card border-0">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Target Tabungan
-            </CardTitle>
-            <CardDescription>Progress target bulan ini</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {savingsGoals.map((goal, index) => (
-              <div key={index} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium text-foreground">{goal.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {Math.round((goal.current_amount / goal.target_amount) * 100)}%
-                  </p>
-                </div>
-                <Progress 
-                  value={(goal.current_amount / goal.target_amount) * 100} 
-                  className="h-2"
-                />
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Rp {goal.current_amount.toLocaleString('id-ID')}
-                  </span>
-                  <span className="text-muted-foreground">
-                    Rp {goal.target_amount.toLocaleString('id-ID')}
-                  </span>
-                </div>
+              <Progress 
+                value={(goal.current_amount / goal.target_amount) * 100} 
+                className="h-2"
+              />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Rp {goal.current_amount.toLocaleString('id-ID')}
+                </span>
+                <span className="text-muted-foreground">
+                  Rp {goal.target_amount.toLocaleString('id-ID')}
+                </span>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card className="shadow-card border-0">
