@@ -19,6 +19,7 @@ import {
   Building2,
   Loader2
 } from "lucide-react";
+import { DebtPaymentHistory } from "@/components/DebtPaymentHistory";
 import { useState } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { CreateDebtData } from "@/hooks/useDebts";
@@ -37,8 +38,8 @@ export default function Debts() {
   const [formLoading, setFormLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const { debts, loading: dataLoading, createDebt, updateDebt, deleteDebt } = useFinancialData();
-  const debtsLoading = dataLoading.debts;
+  const { debts, transactions, loading: dataLoading, createDebt, updateDebt, deleteDebt } = useFinancialData();
+  const debtsLoading = dataLoading.debts || dataLoading.transactions;
 
   const getProgress = (remaining: number, total: number) => {
     return ((total - remaining) / total) * 100;
@@ -399,6 +400,9 @@ export default function Debts() {
                           <span>Rp {debt.total_amount.toLocaleString('id-ID')} total</span>
                         </div>
                       </div>
+
+                      {/* Payment History */}
+                      <DebtPaymentHistory debtId={debt.id} transactions={transactions} />
                     </div>
                   );
                 })
@@ -437,6 +441,9 @@ export default function Debts() {
                         </Button>
                       </div>
                     </div>
+                    
+                    {/* Payment History for paid off debts */}
+                    <DebtPaymentHistory debtId={debt.id} transactions={transactions} />
                   </div>
                 ))}
               </CardContent>
