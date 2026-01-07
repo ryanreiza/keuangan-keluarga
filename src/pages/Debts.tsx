@@ -20,7 +20,8 @@ import {
   Loader2
 } from "lucide-react";
 import { useState } from "react";
-import { useDebts, CreateDebtData } from "@/hooks/useDebts";
+import { useFinancialData } from "@/hooks/useFinancialData";
+import { CreateDebtData } from "@/hooks/useDebts";
 import { format } from "date-fns";
 
 export default function Debts() {
@@ -33,10 +34,11 @@ export default function Debts() {
     due_date: ""
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const { debts, loading: debtsLoading, createDebt, updateDebt, deleteDebt } = useDebts();
+  const { debts, loading: dataLoading, createDebt, updateDebt, deleteDebt } = useFinancialData();
+  const debtsLoading = dataLoading.debts;
 
   const getProgress = (remaining: number, total: number) => {
     return ((total - remaining) / total) * 100;
@@ -67,7 +69,7 @@ export default function Debts() {
     e.preventDefault();
     if (!formData.creditor_name || !formData.total_amount || !formData.remaining_amount) return;
 
-    setLoading(true);
+    setFormLoading(true);
     const debtData: CreateDebtData = {
       creditor_name: formData.creditor_name,
       total_amount: parseFloat(formData.total_amount),
@@ -96,7 +98,7 @@ export default function Debts() {
       setEditingId(null);
       setShowForm(false);
     }
-    setLoading(false);
+    setFormLoading(false);
   };
 
   const handleEdit = (debt: any) => {
@@ -237,8 +239,8 @@ export default function Debts() {
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                <Button type="submit" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={formLoading}>
+                  {formLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {editingId ? "Update Utang" : "Simpan Utang"}
                 </Button>
                 {editingId && (
