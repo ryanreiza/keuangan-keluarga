@@ -81,6 +81,32 @@ export default function MonthlyBudgetTracker({
     setLocalExpected(initial);
   }, [expectedAmounts, filteredCategories]);
 
+  // Show notification for categories exceeding budget (>100%)
+  useEffect(() => {
+    if (type !== 'expense') return;
+    
+    const overBudgetCategories = filteredCategories.filter(cat => {
+      const expected = expectedAmounts[cat.id] || 0;
+      const actual = actualAmounts[cat.id] || 0;
+      return expected > 0 && actual > expected;
+    });
+
+    if (overBudgetCategories.length > 0) {
+      const categoryNames = overBudgetCategories.map(cat => {
+        const expected = expectedAmounts[cat.id];
+        const actual = actualAmounts[cat.id];
+        const percentage = Math.round((actual / expected) * 100);
+        return `${cat.name} (${percentage}%)`;
+      }).join(', ');
+
+      toast({
+        title: "⚠️ Peringatan Budget",
+        description: `Kategori melebihi budget: ${categoryNames}`,
+        variant: "destructive",
+      });
+    }
+  }, [filteredCategories, expectedAmounts, actualAmounts, type, toast, selectedMonth]);
+
   const handleExpectedChange = (categoryId: string, value: string) => {
     setLocalExpected(prev => ({ ...prev, [categoryId]: value }));
   };
