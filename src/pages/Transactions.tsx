@@ -18,6 +18,8 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useDebts } from "@/hooks/useDebts";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
 import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
+import { TransactionDetailDialog } from "@/components/TransactionDetailDialog";
+import { Transaction } from "@/hooks/useTransactions";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
@@ -37,6 +39,8 @@ export default function Transactions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<{ id: string; description: string } | null>(null);
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' | 'name-asc' | 'name-desc'>('date-desc');
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
 
   const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -193,7 +197,8 @@ export default function Transactions() {
                              formData.type === 'expense' ? expenseCategories : 
                              categories;
 
-  const handleDeleteClick = (id: string, description: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, id: string, description: string) => {
+    e.stopPropagation();
     setSelectedTransaction({ id, description });
     setDeleteDialogOpen(true);
   };
@@ -203,6 +208,11 @@ export default function Transactions() {
       deleteTransaction(selectedTransaction.id);
       setSelectedTransaction(null);
     }
+  };
+
+  const handleTransactionClick = (transaction: Transaction) => {
+    setDetailTransaction(transaction);
+    setDetailDialogOpen(true);
   };
 
   // Filter out paid off debts
@@ -522,7 +532,11 @@ export default function Transactions() {
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((transaction, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg group">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg group cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTransactionClick(transaction)}
+                  >
                     <div className="flex items-center gap-3 flex-1">
                       <div className={`p-2 rounded-lg ${
                         transaction.type === 'income' 
@@ -585,7 +599,7 @@ export default function Transactions() {
                       variant="ghost"
                       size="icon"
                       className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                      onClick={() => handleDeleteClick(transaction.id, transaction.description || 'Transaksi')}
+                      onClick={(e) => handleDeleteClick(e, transaction.id, transaction.description || 'Transaksi')}
                     >
                       <Trash2 className="h-4 w-4 text-danger" />
                     </Button>
@@ -606,6 +620,14 @@ export default function Transactions() {
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         transactionDescription={selectedTransaction?.description || ''}
+      />
+
+      <TransactionDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        transaction={detailTransaction}
+        accounts={accounts}
+        debts={debts}
       />
     </div>
   );
