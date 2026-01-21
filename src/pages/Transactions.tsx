@@ -19,6 +19,7 @@ import { useDebts } from "@/hooks/useDebts";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
 import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 import { TransactionDetailDialog } from "@/components/TransactionDetailDialog";
+import { TransactionExport } from "@/components/TransactionExport";
 import { Transaction } from "@/hooks/useTransactions";
 
 export default function Transactions() {
@@ -249,6 +250,10 @@ export default function Transactions() {
               ))}
             </SelectContent>
           </Select>
+          <TransactionExport 
+            transactions={filteredTransactions} 
+            selectedMonth={selectedMonth} 
+          />
           <ResetTransactionsDialog onReset={resetAllTransactions} />
           <Button 
             className="bg-gradient-primary text-primary-foreground hover:opacity-90"
