@@ -127,6 +127,54 @@ export const useTransactions = () => {
     }
   };
 
+  const updateTransaction = async (id: string, transactionData: Partial<CreateTransactionData>) => {
+    if (!user) return { error: 'User not authenticated' };
+
+    try {
+      const updateData: any = {};
+      
+      if (transactionData.description !== undefined) updateData.description = transactionData.description;
+      if (transactionData.amount !== undefined) updateData.amount = transactionData.amount;
+      if (transactionData.type !== undefined) updateData.type = transactionData.type;
+      if (transactionData.category_id !== undefined) updateData.category_id = transactionData.category_id;
+      if (transactionData.account_id !== undefined) updateData.account_id = transactionData.account_id;
+      if (transactionData.transaction_date !== undefined) updateData.transaction_date = transactionData.transaction_date;
+      if (transactionData.destination_account_id !== undefined) updateData.destination_account_id = transactionData.destination_account_id;
+      if (transactionData.debt_id !== undefined) updateData.debt_id = transactionData.debt_id;
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select(`
+          *,
+          categories(name),
+          accounts(name)
+        `);
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        setTransactions(prev => prev.map(t => t.id === id ? data[0] : t));
+        toast({
+          title: "Berhasil",
+          description: "Transaksi berhasil diperbarui",
+        });
+      }
+      
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Error updating transaction:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memperbarui transaksi",
+        variant: "destructive",
+      });
+      return { data: null, error };
+    }
+  };
+
   const deleteTransaction = async (id: string) => {
     try {
       const { error } = await supabase
@@ -186,6 +234,7 @@ export const useTransactions = () => {
     transactions,
     loading,
     createTransaction,
+    updateTransaction,
     deleteTransaction,
     resetAllTransactions,
     refetch: fetchTransactions,
