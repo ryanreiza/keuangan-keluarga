@@ -42,7 +42,7 @@ export default function Transactions() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
 
-  const { transactions, loading: transactionsLoading, createTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
+  const { transactions, loading: transactionsLoading, createTransaction, updateTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
   const { categories, loading: categoriesLoading } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { debts, loading: debtsLoading } = useDebts();
@@ -628,6 +628,8 @@ export default function Transactions() {
         transaction={detailTransaction}
         accounts={accounts}
         debts={debts}
+        categories={categories}
+        onUpdate={updateTransaction}
       />
     </div>
   );
