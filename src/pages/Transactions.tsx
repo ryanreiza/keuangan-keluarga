@@ -308,7 +308,6 @@ export default function Transactions() {
                     <SelectItem value="income">Pemasukan</SelectItem>
                     <SelectItem value="expense">Pengeluaran</SelectItem>
                     <SelectItem value="transfer">Transfer Antar Rekening</SelectItem>
-                    <SelectItem value="debt_payment">Bayar Utang</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -356,29 +355,6 @@ export default function Transactions() {
                 </div>
               )}
 
-              {formData.type === 'debt_payment' && (
-                <div className="space-y-2">
-                  <Label>Pilih Utang</Label>
-                  <Select value={formData.debt_id} onValueChange={(value) => setFormData({...formData, debt_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih utang yang akan dibayar" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50">
-                      {activeDebts.length > 0 ? (
-                        activeDebts.map((debt) => (
-                          <SelectItem key={debt.id} value={debt.id}>
-                            {debt.creditor_name} - Sisa: Rp {debt.remaining_amount.toLocaleString("id-ID")}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled>
-                          Tidak ada utang aktif
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label>
