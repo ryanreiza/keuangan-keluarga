@@ -40,6 +40,7 @@ export default function Transactions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<{ id: string; description: string } | null>(null);
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' | 'name-asc' | 'name-desc'>('date-desc');
+  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense' | 'transfer'>('all');
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
 
@@ -167,7 +168,10 @@ export default function Transactions() {
       const transactionMonth = transaction.transaction_date.slice(0, 7);
       const matchesMonth = transactionMonth === selectedMonth;
       
-      return matchesSearch && matchesMonth;
+      // Filter by transaction type
+      const matchesType = filterType === 'all' || transaction.type === filterType;
+      
+      return matchesSearch && matchesMonth && matchesType;
     });
 
     // Apply sorting
@@ -189,7 +193,7 @@ export default function Transactions() {
           return 0;
       }
     });
-  }, [transactions, searchTerm, selectedMonth, sortBy]);
+  }, [transactions, searchTerm, selectedMonth, sortBy, filterType]);
 
   // Filter categories by type
   const incomeCategories = categories.filter(cat => cat.type === 'income');
@@ -458,6 +462,36 @@ export default function Transactions() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Filter Tipe</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setFilterType('all')}
+                      className={filterType === 'all' ? 'bg-accent' : ''}
+                    >
+                      Semua Tipe
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setFilterType('income')}
+                      className={filterType === 'income' ? 'bg-accent' : ''}
+                    >
+                      <ArrowUpRight className="h-4 w-4 mr-2 text-green-500" />
+                      Pemasukan
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setFilterType('expense')}
+                      className={filterType === 'expense' ? 'bg-accent' : ''}
+                    >
+                      <ArrowDownRight className="h-4 w-4 mr-2 text-red-500" />
+                      Pengeluaran
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setFilterType('transfer')}
+                      className={filterType === 'transfer' ? 'bg-accent' : ''}
+                    >
+                      <ArrowUpDown className="h-4 w-4 mr-2 text-blue-500" />
+                      Transfer
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuLabel>Urutkan</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
