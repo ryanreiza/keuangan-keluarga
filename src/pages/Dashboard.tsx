@@ -136,16 +136,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Keuangan</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard Keuangan</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             Ringkasan keuangan {monthOptions.find(opt => opt.value === selectedMonth)?.label || ''}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-36 md:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -156,26 +156,27 @@ export default function Dashboard() {
               ))}
             </SelectContent>
           </Select>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Tambah Transaksi
+          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90" size="sm">
+            <DollarSign className="h-4 w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Tambah Transaksi</span>
+            <span className="sm:hidden">Tambah</span>
           </Button>
         </div>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat, index) => (
           <Card key={index} className="bg-gradient-card shadow-card border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <div className="flex items-center mt-2">
-                    {stat.changeType === "increase" && <ArrowUpRight className="h-4 w-4 text-success mr-1" />}
-                    {stat.changeType === "decrease" && <ArrowDownRight className="h-4 w-4 text-danger mr-1" />}
-                    <span className={`text-sm font-medium ${
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 truncate">{stat.title}</p>
+                  <p className="text-lg md:text-2xl font-bold text-foreground truncate">{stat.value}</p>
+                  <div className="flex items-center mt-1 md:mt-2">
+                    {stat.changeType === "increase" && <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-success mr-0.5" />}
+                    {stat.changeType === "decrease" && <ArrowDownRight className="h-3 w-3 md:h-4 md:w-4 text-danger mr-0.5" />}
+                    <span className={`text-xs md:text-sm font-medium ${
                       stat.changeType === "increase" ? "text-success" : 
                       stat.changeType === "decrease" ? "text-danger" : "text-muted-foreground"
                     }`}>
@@ -183,8 +184,8 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                  <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
+                <div className={`p-2 md:p-3 rounded-xl ${stat.bgColor} ml-2 flex-shrink-0`}>
+                  <stat.icon className={`h-4 w-4 md:h-6 md:w-6 ${stat.iconColor}`} />
                 </div>
               </div>
             </CardContent>

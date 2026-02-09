@@ -118,3 +118,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Safe area for mobile bottom navigation */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 767px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
