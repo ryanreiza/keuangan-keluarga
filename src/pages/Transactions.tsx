@@ -234,16 +234,16 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Transaksi</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Transaksi</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             {monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Kelola semua transaksi keuangan Anda'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-36 md:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -261,10 +261,12 @@ export default function Transactions() {
           <ResetTransactionsDialog onReset={resetAllTransactions} />
           <Button 
             className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            size="sm"
             onClick={() => setShowForm(!showForm)}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            {showForm ? "Tutup Form" : "Tambah Transaksi"}
+            <Plus className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">{showForm ? "Tutup Form" : "Tambah Transaksi"}</span>
+            <span className="sm:hidden">{showForm ? "Tutup" : "Tambah"}</span>
           </Button>
         </div>
       </div>

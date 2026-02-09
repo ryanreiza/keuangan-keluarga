@@ -162,25 +162,28 @@ export default function Accounts() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Rekening Bank</h1>
-          <p className="text-muted-foreground mt-1">Kelola semua rekening bank dan saldo Anda</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rekening Bank</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">Kelola semua rekening bank dan saldo Anda</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 md:h-10 md:w-10"
             onClick={() => setShowBalance(!showBalance)}
           >
             {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
           <Button 
             className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            size="sm"
             onClick={() => setShowForm(!showForm)}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            {showForm ? "Tutup Form" : "Tambah Rekening"}
+            <Plus className="h-4 w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">{showForm ? "Tutup Form" : "Tambah Rekening"}</span>
+            <span className="sm:hidden">{showForm ? "Tutup" : "Tambah"}</span>
           </Button>
         </div>
       </div>
@@ -270,7 +273,7 @@ export default function Accounts() {
         {/* Accounts Overview */}
         <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
             <Card className="bg-gradient-primary shadow-card border-0">
               <CardContent className="p-6 text-primary-foreground">
                 <div className="flex items-center justify-between">
@@ -322,34 +325,31 @@ export default function Accounts() {
                   </div>
                 ) : (
                   accounts.map((account, index) => (
-                    <div key={account.id} className={`p-6 hover:bg-surface/50 transition-colors group ${index !== accounts.length - 1 ? 'border-b border-border' : ''}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-3xl">
+                    <div key={account.id} className={`p-4 md:p-6 hover:bg-surface/50 transition-colors group ${index !== accounts.length - 1 ? 'border-b border-border' : ''}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <div className="text-2xl md:text-3xl">
                             {getBankEmoji(account.bank_name)}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-3 mb-1">
-                              <h3 className="font-semibold text-foreground">{account.name}</h3>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{account.name}</h3>
                               {account.is_active && (
-                                <Badge className="bg-success-bg text-success-foreground">
+                                <Badge className="bg-success-bg text-success-foreground text-xs flex-shrink-0">
                                   Aktif
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs md:text-sm text-muted-foreground">
                               {account.bank_name} {account.account_number && `• •••• ${account.account_number.slice(-4)}`}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Dibuat: {new Date(account.created_at).toLocaleDateString('id-ID')}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground mb-1">Saldo Saat Ini</p>
-                            <p className="text-2xl font-bold text-foreground">
+                        <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-6 ml-11 sm:ml-0">
+                          <div className="text-left sm:text-right">
+                            <p className="text-xs text-muted-foreground mb-0.5">Saldo</p>
+                            <p className="text-lg md:text-2xl font-bold text-foreground">
                               {formatBalance(account.current_balance)}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -357,8 +357,8 @@ export default function Accounts() {
                             </p>
                           </div>
                           
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(account)}>
+                          <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10" onClick={() => handleEdit(account)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
