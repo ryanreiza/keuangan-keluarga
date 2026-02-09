@@ -1,9 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FinancialSidebar } from "@/components/FinancialSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Bell, User, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AnimatePresence } from "framer-motion";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -55,7 +57,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Main Content - add bottom padding on mobile for nav */}
           <main className="flex-1 p-4 md:p-6 overflow-auto pb-20 md:pb-6">
-            {children}
+            <AnimatePresence mode="wait">
+              <PageTransition>{children}</PageTransition>
+            </AnimatePresence>
           </main>
         </div>
 
