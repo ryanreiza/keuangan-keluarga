@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAccounts, CreateAccountData } from "@/hooks/useAccounts";
+import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -273,8 +274,8 @@ export default function Accounts() {
         {/* Accounts Overview */}
         <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-            <Card className="bg-gradient-primary shadow-card border-0">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+            <StaggerItem><Card className="bg-gradient-primary shadow-card border-0">
               <CardContent className="p-6 text-primary-foreground">
                 <div className="flex items-center justify-between">
                   <div>
@@ -284,9 +285,9 @@ export default function Accounts() {
                   <Building2 className="h-8 w-8 opacity-80" />
                 </div>
               </CardContent>
-            </Card>
+            </Card></StaggerItem>
             
-            <Card className="bg-gradient-success shadow-card border-0">
+            <StaggerItem><Card className="bg-gradient-success shadow-card border-0">
               <CardContent className="p-6 text-success-foreground">
                 <div className="flex items-center justify-between">
                   <div>
@@ -296,9 +297,9 @@ export default function Accounts() {
                   <CreditCard className="h-8 w-8 opacity-80" />
                 </div>
               </CardContent>
-            </Card>
+            </Card></StaggerItem>
             
-            <Card className="bg-gradient-card shadow-card border-0">
+            <StaggerItem><Card className="bg-gradient-card shadow-card border-0">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -308,11 +309,11 @@ export default function Accounts() {
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
               </CardContent>
-            </Card>
-          </div>
+            </Card></StaggerItem>
+          </StaggerContainer>
 
           {/* Accounts List */}
-          <Card className="shadow-card border-0">
+          <StaggerItem delay={0.3}><Card className="shadow-card border-0">
             <CardHeader>
               <CardTitle className="text-lg">Daftar Rekening</CardTitle>
               <CardDescription>Semua rekening bank Anda ({accounts.length} rekening)</CardDescription>
@@ -406,7 +407,7 @@ export default function Accounts() {
                 )}
               </div>
             </CardContent>
-          </Card>
+          </Card></StaggerItem>
         </div>
       </div>
     </div>
