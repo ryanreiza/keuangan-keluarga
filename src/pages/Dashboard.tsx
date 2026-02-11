@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { Link } from "react-router-dom";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
+import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -165,87 +166,94 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+      <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat, index) => (
-          <Card key={index} className="bg-gradient-card shadow-card border-0">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 truncate">{stat.title}</p>
-                  <p className="text-lg md:text-2xl font-bold text-foreground truncate">{stat.value}</p>
-                  <div className="flex items-center mt-1 md:mt-2">
-                    {stat.changeType === "increase" && <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-success mr-0.5" />}
-                    {stat.changeType === "decrease" && <ArrowDownRight className="h-3 w-3 md:h-4 md:w-4 text-danger mr-0.5" />}
-                    <span className={`text-xs md:text-sm font-medium ${
-                      stat.changeType === "increase" ? "text-success" : 
-                      stat.changeType === "decrease" ? "text-danger" : "text-muted-foreground"
-                    }`}>
-                      {stat.change}
-                    </span>
+          <StaggerItem key={index} index={index}>
+            <Card className="bg-gradient-card shadow-card border-0 h-full">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 truncate">{stat.title}</p>
+                    <p className="text-lg md:text-2xl font-bold text-foreground truncate">{stat.value}</p>
+                    <div className="flex items-center mt-1 md:mt-2">
+                      {stat.changeType === "increase" && <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-success mr-0.5" />}
+                      {stat.changeType === "decrease" && <ArrowDownRight className="h-3 w-3 md:h-4 md:w-4 text-danger mr-0.5" />}
+                      <span className={`text-xs md:text-sm font-medium ${
+                        stat.changeType === "increase" ? "text-success" : 
+                        stat.changeType === "decrease" ? "text-danger" : "text-muted-foreground"
+                      }`}>
+                        {stat.change}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`p-2 md:p-3 rounded-xl ${stat.bgColor} ml-2 flex-shrink-0`}>
+                    <stat.icon className={`h-4 w-4 md:h-6 md:w-6 ${stat.iconColor}`} />
                   </div>
                 </div>
-                <div className={`p-2 md:p-3 rounded-xl ${stat.bgColor} ml-2 flex-shrink-0`}>
-                  <stat.icon className={`h-4 w-4 md:h-6 md:w-6 ${stat.iconColor}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerContainer>
 
       {/* Expense Summary Table */}
-      <Card className="shadow-card border-0">
-        <CardHeader>
-          <CardTitle className="text-xl">Ringkasan Pengeluaran Bulanan</CardTitle>
-          <CardDescription>Target vs Realisasi pengeluaran per kategori bulan ini</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MonthlyBudgetTracker 
-            type="expense" 
-            categories={categories}
-            transactions={currentMonthTransactions}
-            selectedMonth={selectedMonth}
-          />
-        </CardContent>
-      </Card>
+      <StaggerItem delay={0.3}>
+        <Card className="shadow-card border-0">
+          <CardHeader>
+            <CardTitle className="text-xl">Ringkasan Pengeluaran Bulanan</CardTitle>
+            <CardDescription>Target vs Realisasi pengeluaran per kategori bulan ini</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MonthlyBudgetTracker 
+              type="expense" 
+              categories={categories}
+              transactions={currentMonthTransactions}
+              selectedMonth={selectedMonth}
+            />
+          </CardContent>
+        </Card>
+      </StaggerItem>
 
       {/* Savings Goals */}
-      <Card className="shadow-card border-0">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Target Tabungan
-          </CardTitle>
-          <CardDescription>Progress target bulan ini</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {savingsGoals.map((goal, index) => (
-            <div key={index} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="font-medium text-foreground">{goal.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {Math.round((goal.current_amount / goal.target_amount) * 100)}%
-                </p>
+      <StaggerItem delay={0.4}>
+        <Card className="shadow-card border-0">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Target Tabungan
+            </CardTitle>
+            <CardDescription>Progress target bulan ini</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {savingsGoals.map((goal, index) => (
+              <div key={index} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-foreground">{goal.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {Math.round((goal.current_amount / goal.target_amount) * 100)}%
+                  </p>
+                </div>
+                <Progress 
+                  value={(goal.current_amount / goal.target_amount) * 100} 
+                  className="h-2"
+                />
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Rp {goal.current_amount.toLocaleString('id-ID')}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Rp {goal.target_amount.toLocaleString('id-ID')}
+                  </span>
+                </div>
               </div>
-              <Progress 
-                value={(goal.current_amount / goal.target_amount) * 100} 
-                className="h-2"
-              />
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Rp {goal.current_amount.toLocaleString('id-ID')}
-                </span>
-                <span className="text-muted-foreground">
-                  Rp {goal.target_amount.toLocaleString('id-ID')}
-                </span>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+      </StaggerItem>
 
       {/* Quick Actions */}
-      <Card className="shadow-card border-0">
+      <StaggerItem delay={0.5}>
+        <Card className="shadow-card border-0">
         <CardHeader>
           <CardTitle className="text-xl">Aksi Cepat</CardTitle>
           <CardDescription>Fitur yang sering digunakan</CardDescription>
@@ -271,6 +279,7 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+      </StaggerItem>
     </div>
   );
 }
