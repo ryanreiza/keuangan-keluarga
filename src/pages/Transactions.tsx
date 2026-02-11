@@ -21,6 +21,7 @@ import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 import { TransactionDetailDialog } from "@/components/TransactionDetailDialog";
 import { TransactionExport } from "@/components/TransactionExport";
 import { Transaction } from "@/hooks/useTransactions";
+import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
@@ -546,11 +547,11 @@ export default function Transactions() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <StaggerContainer className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((transaction, index) => (
+                  <StaggerItem key={transaction.id} index={index}>
                   <div 
-                    key={index} 
                     className="flex items-center justify-between p-4 bg-muted/50 rounded-lg group cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => handleTransactionClick(transaction)}
                   >
@@ -621,13 +622,14 @@ export default function Transactions() {
                       <Trash2 className="h-4 w-4 text-danger" />
                     </Button>
                   </div>
+                  </StaggerItem>
                 ))
               ) : (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">Tidak ada transaksi yang ditemukan</p>
                 </div>
               )}
-            </div>
+            </StaggerContainer>
           </CardContent>
         </Card>
       </div>
