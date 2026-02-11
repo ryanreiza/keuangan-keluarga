@@ -16,6 +16,7 @@ import Savings from "./pages/Savings";
 import Debts from "./pages/Debts";
 import Annual from "./pages/Annual";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,13 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Reports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Settings />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
