@@ -87,8 +87,8 @@ export const useTransactions = () => {
         insertData.destination_account_id = transactionData.destination_account_id;
       }
 
-      // Add debt_id for debt payment transactions
-      if (transactionData.type === 'debt_payment' && transactionData.debt_id) {
+      // Add debt_id for debt payment transactions (type may be 'expense' or 'debt_payment')
+      if (transactionData.debt_id) {
         insertData.debt_id = transactionData.debt_id;
       }
 
