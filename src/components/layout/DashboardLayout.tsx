@@ -33,7 +33,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const userInitials = (user?.user_metadata?.full_name || user?.email || "U")
     .split(" ")
     .map((w: string) => w[0])
@@ -89,7 +89,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <PopoverContent align="end" className="w-80 p-0 bg-background border border-border z-50">
                   <div className="p-3 border-b border-border flex items-center justify-between">
                     <h4 className="font-semibold text-sm text-foreground">Notifikasi</h4>
-                    <span className="text-xs text-muted-foreground">{unreadCount} belum dibaca</span>
+                    {unreadCount > 0 ? (
+                      <button onClick={markAllAsRead} className="text-xs text-primary hover:underline">
+                        Tandai semua dibaca
+                      </button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Semua sudah dibaca</span>
+                    )}
                   </div>
                   <div className="max-h-72 overflow-y-auto">
                     {notifications.length === 0 ? (
@@ -100,6 +106,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     ) : notifications.map((n) => (
                       <div
                         key={n.id}
+                        onClick={() => n.unread && markAsRead(n.id)}
                         className={`p-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer ${n.unread ? "bg-primary/5" : ""}`}
                       >
                         <div className="flex items-start gap-2">

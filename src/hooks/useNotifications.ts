@@ -12,9 +12,23 @@ export interface AppNotification {
   type: 'budget_warning' | 'debt_due' | 'debt_overdue' | 'savings_achieved';
 }
 
+const STORAGE_KEY = 'read_notifications';
+
+const getReadIds = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch { return new Set(); }
+};
+
+const saveReadIds = (ids: Set<string>) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
+};
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [readIds, setReadIds] = useState<Set<string>>(getReadIds);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,21 +96,23 @@ export const useNotifications = () => {
           : 0;
 
         if (percentage >= 100) {
+          const nId = `budget-over-${budget.id}`;
           results.push({
-            id: `budget-over-${budget.id}`,
+            id: nId,
             title: 'Anggaran melebihi batas',
             desc: `Pengeluaran ${categoryMap.get(budget.category_id) || 'kategori'} sudah ${percentage}% dari anggaran (Rp ${formatNumber(spent)} / Rp ${formatNumber(budget.expected_amount)})`,
             time: 'Bulan ini',
-            unread: true,
+            unread: !readIds.has(nId),
             type: 'budget_warning',
           });
         } else if (percentage >= 80) {
+          const nId = `budget-warn-${budget.id}`;
           results.push({
-            id: `budget-warn-${budget.id}`,
+            id: nId,
             title: 'Anggaran hampir habis',
             desc: `Pengeluaran ${categoryMap.get(budget.category_id) || 'kategori'} sudah ${percentage}% dari anggaran`,
             time: 'Bulan ini',
-            unread: true,
+            unread: !readIds.has(nId),
             type: 'budget_warning',
           });
         }
@@ -111,21 +127,23 @@ export const useNotifications = () => {
         if (!debt.due_date) continue;
 
         if (debt.due_date < today) {
+          const nId = `debt-overdue-${debt.id}`;
           results.push({
-            id: `debt-overdue-${debt.id}`,
+            id: nId,
             title: 'Pembayaran utang terlambat!',
             desc: `Utang ke ${debt.creditor_name} sudah melewati jatuh tempo (${formatDate(debt.due_date)}). Sisa: Rp ${formatNumber(debt.remaining_amount)}`,
             time: 'Terlambat',
-            unread: true,
+            unread: !readIds.has(nId),
             type: 'debt_overdue',
           });
         } else if (debt.due_date <= threeDaysLater) {
+          const nId = `debt-due-${debt.id}`;
           results.push({
-            id: `debt-due-${debt.id}`,
+            id: nId,
             title: 'Pembayaran utang jatuh tempo',
             desc: `Cicilan ${debt.creditor_name} jatuh tempo ${formatDate(debt.due_date)}. Sisa: Rp ${formatNumber(debt.remaining_amount)}`,
             time: 'Segera',
-            unread: true,
+            unread: !readIds.has(nId),
             type: 'debt_due',
           });
         }
@@ -133,12 +151,13 @@ export const useNotifications = () => {
 
       // Savings achieved
       for (const saving of savings) {
+        const nId = `savings-${saving.id}`;
         results.push({
-          id: `savings-${saving.id}`,
+          id: nId,
           title: 'Tabungan tercapai! 🎉',
           desc: `Target "${saving.name}" sudah tercapai 100% (Rp ${formatNumber(saving.target_amount)})`,
           time: formatDate(saving.updated_at.split('T')[0]),
-          unread: false,
+          unread: !readIds.has(nId),
           type: 'savings_achieved',
         });
       }
@@ -158,9 +177,25 @@ export const useNotifications = () => {
     }
   };
 
+  const markAsRead = (id: string) => {
+    const updated = new Set(readIds);
+    updated.add(id);
+    setReadIds(updated);
+    saveReadIds(updated);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+  };
+
+  const markAllAsRead = () => {
+    const updated = new Set(readIds);
+    notifications.forEach(n => updated.add(n.id));
+    setReadIds(updated);
+    saveReadIds(updated);
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+
   const unreadCount = useMemo(() => notifications.filter(n => n.unread).length, [notifications]);
 
-  return { notifications, unreadCount, loading, refetch: generateNotifications };
+  return { notifications, unreadCount, loading, refetch: generateNotifications, markAsRead, markAllAsRead };
 };
 
 function formatNumber(num: number): string {
