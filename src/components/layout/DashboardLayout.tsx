@@ -4,10 +4,11 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, User, Settings, LogOut, CreditCard, ChevronRight } from "lucide-react";
+import { Bell, User, Settings, LogOut, CreditCard, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useNotifications } from "@/hooks/useNotifications";
 import { AnimatePresence } from "framer-motion";
 import {
   Popover,
@@ -28,19 +29,11 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const mockNotifications = [
-  { id: 1, title: "Anggaran melebihi batas", desc: "Pengeluaran makanan sudah 120% dari anggaran", time: "5 menit lalu", unread: true },
-  { id: 2, title: "Pembayaran utang jatuh tempo", desc: "Cicilan kartu kredit jatuh tempo besok", time: "1 jam lalu", unread: true },
-  { id: 3, title: "Tabungan tercapai!", desc: "Target dana darurat sudah tercapai 100%", time: "2 jam lalu", unread: false },
-  { id: 4, title: "Transaksi baru dicatat", desc: "Pemasukan Rp 5.000.000 berhasil dicatat", time: "Kemarin", unread: false },
-];
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-
-  const unreadCount = mockNotifications.filter(n => n.unread).length;
+  const { notifications, unreadCount } = useNotifications();
   const userInitials = (user?.user_metadata?.full_name || user?.email || "U")
     .split(" ")
     .map((w: string) => w[0])
@@ -99,7 +92,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <span className="text-xs text-muted-foreground">{unreadCount} belum dibaca</span>
                   </div>
                   <div className="max-h-72 overflow-y-auto">
-                    {mockNotifications.map((n) => (
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-muted-foreground text-sm">
+                        <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success opacity-50" />
+                        Tidak ada notifikasi saat ini
+                      </div>
+                    ) : notifications.map((n) => (
                       <div
                         key={n.id}
                         className={`p-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer ${n.unread ? "bg-primary/5" : ""}`}
