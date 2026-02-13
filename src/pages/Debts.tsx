@@ -309,8 +309,12 @@ export default function Debts() {
                   <p>Tidak ada utang aktif. Semoga tetap bebas utang! 🎉</p>
                 </div>
               ) : (
-                activeDebts.map((debt) => {
-                  const progress = getProgress(debt.remaining_amount, debt.total_amount);
+              activeDebts.map((debt) => {
+                  // Calculate paid amount from actual transactions linked to this debt
+                  const paidFromTransactions = transactions
+                    .filter((t: any) => t.debt_id === debt.id)
+                    .reduce((sum: number, t: any) => sum + t.amount, 0);
+                  const progress = debt.total_amount > 0 ? (paidFromTransactions / debt.total_amount) * 100 : 0;
                   const daysUntilDue = getDaysUntilDue(debt.due_date);
                   const StatusIcon = getStatusIcon(debt.is_paid_off, daysUntilDue);
                   const monthsRemaining = debt.monthly_payment && debt.monthly_payment > 0 
@@ -396,7 +400,7 @@ export default function Debts() {
                         </div>
                         <Progress value={progress} className="h-3" />
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <span>Rp {(debt.total_amount - debt.remaining_amount).toLocaleString('id-ID')} dibayar</span>
+                          <span>Rp {paidFromTransactions.toLocaleString('id-ID')} dibayar</span>
                           <span>Rp {debt.total_amount.toLocaleString('id-ID')} total</span>
                         </div>
                       </div>
