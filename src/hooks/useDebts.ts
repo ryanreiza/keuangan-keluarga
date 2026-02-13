@@ -144,6 +144,31 @@ export const useDebts = () => {
     fetchDebts();
   }, [user]);
 
+  // Realtime subscription for debts table
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('debts-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'debts',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchDebts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   return {
     debts,
     loading,
