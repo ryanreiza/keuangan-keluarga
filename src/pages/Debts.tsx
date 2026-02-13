@@ -20,8 +20,9 @@ import {
   Loader2
 } from "lucide-react";
 import { DebtPaymentHistory } from "@/components/DebtPaymentHistory";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { supabase } from "@/integrations/supabase/client";
 import { CreateDebtData } from "@/hooks/useDebts";
 import { format } from "date-fns";
 
@@ -38,8 +39,26 @@ export default function Debts() {
   const [formLoading, setFormLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const { debts, transactions, loading: dataLoading, createDebt, updateDebt, deleteDebt } = useFinancialData();
+  const { debts, transactions, loading: dataLoading, createDebt, updateDebt, deleteDebt, refetch } = useFinancialData();
   const debtsLoading = dataLoading.debts || dataLoading.transactions;
+
+  // Realtime subscription for transactions changes (debt payments)
+  useEffect(() => {
+    const channel = supabase
+      .channel('debts-page-transactions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        refetch.transactions();
+        refetch.debts();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'debts' }, () => {
+        refetch.debts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   const getProgress = (remaining: number, total: number) => {
     return ((total - remaining) / total) * 100;
