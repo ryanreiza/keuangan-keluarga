@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import jsPDF from "jspdf";
-import * as XLSX from "xlsx";
+import { createAndDownloadExcel } from "@/lib/excel-export";
 
 interface Transaction {
   id: string;
@@ -61,7 +61,7 @@ export function TransactionExport({ transactions, selectedMonth }: TransactionEx
     return format(new Date(parseInt(year), parseInt(month) - 1), "MMMM yyyy", { locale: id });
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (transactions.length === 0) {
       toast({
         title: "Tidak ada data",
@@ -78,9 +78,6 @@ export function TransactionExport({ transactions, selectedMonth }: TransactionEx
     });
 
     try {
-      const wb = XLSX.utils.book_new();
-
-      // Sheet 1: Transaction List
       const transactionData = transactions.map((t, index) => ({
         "No": index + 1,
         "Tanggal": format(new Date(t.transaction_date), "dd MMMM yyyy", { locale: id }),
@@ -90,31 +87,10 @@ export function TransactionExport({ transactions, selectedMonth }: TransactionEx
         "Rekening": t.accounts?.name || "-",
         "Jumlah": t.amount,
       }));
-      const ws1 = XLSX.utils.json_to_sheet(transactionData);
-      
-      // Set column widths
-      ws1["!cols"] = [
-        { wch: 5 },   // No
-        { wch: 18 },  // Tanggal
-        { wch: 30 },  // Deskripsi
-        { wch: 15 },  // Tipe
-        { wch: 20 },  // Kategori
-        { wch: 20 },  // Rekening
-        { wch: 18 },  // Jumlah
-      ];
-      
-      XLSX.utils.book_append_sheet(wb, ws1, "Daftar Transaksi");
 
-      // Sheet 2: Summary
-      const incomeTotal = transactions
-        .filter((t) => t.type === "income")
-        .reduce((sum, t) => sum + t.amount, 0);
-      const expenseTotal = transactions
-        .filter((t) => t.type === "expense" || t.type === "debt_payment")
-        .reduce((sum, t) => sum + t.amount, 0);
-      const transferTotal = transactions
-        .filter((t) => t.type === "transfer")
-        .reduce((sum, t) => sum + t.amount, 0);
+      const incomeTotal = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+      const expenseTotal = transactions.filter((t) => t.type === "expense" || t.type === "debt_payment").reduce((sum, t) => sum + t.amount, 0);
+      const transferTotal = transactions.filter((t) => t.type === "transfer").reduce((sum, t) => sum + t.amount, 0);
 
       const summaryData = [
         { "Keterangan": "Total Pemasukan", "Jumlah": incomeTotal },
@@ -123,20 +99,13 @@ export function TransactionExport({ transactions, selectedMonth }: TransactionEx
         { "Keterangan": "Saldo Bersih", "Jumlah": incomeTotal - expenseTotal },
         { "Keterangan": "Jumlah Transaksi", "Jumlah": transactions.length },
       ];
-      const ws2 = XLSX.utils.json_to_sheet(summaryData);
-      ws2["!cols"] = [{ wch: 20 }, { wch: 18 }];
-      XLSX.utils.book_append_sheet(wb, ws2, "Ringkasan");
 
-      // Sheet 3: By Category
       const categoryMap = new Map<string, { income: number; expense: number; count: number }>();
       transactions.forEach((t) => {
         const catName = t.categories?.name || "Lainnya";
         const current = categoryMap.get(catName) || { income: 0, expense: 0, count: 0 };
-        if (t.type === "income") {
-          current.income += t.amount;
-        } else if (t.type === "expense" || t.type === "debt_payment") {
-          current.expense += t.amount;
-        }
+        if (t.type === "income") current.income += t.amount;
+        else if (t.type === "expense" || t.type === "debt_payment") current.expense += t.amount;
         current.count++;
         categoryMap.set(catName, current);
       });
@@ -147,24 +116,18 @@ export function TransactionExport({ transactions, selectedMonth }: TransactionEx
         "Pengeluaran": data.expense,
         "Jumlah Transaksi": data.count,
       }));
-      const ws3 = XLSX.utils.json_to_sheet(categoryData);
-      ws3["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
-      XLSX.utils.book_append_sheet(wb, ws3, "Per Kategori");
 
       const fileName = `Transaksi_${getMonthLabel().replace(" ", "_")}_${format(new Date(), "yyyyMMdd")}.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      await createAndDownloadExcel(fileName, [
+        { name: "Daftar Transaksi", data: transactionData, columnWidths: [5, 18, 30, 15, 20, 20, 18] },
+        { name: "Ringkasan", data: summaryData, columnWidths: [20, 18] },
+        { name: "Per Kategori", data: categoryData, columnWidths: [20, 18, 18, 18] },
+      ]);
 
-      toast({
-        title: "Berhasil!",
-        description: "File Excel telah diunduh",
-      });
+      toast({ title: "Berhasil!", description: "File Excel telah diunduh" });
     } catch (error) {
       console.error("Error generating Excel:", error);
-      toast({
-        title: "Gagal",
-        description: "Tidak dapat membuat file Excel",
-        variant: "destructive",
-      });
+      toast({ title: "Gagal", description: "Tidak dapat membuat file Excel", variant: "destructive" });
     } finally {
       setIsExporting(false);
     }

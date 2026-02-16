@@ -13,7 +13,7 @@ import { FileBarChart, FileSpreadsheet, FileText, ChevronDown, ChevronUp, ArrowU
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import * as XLSX from 'xlsx';
+import { createAndDownloadExcel } from '@/lib/excel-export';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -398,7 +398,7 @@ export default function Reports() {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     setIsExporting(true);
     toast({
       title: "Memproses...",
@@ -406,68 +406,63 @@ export default function Reports() {
     });
 
     try {
-      const wb = XLSX.utils.book_new();
+      const sheets = [];
 
       // Sheet 1: Monthly Summary
-      const monthlySummary = chartData.map(item => ({
-        'Bulan': item.month,
-        'Yang Diharapkan': item.expected,
-        'Yang Sebenarnya': item.actual,
-        'Selisih': item.difference,
-        'Persentase': item.expected > 0 ? `${Math.round((item.actual / item.expected) * 100)}%` : '0%'
-      }));
-      const ws1 = XLSX.utils.json_to_sheet(monthlySummary);
-      XLSX.utils.book_append_sheet(wb, ws1, 'Ringkasan Bulanan');
-
-      // Sheet 2: Category Breakdown
-      if (detailTableData.length > 0) {
-        const categoryBreakdown = detailTableData.map(item => ({
-          'Kategori': item.category,
+      sheets.push({
+        name: 'Ringkasan Bulanan',
+        data: chartData.map(item => ({
+          'Bulan': item.month,
           'Yang Diharapkan': item.expected,
           'Yang Sebenarnya': item.actual,
           'Selisih': item.difference,
-          'Persentase': `${Math.round(item.percentage)}%`
-        }));
-        const ws2 = XLSX.utils.json_to_sheet(categoryBreakdown);
-        XLSX.utils.book_append_sheet(wb, ws2, 'Per Kategori');
+          'Persentase': item.expected > 0 ? `${Math.round((item.actual / item.expected) * 100)}%` : '0%'
+        })),
+      });
+
+      // Sheet 2: Category Breakdown
+      if (detailTableData.length > 0) {
+        sheets.push({
+          name: 'Per Kategori',
+          data: detailTableData.map(item => ({
+            'Kategori': item.category,
+            'Yang Diharapkan': item.expected,
+            'Yang Sebenarnya': item.actual,
+            'Selisih': item.difference,
+            'Persentase': `${Math.round(item.percentage)}%`
+          })),
+        });
       }
 
       // Sheet 3: Summary Statistics
-      const summaryStats = [
-        {
-          'Keterangan': 'Total Yang Diharapkan',
-          'Jumlah': chartData.reduce((sum, item) => sum + item.expected, 0)
-        },
-        {
-          'Keterangan': 'Total Yang Sebenarnya',
-          'Jumlah': chartData.reduce((sum, item) => sum + item.actual, 0)
-        },
-        {
-          'Keterangan': 'Selisih Total',
-          'Jumlah': chartData.reduce((sum, item) => sum + item.difference, 0)
-        }
-      ];
-      const ws3 = XLSX.utils.json_to_sheet(summaryStats);
-      XLSX.utils.book_append_sheet(wb, ws3, 'Ringkasan Total');
+      sheets.push({
+        name: 'Ringkasan Total',
+        data: [
+          { 'Keterangan': 'Total Yang Diharapkan', 'Jumlah': chartData.reduce((sum, item) => sum + item.expected, 0) },
+          { 'Keterangan': 'Total Yang Sebenarnya', 'Jumlah': chartData.reduce((sum, item) => sum + item.actual, 0) },
+          { 'Keterangan': 'Selisih Total', 'Jumlah': chartData.reduce((sum, item) => sum + item.difference, 0) },
+        ],
+      });
 
       // Sheet 4: Year Comparison (if enabled)
       if (compareYear && compareChartData.length > 0) {
-        const yearComparison = chartData.map((item, index) => {
-          const compareItem = compareChartData[index];
-          return {
-            'Bulan': item.month,
-            [`Aktual ${new Date().getFullYear()}`]: item.actual,
-            [`Budget ${new Date().getFullYear()}`]: item.expected,
-            [`Aktual ${compareYear}`]: compareItem?.actual || 0,
-            [`Budget ${compareYear}`]: compareItem?.expected || 0,
-          };
+        sheets.push({
+          name: 'Perbandingan Tahun',
+          data: chartData.map((item, index) => {
+            const compareItem = compareChartData[index];
+            return {
+              'Bulan': item.month,
+              [`Aktual ${new Date().getFullYear()}`]: item.actual,
+              [`Budget ${new Date().getFullYear()}`]: item.expected,
+              [`Aktual ${compareYear}`]: compareItem?.actual || 0,
+              [`Budget ${compareYear}`]: compareItem?.expected || 0,
+            };
+          }),
         });
-        const ws4 = XLSX.utils.json_to_sheet(yearComparison);
-        XLSX.utils.book_append_sheet(wb, ws4, 'Perbandingan Tahun');
       }
 
       const fileName = `Laporan_${viewType === 'expense' ? 'Pengeluaran' : 'Pemasukan'}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      await createAndDownloadExcel(fileName, sheets);
 
       toast({
         title: "Berhasil!",
