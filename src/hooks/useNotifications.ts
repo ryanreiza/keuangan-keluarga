@@ -34,6 +34,27 @@ export const useNotifications = () => {
   useEffect(() => {
     if (!user) return;
     generateNotifications();
+
+    // Realtime subscriptions for auto-updating notifications
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        generateNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'debts' }, () => {
+        generateNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_budgets' }, () => {
+        generateNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'savings_goals' }, () => {
+        generateNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const generateNotifications = async () => {
