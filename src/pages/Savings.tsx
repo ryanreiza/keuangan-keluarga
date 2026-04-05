@@ -23,7 +23,6 @@ import { useSavings, CreateSavingsGoalData } from "@/hooks/useSavings";
 import { useCategories } from "@/hooks/useCategories";
 import { format } from "date-fns";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { format } from "date-fns";
 
 export default function Savings() {
   const [formData, setFormData] = useState({
