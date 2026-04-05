@@ -363,6 +363,14 @@ export default function Savings() {
           </Card>
         </div>
       </div>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteSavingsGoal(deleteTarget.id)}
+        title="Hapus Target Tabungan"
+        description={`Apakah Anda yakin ingin menghapus target "${deleteTarget?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+      />
     </div>
   );
 }
