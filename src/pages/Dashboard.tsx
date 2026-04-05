@@ -158,7 +158,7 @@ export default function Dashboard() {
               ))}
             </SelectContent>
           </Select>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90" size="sm">
+          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90" size="sm" onClick={() => navigate('/transactions')}>
             <DollarSign className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Tambah Transaksi</span>
             <span className="sm:hidden">Tambah</span>
