@@ -326,7 +326,7 @@ export default function Savings() {
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(goal)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => deleteSavingsGoal(goal.id)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => setDeleteTarget({ id: goal.id, name: goal.name })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
