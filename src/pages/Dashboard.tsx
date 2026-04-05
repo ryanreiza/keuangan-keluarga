@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
-import { Link } from "react-router-dom";
+
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 import { useState, useMemo } from "react";
