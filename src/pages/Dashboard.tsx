@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   
   const { 
