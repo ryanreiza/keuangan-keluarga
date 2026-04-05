@@ -261,19 +261,19 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/categories')}>
               <PieChart className="h-6 w-6" />
               <span className="text-sm">Analisis Kategori</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/reports')}>
               <BarChart3 className="h-6 w-6" />
               <span className="text-sm">Laporan Bulanan</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/savings')}>
               <Target className="h-6 w-6" />
               <span className="text-sm">Set Target Baru</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/accounts')}>
               <CreditCard className="h-6 w-6" />
               <span className="text-sm">Rekening Baru</span>
             </Button>
