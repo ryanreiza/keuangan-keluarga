@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
+import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
-import { Link } from "react-router-dom";
+
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 import { useState, useMemo } from "react";
@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   
   const { 
@@ -157,7 +158,7 @@ export default function Dashboard() {
               ))}
             </SelectContent>
           </Select>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90" size="sm">
+          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90" size="sm" onClick={() => navigate('/transactions')}>
             <DollarSign className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Tambah Transaksi</span>
             <span className="sm:hidden">Tambah</span>
@@ -260,19 +261,19 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/categories')}>
               <PieChart className="h-6 w-6" />
               <span className="text-sm">Analisis Kategori</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/reports')}>
               <BarChart3 className="h-6 w-6" />
               <span className="text-sm">Laporan Bulanan</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/savings')}>
               <Target className="h-6 w-6" />
               <span className="text-sm">Set Target Baru</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => navigate('/accounts')}>
               <CreditCard className="h-6 w-6" />
               <span className="text-sm">Rekening Baru</span>
             </Button>

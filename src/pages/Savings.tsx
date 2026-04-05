@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useSavings, CreateSavingsGoalData } from "@/hooks/useSavings";
 import { useCategories } from "@/hooks/useCategories";
 import { format } from "date-fns";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 export default function Savings() {
   const [formData, setFormData] = useState({
@@ -34,6 +35,7 @@ export default function Savings() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { savingsGoals, loading: savingsLoading, createSavingsGoal, updateSavingsGoal, deleteSavingsGoal } = useSavings();
   const { categories } = useCategories();
@@ -323,7 +325,7 @@ export default function Savings() {
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(goal)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => deleteSavingsGoal(goal.id)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => setDeleteTarget({ id: goal.id, name: goal.name })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -360,6 +362,14 @@ export default function Savings() {
           </Card>
         </div>
       </div>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteSavingsGoal(deleteTarget.id)}
+        title="Hapus Target Tabungan"
+        description={`Apakah Anda yakin ingin menghapus target "${deleteTarget?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+      />
     </div>
   );
 }
