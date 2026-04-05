@@ -36,6 +36,7 @@ export default function Savings() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { savingsGoals, loading: savingsLoading, createSavingsGoal, updateSavingsGoal, deleteSavingsGoal } = useSavings();
   const { categories } = useCategories();
