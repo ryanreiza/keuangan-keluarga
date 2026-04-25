@@ -16,8 +16,10 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  Loader2
+  Loader2,
+  PiggyBank
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useState } from "react";
 import { useSavings, CreateSavingsGoalData } from "@/hooks/useSavings";
 import { useCategories } from "@/hooks/useCategories";
@@ -119,13 +121,18 @@ export default function Savings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Pelacak Tabungan</h1>
-          <p className="text-muted-foreground mt-1">Kelola target tabungan dan pantau progress pencapaian</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-gradient-primary shadow-elegant">
+            <PiggyBank className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-foreground">Pelacak Tabungan</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Kelola target tabungan dan pantau progress pencapaian</p>
+          </div>
         </div>
         <Button 
-          className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+          className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
           onClick={() => setShowForm(!showForm)}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -227,73 +234,85 @@ export default function Savings() {
         <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gradient-primary shadow-card border-0">
+            <Card className="bg-gradient-primary shadow-elegant border-0 rounded-2xl overflow-hidden hover-lift">
               <CardContent className="p-6 text-primary-foreground">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm opacity-90 mb-1">Total Target</p>
-                    <p className="text-2xl font-bold">Rp {totalTarget.toLocaleString('id-ID')}</p>
+                    <p className="text-sm opacity-90 mb-1 font-medium">Total Target</p>
+                    <p className="text-2xl font-bold font-mono-num">Rp {totalTarget.toLocaleString('id-ID')}</p>
                   </div>
-                  <Target className="h-8 w-8 opacity-80" />
+                  <div className="p-3 rounded-xl bg-white/15 backdrop-blur-sm">
+                    <Target className="h-6 w-6" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-success shadow-card border-0">
+            <Card className="bg-gradient-success shadow-elegant border-0 rounded-2xl overflow-hidden hover-lift">
               <CardContent className="p-6 text-success-foreground">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm opacity-90 mb-1">Sudah Terkumpul</p>
-                    <p className="text-2xl font-bold">Rp {totalSaved.toLocaleString('id-ID')}</p>
+                    <p className="text-sm opacity-90 mb-1 font-medium">Sudah Terkumpul</p>
+                    <p className="text-2xl font-bold font-mono-num">Rp {totalSaved.toLocaleString('id-ID')}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 opacity-80" />
+                  <div className="p-3 rounded-xl bg-white/15 backdrop-blur-sm">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card shadow-card border-0">
+            <Card className="bg-gradient-card shadow-card border border-border/40 rounded-2xl hover-lift">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Progress Keseluruhan</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm text-muted-foreground mb-1 font-medium">Progress Keseluruhan</p>
+                    <p className="text-2xl font-bold text-foreground font-mono-num">
                       {totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0}%
                     </p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-success" />
+                  <div className="p-3 rounded-xl bg-gradient-primary-soft">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Goals List */}
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border border-border/40 rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-lg">Daftar Target Tabungan</CardTitle>
+              <CardTitle className="text-lg font-display">Daftar Target Tabungan</CardTitle>
               <CardDescription>Semua target tabungan dan progressnya ({savingsGoals.length} target)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {savingsGoals.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  Belum ada target tabungan. Buat target pertama Anda untuk mulai menabung dengan tujuan yang jelas.
-                </div>
+                <EmptyState
+                  icon={PiggyBank}
+                  title="Belum ada target tabungan"
+                  description="Buat target pertama Anda untuk mulai menabung dengan tujuan yang jelas."
+                  action={{
+                    label: "Tambah Target",
+                    onClick: () => setShowForm(true),
+                  }}
+                />
               ) : (
                 savingsGoals.map((goal) => {
                   const progress = getProgress(goal.current_amount, goal.target_amount);
                   const StatusIcon = getStatusIcon(progress);
                   
                   return (
-                    <div key={goal.id} className="p-6 border border-border rounded-lg hover:bg-surface/50 transition-colors group">
+                    <div key={goal.id} className="p-6 border border-border/60 rounded-2xl hover:bg-surface/50 hover:shadow-md transition-all group">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-foreground">{goal.name}</h3>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-lg font-semibold font-display text-foreground">{goal.name}</h3>
                             <Badge className={getStatusColor(progress)}>
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {progress >= 100 ? 'Tercapai' : progress >= 50 ? 'On Track' : 'Perlu Usaha'}
                             </Badge>
                             {goal.categories && (
-                              <Badge variant="outline">
+                              <Badge variant="outline" className="rounded-md">
                                 {goal.categories.name}
                               </Badge>
                             )}
@@ -301,31 +320,31 @@ export default function Savings() {
                           
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                             <div>
-                              <span className="text-muted-foreground">Progress:</span>
-                              <p className="font-medium text-foreground">{progress.toFixed(1)}%</p>
+                              <span className="text-muted-foreground text-xs">Progress</span>
+                              <p className="font-semibold text-foreground font-mono-num">{progress.toFixed(1)}%</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Terkumpul:</span>
-                              <p className="font-medium text-success">Rp {goal.current_amount.toLocaleString('id-ID')}</p>
+                              <span className="text-muted-foreground text-xs">Terkumpul</span>
+                              <p className="font-semibold text-success font-mono-num">Rp {goal.current_amount.toLocaleString('id-ID')}</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Target:</span>
-                              <p className="font-medium text-foreground">Rp {goal.target_amount.toLocaleString('id-ID')}</p>
+                              <span className="text-muted-foreground text-xs">Target</span>
+                              <p className="font-semibold text-foreground font-mono-num">Rp {goal.target_amount.toLocaleString('id-ID')}</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Target Tanggal:</span>
-                              <p className="font-medium text-foreground">
-                                {goal.target_date ? new Date(goal.target_date).toLocaleDateString('id-ID') : 'Tidak ditetapkan'}
+                              <span className="text-muted-foreground text-xs">Target Tanggal</span>
+                              <p className="font-semibold text-foreground font-mono-num">
+                                {goal.target_date ? new Date(goal.target_date).toLocaleDateString('id-ID') : '—'}
                               </p>
                             </div>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(goal)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleEdit(goal)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => setDeleteTarget({ id: goal.id, name: goal.name })}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-danger hover:text-danger" onClick={() => setDeleteTarget({ id: goal.id, name: goal.name })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

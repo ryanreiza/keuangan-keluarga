@@ -500,12 +500,12 @@ export default function Reports() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary rounded-lg">
-            <FileBarChart className="h-6 w-6 text-primary-foreground" />
+          <div className="p-2.5 rounded-2xl bg-gradient-primary shadow-elegant">
+            <FileBarChart className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Laporan Keuangan</h1>
-            <p className="text-muted-foreground">Analisis perbandingan budget vs aktual</p>
+            <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight">Laporan Keuangan</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Analisis perbandingan budget vs aktual</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -513,7 +513,7 @@ export default function Reports() {
             onClick={exportToExcel} 
             disabled={isExporting}
             variant="outline"
-            className="gap-2"
+            className="gap-2 rounded-xl"
           >
             <FileSpreadsheet className="h-4 w-4" />
             Export Excel
@@ -521,7 +521,7 @@ export default function Reports() {
           <Button 
             onClick={exportToPDF} 
             disabled={isExporting}
-            className="gap-2"
+            className="gap-2 rounded-xl bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant"
           >
             <FileText className="h-4 w-4" />
             Export PDF
@@ -784,35 +784,35 @@ export default function Reports() {
 
               {/* Summary Statistics */}
               <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Total Yang Diharapkan</CardTitle>
+                <Card className="bg-gradient-primary text-primary-foreground border-0 shadow-elegant rounded-2xl overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium opacity-90">Total Yang Diharapkan</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-primary">
+                    <p className="text-2xl font-bold font-mono-num">
                       {formatCurrency(chartData.reduce((sum, item) => sum + item.expected, 0))}
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Total Yang Sebenarnya</CardTitle>
+                <Card className={`border-0 shadow-elegant rounded-2xl overflow-hidden text-white ${viewType === 'expense' ? 'bg-gradient-danger' : 'bg-gradient-success'}`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium opacity-90">Total Yang Sebenarnya</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className={`text-2xl font-bold ${viewType === 'expense' ? 'text-red-500' : 'text-green-500'}`}>
+                    <p className="text-2xl font-bold font-mono-num">
                       {formatCurrency(chartData.reduce((sum, item) => sum + item.actual, 0))}
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Selisih Total</CardTitle>
+                <Card className="bg-gradient-card border border-border/40 shadow-card rounded-2xl">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Selisih Total</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className={`text-2xl font-bold ${
+                    <p className={`text-2xl font-bold font-mono-num ${
                       chartData.reduce((sum, item) => sum + item.difference, 0) > 0 
-                        ? 'text-red-500' 
-                        : 'text-green-500'
+                        ? 'text-danger' 
+                        : 'text-success'
                     }`}>
                       {formatCurrency(Math.abs(chartData.reduce((sum, item) => sum + item.difference, 0)))}
                     </p>
