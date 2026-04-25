@@ -54,22 +54,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
-          <header className="h-14 md:h-16 bg-background border-b border-border flex items-center justify-between px-4 md:px-6 shadow-sm">
-            <div className="flex items-center gap-3 md:gap-4">
+          <header className="h-14 md:h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+            <div className="flex items-center gap-3 md:gap-4 min-w-0">
               {!isMobile && (
-                <SidebarTrigger className="p-2 hover:bg-accent rounded-lg transition-colors" />
+                <SidebarTrigger className="p-2 hover:bg-accent rounded-lg transition-colors shrink-0" />
               )}
-              <div className="text-xs md:text-sm text-muted-foreground">
-                {new Date().toLocaleDateString("id-ID", isMobile ? { 
-                  month: "short", 
-                  day: "numeric",
-                  year: "numeric"
-                } : { 
-                  weekday: "long", 
-                  year: "numeric", 
-                  month: "long", 
-                  day: "numeric" 
-                })}
+              <div className="min-w-0">
+                {!isMobile && user && (
+                  <p className="text-sm font-semibold text-foreground leading-tight truncate">
+                    {(() => {
+                      const h = new Date().getHours();
+                      const greet = h < 11 ? "Selamat pagi" : h < 15 ? "Selamat siang" : h < 19 ? "Selamat sore" : "Selamat malam";
+                      const name = (user.user_metadata?.full_name || "").split(" ")[0] || "Pengguna";
+                      return `${greet}, ${name} 👋`;
+                    })()}
+                  </p>
+                )}
+                <p className="text-[11px] md:text-xs text-muted-foreground leading-tight truncate">
+                  {new Date().toLocaleDateString("id-ID", isMobile ? {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric"
+                  } : {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric"
+                  })}
+                </p>
               </div>
             </div>
 
