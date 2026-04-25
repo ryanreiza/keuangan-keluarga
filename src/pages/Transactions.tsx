@@ -447,11 +447,11 @@ export default function Transactions() {
         )}
 
         {/* Transaction List */}
-        <Card className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} shadow-card border-0`}>
+        <Card className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} shadow-card border border-border/40 rounded-2xl`}>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <CardTitle className="text-lg">Daftar Transaksi</CardTitle>
+                <CardTitle className="text-lg font-display">Daftar Transaksi</CardTitle>
                 <CardDescription>Riwayat semua transaksi ({filteredTransactions.length} transaksi)</CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -459,7 +459,7 @@ export default function Transactions() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Cari transaksi..." 
-                    className="pl-10 w-64"
+                    className="pl-10 w-56 md:w-64 rounded-xl"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
