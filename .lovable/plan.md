@@ -1,67 +1,90 @@
 
+# Pendapat Tampilan & Rencana Redesign Profesional
 
-# Saran Optimasi Aplikasi Keuangan
+## Pendapat Singkat
 
-Setelah meninjau seluruh kode, berikut area yang perlu dioptimalkan:
+Tampilan saat ini sudah **rapi dan fungsional**, tapi belum terasa "kelas profesional" seperti aplikasi keuangan modern (Jenius, Jago, Mint, YNAB). Beberapa kelemahan visual yang terlihat:
 
----
+- **Halaman Auth** terlalu polos — card mengambang di tengah dengan banyak ruang kosong, tanpa branding/visual pendukung. Tidak terasa seperti produk fintech.
+- **Palet warna** didominasi biru navy yang flat. Tidak ada accent color yang membuat data finansial "hidup" (hijau pemasukan, merah pengeluaran terlihat soft). Background putih polos terasa datar.
+- **Sidebar** terlalu padat — setiap menu punya 2 baris (judul + deskripsi) sehingga panjang dan ramai. Aplikasi fintech profesional biasanya sidebar minimalis 1 baris.
+- **Stat cards** di Dashboard pakai persentase perubahan **hardcoded** (+8.5%, -2.1%) yang tidak nyata — terlihat sebagai mock, mengurangi kredibilitas.
+- **Tipografi** menggunakan default sans-serif (kemungkinan system font). Web keuangan profesional pakai font seperti **Inter, Plus Jakarta Sans, atau Geist** dengan tabular numerals untuk angka.
+- **Tidak ada visualisasi data ringkas** di hero dashboard (sparkline, mini chart) — semua angka mentah.
+- **Spacing & shadow** kurang konsisten — beberapa card pakai `shadow-card` lemah, beberapa tanpa border, terkesan "flat" bukan "premium".
+- **Empty state, loading state, dan ikon** generik — tidak ada karakter brand.
 
-## 1. Halaman Pengaturan Belum Fungsional
-Halaman Settings saat ini hanya tampilan statis — tombol "Simpan Perubahan", "Ubah Password", dan switch notifikasi/dark mode **tidak terhubung ke backend**. Perlu difungsikan:
-- Update profil (nama) ke Supabase Auth
-- Ubah password via Supabase Auth
-- Dark mode toggle dengan persistensi ke localStorage
-- Preferensi notifikasi disimpan ke database
+## Yang Akan Diubah
 
-## 2. Lazy Loading & Code Splitting
-Semua halaman di-import secara langsung di `App.tsx`, artinya seluruh kode dimuat sekaligus saat pertama kali buka. Gunakan `React.lazy()` + `Suspense` agar halaman dimuat hanya saat diakses — mempercepat initial load.
+### 1. Design System Refresh (`index.css` + `tailwind.config.ts`)
+- **Font profesional**: Tambahkan **Plus Jakarta Sans** (untuk teks) + **JetBrains Mono / tabular-nums** untuk angka uang. Load dari Google Fonts di `index.html`.
+- **Palet warna lebih hidup**:
+  - Primary: ubah dari navy gelap kaku (`217 91% 25%`) → biru lebih segar & premium (`221 83% 53%` atau gradien biru-ungu).
+  - Tambah accent color (mint/teal) untuk highlight CTA sekunder.
+  - Success/danger lebih saturated untuk badge transaksi.
+- **Background**: Ganti putih polos jadi `bg-gradient-surface` halus + grid/dot pattern subtle untuk kesan premium.
+- **Shadow**: Buat shadow lebih lembut tapi berdimensi (multi-layer) untuk kesan elevated card.
+- **Radius**: Naikkan radius card dari 0.75rem → 1rem untuk look modern.
 
-## 3. Tombol "Tambah Transaksi" di Dashboard Belum Berfungsi
-Tombol di Dashboard hanya tampilan, tidak membuka form atau mengarahkan ke halaman transaksi.
+### 2. Halaman Auth (Login/Daftar) — Redesign Total
+- **Layout split-screen 2 kolom** (desktop):
+  - Kiri: form login (clean, fokus).
+  - Kanan: panel branded dengan ilustrasi/mockup dashboard, tagline ("Kelola keuangan keluarga lebih cerdas"), 3 bullet benefit (real-time sync, multi-rekening, laporan otomatis).
+- Mobile: tetap single column, tapi tambah hero section di atas form.
+- Logo + brand name lebih besar, dengan tagline.
+- Tombol Login pakai gradient primary + micro-interaction (hover lift).
 
-## 4. Tombol "Quick Actions" di Dashboard Tidak Fungsional
-Keempat tombol aksi cepat (Analisis Kategori, Laporan Bulanan, Set Target Baru, Rekening Baru) belum terhubung ke halaman masing-masing.
+### 3. Sidebar — Lebih Minimalis & Premium
+- Hilangkan deskripsi menu (1 baris saja: ikon + judul).
+- Group menu jadi 2 sections: **Overview** (Dashboard, Tahunan, Laporan) dan **Manajemen** (Transaksi, Rekening, Kategori, Tabungan, Utang).
+- "Total Saldo" card di footer: ganti background flat jadi card glassmorphism/gradient yang lebih halus, tambah label "Saldo gabungan semua rekening" + ikon mata untuk hide/show angka (privacy).
+- User info: tambah avatar dengan initial nama (bukan ikon User generik).
 
-## 5. Empty States & Error Handling
-Beberapa halaman tidak menampilkan pesan yang baik saat data kosong (misal: Dashboard tanpa transaksi tetap menampilkan angka 0 tanpa panduan). Perlu empty state yang informatif dengan CTA untuk menambah data.
+### 4. Dashboard — Lebih Insightful
+- **Stat cards**: hapus persentase hardcoded; ganti dengan **perbandingan vs bulan lalu yang dihitung real** (jika tidak ada data, jangan tampilkan baris perubahan).
+- Tambah **mini sparkline** di setiap stat card (tren 6 bulan terakhir) pakai recharts.
+- Header dashboard: tambah greeting dinamis ("Selamat pagi, [Nama]") + tanggal hari ini.
+- "Aksi Cepat" diberi ikon berwarna (bg circle gradient), bukan outline polos.
 
-## 6. Konfirmasi Delete yang Konsisten
-Halaman Savings dan beberapa tempat lain melakukan delete langsung tanpa dialog konfirmasi, berbeda dengan Transactions yang sudah punya `DeleteTransactionDialog`.
+### 5. Tabel Transaksi & List — Polish
+- Row hover state lebih halus (subtle bg + shift kiri kecil).
+- Amount pakai `font-mono tabular-nums` agar angka lurus.
+- Badge tipe transaksi (income/expense) pakai pill berwarna soft (bg-success/10 text-success).
+- Ikon kategori dalam lingkaran berwarna (bukan teks polos).
 
-## 7. Validasi Form Lebih Ketat
-Form transaksi dan form lainnya belum memvalidasi input secara menyeluruh (misalnya: nominal negatif, tanggal di masa depan yang tidak masuk akal, dll).
+### 6. Empty States Konsisten
+- Buat komponen `<EmptyState icon title description action />` reusable, pakai ilustrasi sederhana (lucide icon dalam circle gradient) — diterapkan di Transactions, Savings, Debts, Reports kosong.
 
----
+### 7. Header / Topbar
+- Tambah search global (cari transaksi cepat) di header.
+- Notifikasi bell dengan badge count.
+- Avatar dropdown untuk profile/settings/logout (lebih konvensional daripada logout di sidebar).
 
-## Rekomendasi Prioritas
+## Rincian Teknis
 
-| Prioritas | Item | Dampak |
-|-----------|------|--------|
-| Tinggi | Fungsikan halaman Settings | User tidak bisa ubah profil/password |
-| Tinggi | Fungsikan tombol Dashboard | UX buruk — tombol ada tapi tidak kerja |
-| Sedang | Lazy loading halaman | Performa initial load |
-| Sedang | Empty states | UX untuk user baru |
-| Rendah | Konfirmasi delete konsisten | Mencegah hapus tidak sengaja |
-| Rendah | Validasi form | Data integrity |
+**File yang akan diubah:**
+- `index.html` — load Google Fonts (Plus Jakarta Sans, JetBrains Mono).
+- `tailwind.config.ts` — daftarkan fontFamily `sans` & `mono`, tambah util `tabular-nums`.
+- `src/index.css` — refresh CSS variables (primary, gradient, shadow, radius), tambah pattern background utility.
+- `src/pages/Auth.tsx` — split-screen layout dengan brand panel.
+- `src/components/FinancialSidebar.tsx` — simplifikasi item, group sections, avatar inisial, balance card baru dengan show/hide.
+- `src/components/layout/DashboardLayout.tsx` — header baru (greeting, search, notifikasi, avatar dropdown).
+- `src/pages/Dashboard.tsx` — greeting dinamis, sparkline di stat cards, hapus persentase hardcoded, quick actions berwarna.
+- `src/components/EmptyState.tsx` (baru) — komponen reusable.
+- `src/pages/Transactions.tsx` — apply badge & font-mono amount, ikon kategori berwarna.
 
----
+**Tidak diubah:** Logika bisnis, hooks Supabase, struktur routing, fitur backend — purely visual upgrade.
 
-## Detail Teknis
+## Prioritas (Bisa Bertahap)
 
-### Settings Fungsional
-- Gunakan `supabase.auth.updateUser()` untuk update nama dan password
-- Buat tabel `user_preferences` untuk menyimpan preferensi notifikasi
-- Implementasi dark mode dengan CSS class toggle + localStorage
+| Prioritas | Item | Impact |
+|---|---|---|
+| Tinggi | Design tokens (font, warna, shadow) | Look & feel keseluruhan langsung naik |
+| Tinggi | Redesign Auth split-screen | First impression user |
+| Tinggi | Sidebar simplifikasi + balance card baru | Navigasi inti terlihat tiap halaman |
+| Sedang | Dashboard sparkline + greeting + hapus angka palsu | Kredibilitas |
+| Sedang | Header dengan search + notif + avatar | Konvensi UX modern |
+| Rendah | Empty states reusable | Konsistensi |
+| Rendah | Polish tabel transaksi | Detail kerapian |
 
-### Lazy Loading
-```text
-// App.tsx
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Transactions = React.lazy(() => import('./pages/Transactions'));
-// ... dst, bungkus dengan <Suspense fallback={<Loader />}>
-```
-
-### Quick Actions Dashboard
-- Hubungkan 4 tombol ke `navigate('/reports')`, `navigate('/savings')`, `navigate('/accounts')`, dll
-- Tombol "Tambah Transaksi" buka dialog atau navigate ke `/transactions`
-
+Setelah disetujui, saya akan implementasikan **semua item di atas** dalam satu kali eksekusi (urut dari design tokens → komponen umum → halaman).
