@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc, Receipt, Inbox } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -235,16 +236,21 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Transaksi</h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            {monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Kelola semua transaksi keuangan Anda'}
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-gradient-primary shadow-elegant">
+            <Receipt className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground tracking-tight">Transaksi</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Kelola semua transaksi keuangan Anda'}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-36 md:w-40">
+            <SelectTrigger className="w-36 md:w-40 rounded-xl">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -261,7 +267,7 @@ export default function Transactions() {
           />
           <ResetTransactionsDialog onReset={resetAllTransactions} />
           <Button 
-            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
             size="sm"
             onClick={() => setShowForm(!showForm)}
           >
@@ -572,7 +578,7 @@ export default function Transactions() {
                         )}
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{transaction.description}</p>
+                        <p className="font-semibold text-foreground">{transaction.description}</p>
                         <p className="text-sm text-muted-foreground">
                           {transaction.type === 'transfer' 
                             ? `Transfer antar rekening`
@@ -590,12 +596,12 @@ export default function Transactions() {
                           : transaction.type === 'expense' || transaction.type === 'debt_payment'
                           ? 'destructive'
                           : 'secondary'
-                      } className="mb-1">
+                      } className="mb-1 rounded-md">
                         {transaction.type === 'income' ? 'Pemasukan' : 
                          transaction.type === 'expense' ? 'Pengeluaran' : 
                          transaction.type === 'debt_payment' ? 'Bayar Utang' : 'Transfer'}
                       </Badge>
-                      <p className={`font-bold ${
+                      <p className={`font-bold font-mono-num ${
                         transaction.type === 'income' 
                           ? 'text-success' 
                           : transaction.type === 'expense' || transaction.type === 'debt_payment'
@@ -609,7 +615,7 @@ export default function Transactions() {
                           : ''
                         }Rp {transaction.amount.toLocaleString("id-ID")}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground font-mono-num">
                         {new Date(transaction.transaction_date).toLocaleDateString("id-ID")}
                       </p>
                     </div>
@@ -625,9 +631,15 @@ export default function Transactions() {
                   </StaggerItem>
                 ))
               ) : (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">Tidak ada transaksi yang ditemukan</p>
-                </div>
+                <EmptyState
+                  icon={Inbox}
+                  title="Belum ada transaksi"
+                  description="Belum ada transaksi pada periode ini. Tambahkan transaksi pertama Anda untuk mulai melacak keuangan."
+                  action={{
+                    label: "Tambah Transaksi",
+                    onClick: () => setShowForm(true),
+                  }}
+                />
               )}
             </StaggerContainer>
           </CardContent>
