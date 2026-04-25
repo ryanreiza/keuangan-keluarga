@@ -287,26 +287,32 @@ export default function Savings() {
             </CardHeader>
             <CardContent className="space-y-6">
               {savingsGoals.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  Belum ada target tabungan. Buat target pertama Anda untuk mulai menabung dengan tujuan yang jelas.
-                </div>
+                <EmptyState
+                  icon={PiggyBank}
+                  title="Belum ada target tabungan"
+                  description="Buat target pertama Anda untuk mulai menabung dengan tujuan yang jelas."
+                  action={{
+                    label: "Tambah Target",
+                    onClick: () => setShowForm(true),
+                  }}
+                />
               ) : (
                 savingsGoals.map((goal) => {
                   const progress = getProgress(goal.current_amount, goal.target_amount);
                   const StatusIcon = getStatusIcon(progress);
                   
                   return (
-                    <div key={goal.id} className="p-6 border border-border rounded-lg hover:bg-surface/50 transition-colors group">
+                    <div key={goal.id} className="p-6 border border-border/60 rounded-2xl hover:bg-surface/50 hover:shadow-md transition-all group">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-foreground">{goal.name}</h3>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-lg font-semibold font-display text-foreground">{goal.name}</h3>
                             <Badge className={getStatusColor(progress)}>
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {progress >= 100 ? 'Tercapai' : progress >= 50 ? 'On Track' : 'Perlu Usaha'}
                             </Badge>
                             {goal.categories && (
-                              <Badge variant="outline">
+                              <Badge variant="outline" className="rounded-md">
                                 {goal.categories.name}
                               </Badge>
                             )}
@@ -314,31 +320,31 @@ export default function Savings() {
                           
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                             <div>
-                              <span className="text-muted-foreground">Progress:</span>
-                              <p className="font-medium text-foreground">{progress.toFixed(1)}%</p>
+                              <span className="text-muted-foreground text-xs">Progress</span>
+                              <p className="font-semibold text-foreground font-mono-num">{progress.toFixed(1)}%</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Terkumpul:</span>
-                              <p className="font-medium text-success">Rp {goal.current_amount.toLocaleString('id-ID')}</p>
+                              <span className="text-muted-foreground text-xs">Terkumpul</span>
+                              <p className="font-semibold text-success font-mono-num">Rp {goal.current_amount.toLocaleString('id-ID')}</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Target:</span>
-                              <p className="font-medium text-foreground">Rp {goal.target_amount.toLocaleString('id-ID')}</p>
+                              <span className="text-muted-foreground text-xs">Target</span>
+                              <p className="font-semibold text-foreground font-mono-num">Rp {goal.target_amount.toLocaleString('id-ID')}</p>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Target Tanggal:</span>
-                              <p className="font-medium text-foreground">
-                                {goal.target_date ? new Date(goal.target_date).toLocaleDateString('id-ID') : 'Tidak ditetapkan'}
+                              <span className="text-muted-foreground text-xs">Target Tanggal</span>
+                              <p className="font-semibold text-foreground font-mono-num">
+                                {goal.target_date ? new Date(goal.target_date).toLocaleDateString('id-ID') : '—'}
                               </p>
                             </div>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(goal)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleEdit(goal)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-danger hover:text-danger" onClick={() => setDeleteTarget({ id: goal.id, name: goal.name })}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-danger hover:text-danger" onClick={() => setDeleteTarget({ id: goal.id, name: goal.name })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
