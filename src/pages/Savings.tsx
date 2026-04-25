@@ -234,49 +234,55 @@ export default function Savings() {
         <div className={`${showForm ? 'xl:col-span-3' : 'xl:col-span-4'} space-y-6`}>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gradient-primary shadow-card border-0">
+            <Card className="bg-gradient-primary shadow-elegant border-0 rounded-2xl overflow-hidden hover-lift">
               <CardContent className="p-6 text-primary-foreground">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm opacity-90 mb-1">Total Target</p>
-                    <p className="text-2xl font-bold">Rp {totalTarget.toLocaleString('id-ID')}</p>
+                    <p className="text-sm opacity-90 mb-1 font-medium">Total Target</p>
+                    <p className="text-2xl font-bold font-mono-num">Rp {totalTarget.toLocaleString('id-ID')}</p>
                   </div>
-                  <Target className="h-8 w-8 opacity-80" />
+                  <div className="p-3 rounded-xl bg-white/15 backdrop-blur-sm">
+                    <Target className="h-6 w-6" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-success shadow-card border-0">
+            <Card className="bg-gradient-success shadow-elegant border-0 rounded-2xl overflow-hidden hover-lift">
               <CardContent className="p-6 text-success-foreground">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm opacity-90 mb-1">Sudah Terkumpul</p>
-                    <p className="text-2xl font-bold">Rp {totalSaved.toLocaleString('id-ID')}</p>
+                    <p className="text-sm opacity-90 mb-1 font-medium">Sudah Terkumpul</p>
+                    <p className="text-2xl font-bold font-mono-num">Rp {totalSaved.toLocaleString('id-ID')}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 opacity-80" />
+                  <div className="p-3 rounded-xl bg-white/15 backdrop-blur-sm">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card shadow-card border-0">
+            <Card className="bg-gradient-card shadow-card border border-border/40 rounded-2xl hover-lift">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Progress Keseluruhan</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm text-muted-foreground mb-1 font-medium">Progress Keseluruhan</p>
+                    <p className="text-2xl font-bold text-foreground font-mono-num">
                       {totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0}%
                     </p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-success" />
+                  <div className="p-3 rounded-xl bg-gradient-primary-soft">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Goals List */}
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border border-border/40 rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-lg">Daftar Target Tabungan</CardTitle>
+              <CardTitle className="text-lg font-display">Daftar Target Tabungan</CardTitle>
               <CardDescription>Semua target tabungan dan progressnya ({savingsGoals.length} target)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
