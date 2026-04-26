@@ -496,19 +496,19 @@ export default function Reports() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-gradient-primary shadow-elegant">
             <FileBarChart className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight">Laporan Keuangan</h1>
+            <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-foreground">Laporan Keuangan</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Analisis perbandingan budget vs aktual</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button 
             onClick={exportToExcel} 
             disabled={isExporting}
