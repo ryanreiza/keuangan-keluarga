@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc, Receipt, Inbox } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc, Receipt, Inbox, PiggyBank } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
