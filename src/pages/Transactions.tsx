@@ -49,7 +49,7 @@ export default function Transactions() {
   const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
 
   const { transactions, loading: transactionsLoading, createTransaction, updateTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories, loading: categoriesLoading, createCategory } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { debts, loading: debtsLoading } = useDebts();
   const { savingsGoals, loading: savingsLoading } = useSavings();
