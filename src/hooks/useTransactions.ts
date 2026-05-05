@@ -95,6 +95,11 @@ export const useTransactions = () => {
         insertData.debt_id = transactionData.debt_id;
       }
 
+      // Add savings_goal_id for savings contributions
+      if (transactionData.savings_goal_id) {
+        insertData.savings_goal_id = transactionData.savings_goal_id;
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .insert([insertData])
