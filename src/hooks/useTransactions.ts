@@ -33,6 +33,7 @@ export interface CreateTransactionData {
   account_id: string;
   destination_account_id?: string; // Required only for transfer type
   debt_id?: string; // Required only for debt_payment type
+  savings_goal_id?: string; // Required only for savings contribution
   transaction_date: string;
 }
 
