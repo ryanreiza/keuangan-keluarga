@@ -336,19 +336,20 @@ export default function Transactions() {
 
               <div className="space-y-2">
                 <Label>Tipe</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: "", debt_id: ""})}>
+                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: "", debt_id: "", savings_goal_id: ""})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih tipe transaksi" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border z-50">
                     <SelectItem value="income">Pemasukan</SelectItem>
                     <SelectItem value="expense">Pengeluaran</SelectItem>
+                    <SelectItem value="savings">Menabung</SelectItem>
                     <SelectItem value="transfer">Transfer Antar Rekening</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.type !== 'transfer' && formData.type !== 'debt_payment' && (
+              {formData.type !== 'transfer' && formData.type !== 'debt_payment' && formData.type !== 'savings' && (
                 <div className="space-y-2">
                   <Label>Kategori</Label>
                   <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value, debt_id: ""})} disabled={!formData.type}>
@@ -363,6 +364,32 @@ export default function Transactions() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* Show savings goal selection when type is 'savings' */}
+              {formData.type === 'savings' && (
+                <div className="space-y-2">
+                  <Label>Tujuan Tabungan</Label>
+                  <Select value={formData.savings_goal_id} onValueChange={(value) => setFormData({...formData, savings_goal_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih tujuan tabungan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {savingsGoals.filter(g => !g.is_achieved).length > 0 ? (
+                        savingsGoals.filter(g => !g.is_achieved).map((goal) => (
+                          <SelectItem key={goal.id} value={goal.id}>
+                            {goal.name} — Rp {goal.current_amount.toLocaleString("id-ID")} / {goal.target_amount.toLocaleString("id-ID")}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Belum ada tujuan tabungan aktif
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Progress tabungan akan otomatis bertambah.</p>
                 </div>
               )}
 
