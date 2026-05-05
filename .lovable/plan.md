@@ -1,90 +1,68 @@
 
-# Pendapat Tampilan & Rencana Redesign Profesional
+# Integrasi Otomatis Transaksi Menabung ke Pelacak Tabungan
 
-## Pendapat Singkat
+Saat ini, ketika user menabung, mereka harus:
+1. Catat transaksi pengeluaran di halaman Transaksi
+2. Buka halaman Tabungan, lalu update progress goal secara manual
 
-Tampilan saat ini sudah **rapi dan fungsional**, tapi belum terasa "kelas profesional" seperti aplikasi keuangan modern (Jenius, Jago, Mint, YNAB). Beberapa kelemahan visual yang terlihat:
+Akan kita buat menjadi **satu langkah saja**: pilih tipe transaksi "Menabung" → pilih goal tujuan → otomatis tercatat sebagai transaksi & progress goal bertambah.
 
-- **Halaman Auth** terlalu polos — card mengambang di tengah dengan banyak ruang kosong, tanpa branding/visual pendukung. Tidak terasa seperti produk fintech.
-- **Palet warna** didominasi biru navy yang flat. Tidak ada accent color yang membuat data finansial "hidup" (hijau pemasukan, merah pengeluaran terlihat soft). Background putih polos terasa datar.
-- **Sidebar** terlalu padat — setiap menu punya 2 baris (judul + deskripsi) sehingga panjang dan ramai. Aplikasi fintech profesional biasanya sidebar minimalis 1 baris.
-- **Stat cards** di Dashboard pakai persentase perubahan **hardcoded** (+8.5%, -2.1%) yang tidak nyata — terlihat sebagai mock, mengurangi kredibilitas.
-- **Tipografi** menggunakan default sans-serif (kemungkinan system font). Web keuangan profesional pakai font seperti **Inter, Plus Jakarta Sans, atau Geist** dengan tabular numerals untuk angka.
-- **Tidak ada visualisasi data ringkas** di hero dashboard (sparkline, mini chart) — semua angka mentah.
-- **Spacing & shadow** kurang konsisten — beberapa card pakai `shadow-card` lemah, beberapa tanpa border, terkesan "flat" bukan "premium".
-- **Empty state, loading state, dan ikon** generik — tidak ada karakter brand.
+---
 
-## Yang Akan Diubah
+## Perubahan UX
 
-### 1. Design System Refresh (`index.css` + `tailwind.config.ts`)
-- **Font profesional**: Tambahkan **Plus Jakarta Sans** (untuk teks) + **JetBrains Mono / tabular-nums** untuk angka uang. Load dari Google Fonts di `index.html`.
-- **Palet warna lebih hidup**:
-  - Primary: ubah dari navy gelap kaku (`217 91% 25%`) → biru lebih segar & premium (`221 83% 53%` atau gradien biru-ungu).
-  - Tambah accent color (mint/teal) untuk highlight CTA sekunder.
-  - Success/danger lebih saturated untuk badge transaksi.
-- **Background**: Ganti putih polos jadi `bg-gradient-surface` halus + grid/dot pattern subtle untuk kesan premium.
-- **Shadow**: Buat shadow lebih lembut tapi berdimensi (multi-layer) untuk kesan elevated card.
-- **Radius**: Naikkan radius card dari 0.75rem → 1rem untuk look modern.
+### Di Form Tambah Transaksi
+- Tambah opsi tipe baru: **"Menabung"** (di samping Income, Expense, Transfer, Debt Payment)
+- Saat dipilih "Menabung", muncul dropdown baru: **"Tujuan Tabungan"** (list dari `savings_goals` yang belum tercapai)
+- Field kategori akan otomatis pakai kategori "Tabungan" (auto-create kalau belum ada)
+- Dari sisi pencatatan keuangan, transaksi disimpan sebagai `expense` agar saldo rekening berkurang dengan benar (sama pola dengan Debt Payment)
 
-### 2. Halaman Auth (Login/Daftar) — Redesign Total
-- **Layout split-screen 2 kolom** (desktop):
-  - Kiri: form login (clean, fokus).
-  - Kanan: panel branded dengan ilustrasi/mockup dashboard, tagline ("Kelola keuangan keluarga lebih cerdas"), 3 bullet benefit (real-time sync, multi-rekening, laporan otomatis).
-- Mobile: tetap single column, tapi tambah hero section di atas form.
-- Logo + brand name lebih besar, dengan tagline.
-- Tombol Login pakai gradient primary + micro-interaction (hover lift).
+### Di Halaman Pelacak Tabungan
+- Progress bar setiap goal akan otomatis bertambah real-time saat transaksi menabung dibuat
+- Jika transaksi menabung dihapus → progress otomatis berkurang kembali
+- Tetap bisa edit `current_amount` manual untuk koreksi/saldo awal
 
-### 3. Sidebar — Lebih Minimalis & Premium
-- Hilangkan deskripsi menu (1 baris saja: ikon + judul).
-- Group menu jadi 2 sections: **Overview** (Dashboard, Tahunan, Laporan) dan **Manajemen** (Transaksi, Rekening, Kategori, Tabungan, Utang).
-- "Total Saldo" card di footer: ganti background flat jadi card glassmorphism/gradient yang lebih halus, tambah label "Saldo gabungan semua rekening" + ikon mata untuk hide/show angka (privacy).
-- User info: tambah avatar dengan initial nama (bukan ikon User generik).
+---
 
-### 4. Dashboard — Lebih Insightful
-- **Stat cards**: hapus persentase hardcoded; ganti dengan **perbandingan vs bulan lalu yang dihitung real** (jika tidak ada data, jangan tampilkan baris perubahan).
-- Tambah **mini sparkline** di setiap stat card (tren 6 bulan terakhir) pakai recharts.
-- Header dashboard: tambah greeting dinamis ("Selamat pagi, [Nama]") + tanggal hari ini.
-- "Aksi Cepat" diberi ikon berwarna (bg circle gradient), bukan outline polos.
+## Detail Teknis
 
-### 5. Tabel Transaksi & List — Polish
-- Row hover state lebih halus (subtle bg + shift kiri kecil).
-- Amount pakai `font-mono tabular-nums` agar angka lurus.
-- Badge tipe transaksi (income/expense) pakai pill berwarna soft (bg-success/10 text-success).
-- Ikon kategori dalam lingkaran berwarna (bukan teks polos).
+### 1. Database (migration)
+Tambah kolom `savings_goal_id uuid NULL` di tabel `transactions` (nullable, mirip pola `debt_id`).
 
-### 6. Empty States Konsisten
-- Buat komponen `<EmptyState icon title description action />` reusable, pakai ilustrasi sederhana (lucide icon dalam circle gradient) — diterapkan di Transactions, Savings, Debts, Reports kosong.
+Update RLS INSERT policy `transactions` agar memvalidasi kepemilikan `savings_goal_id` (sama pola dengan `debt_id`).
 
-### 7. Header / Topbar
-- Tambah search global (cari transaksi cepat) di header.
-- Notifikasi bell dengan badge count.
-- Avatar dropdown untuk profile/settings/logout (lebih konvensional daripada logout di sidebar).
+Buat 2 trigger function (mirip `update_debt_on_payment` & `reverse_debt_payment`):
 
-## Rincian Teknis
+- `update_savings_on_contribution()` — AFTER INSERT: jika `NEW.savings_goal_id IS NOT NULL`, tambah `current_amount` di `savings_goals`, set `is_achieved = true` jika tercapai.
+- `reverse_savings_contribution()` — AFTER DELETE: jika `OLD.savings_goal_id IS NOT NULL`, kurangi `current_amount`, set `is_achieved = false`.
 
-**File yang akan diubah:**
-- `index.html` — load Google Fonts (Plus Jakarta Sans, JetBrains Mono).
-- `tailwind.config.ts` — daftarkan fontFamily `sans` & `mono`, tambah util `tabular-nums`.
-- `src/index.css` — refresh CSS variables (primary, gradient, shadow, radius), tambah pattern background utility.
-- `src/pages/Auth.tsx` — split-screen layout dengan brand panel.
-- `src/components/FinancialSidebar.tsx` — simplifikasi item, group sections, avatar inisial, balance card baru dengan show/hide.
-- `src/components/layout/DashboardLayout.tsx` — header baru (greeting, search, notifikasi, avatar dropdown).
-- `src/pages/Dashboard.tsx` — greeting dinamis, sparkline di stat cards, hapus persentase hardcoded, quick actions berwarna.
-- `src/components/EmptyState.tsx` (baru) — komponen reusable.
-- `src/pages/Transactions.tsx` — apply badge & font-mono amount, ikon kategori berwarna.
+Keduanya `SECURITY DEFINER` + verifikasi kepemilikan goal (sama pola debt).
 
-**Tidak diubah:** Logika bisnis, hooks Supabase, struktur routing, fitur backend — purely visual upgrade.
+### 2. Hooks
+- `useTransactions.ts`: tambah field `savings_goal_id?: string` di `Transaction` & `CreateTransactionData`; teruskan ke insert/update.
+- `useFinancialData.ts`: pada `createTransactionWithRefresh` & `deleteTransactionWithRefresh`, tambah `savingsHook.refetch()` ke `Promise.all` agar UI tabungan langsung sinkron.
 
-## Prioritas (Bisa Bertahap)
+### 3. UI — `src/pages/Transactions.tsx`
+- Tambah state `savings_goal_id` di `formData`.
+- Tambah `useSavings()` untuk ambil daftar goals.
+- Tambah opsi Select "Menabung" (`type: 'savings'`).
+- Saat tipe = `savings`: render dropdown "Tujuan Tabungan" (filter `!is_achieved`).
+- Saat submit: convert `actualType = 'expense'`, auto-pakai kategori "Tabungan" (create jika belum ada via `useCategories.createCategory`), kirim `savings_goal_id`.
+- Tampilkan badge "Menabung" di list transaksi jika `savings_goal_id` ada.
 
-| Prioritas | Item | Impact |
-|---|---|---|
-| Tinggi | Design tokens (font, warna, shadow) | Look & feel keseluruhan langsung naik |
-| Tinggi | Redesign Auth split-screen | First impression user |
-| Tinggi | Sidebar simplifikasi + balance card baru | Navigasi inti terlihat tiap halaman |
-| Sedang | Dashboard sparkline + greeting + hapus angka palsu | Kredibilitas |
-| Sedang | Header dengan search + notif + avatar | Konvensi UX modern |
-| Rendah | Empty states reusable | Konsistensi |
-| Rendah | Polish tabel transaksi | Detail kerapian |
+### 4. UI — `src/pages/Savings.tsx`
+- Tidak banyak berubah. Karena `current_amount` diupdate trigger DB + refetch otomatis, progress akan akurat.
+- Tambah info kecil: "Progress diperbarui otomatis dari transaksi Menabung".
 
-Setelah disetujui, saya akan implementasikan **semua item di atas** dalam satu kali eksekusi (urut dari design tokens → komponen umum → halaman).
+### 5. Detail Dialog & Export
+- `TransactionDetailDialog.tsx`: tampilkan nama goal jika `savings_goal_id` ada (mirip tampilan debt).
+- `excel-export.ts`: opsional, tambah kolom "Tujuan Tabungan".
+
+---
+
+## Edge Cases
+- Hapus transaksi menabung → progress goal berkurang otomatis (trigger reverse).
+- Goal sudah tercapai (`is_achieved = true`) → disembunyikan dari dropdown saat membuat transaksi baru.
+- Tidak mengubah perilaku transaksi lama (kolom nullable, backward-compatible).
+
+Setelah disetujui, saya akan buat migration DB lalu update kode di atas.
