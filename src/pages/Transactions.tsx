@@ -87,8 +87,8 @@ export default function Transactions() {
 
     setLoading(true);
     
-    // For debt_payment, save as 'expense' type for proper financial reporting
-    const actualType = formData.type === 'debt_payment' ? 'expense' : formData.type;
+    // For debt_payment & savings, save as 'expense' type for proper financial reporting
+    const actualType = (formData.type === 'debt_payment' || formData.type === 'savings') ? 'expense' : formData.type;
     
     const transactionData: any = {
       description: formData.description,
