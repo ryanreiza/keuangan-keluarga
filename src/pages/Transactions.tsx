@@ -116,6 +116,20 @@ export default function Transactions() {
       }
       transactionData.category_id = debtCategory.id;
       transactionData.debt_id = formData.debt_id;
+    } else if (formData.type === 'savings') {
+      // Find or auto-create a "Tabungan" expense category
+      let savingsCategory = categories?.find(cat => cat.name === 'Tabungan' && cat.type === 'expense');
+      if (!savingsCategory) {
+        const result = await createCategory({ name: 'Tabungan', type: 'expense', color: '#10B981' });
+        if (result.error || !result.data) {
+          console.error('Failed to create Tabungan category');
+          setLoading(false);
+          return;
+        }
+        savingsCategory = result.data;
+      }
+      transactionData.category_id = savingsCategory.id;
+      transactionData.savings_goal_id = formData.savings_goal_id;
     } else {
       transactionData.category_id = formData.category_id;
       // If expense type with "Bayar Utang" category, also link to debt
