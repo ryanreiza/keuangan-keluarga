@@ -29,11 +29,11 @@ export const useFinancialData = () => {
   const createTransactionWithRefresh = async (data: any) => {
     const result = await transactionsHook.createTransaction(data);
     if (!result.error) {
-      // Refresh accounts when transaction is created (balance changes)
-      // Refresh debts when transaction might be a debt payment
+      // Refresh accounts (balance), debts (payments), savings (contributions)
       await Promise.all([
         accountsHook.refetch(),
         debtsHook.refetch(),
+        savingsHook.refetch(),
       ]);
     }
     return result;
