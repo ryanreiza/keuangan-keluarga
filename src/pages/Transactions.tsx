@@ -248,7 +248,7 @@ export default function Transactions() {
   // Filter out paid off debts
   const activeDebts = debts?.filter(debt => !debt.is_paid_off) || [];
 
-  if (transactionsLoading || categoriesLoading || accountsLoading || debtsLoading) {
+  if (transactionsLoading || categoriesLoading || accountsLoading || debtsLoading || savingsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
