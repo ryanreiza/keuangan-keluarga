@@ -50,10 +50,11 @@ export const useFinancialData = () => {
 
   const deleteTransactionWithRefresh = async (id: string) => {
     await transactionsHook.deleteTransaction(id);
-    // Refresh accounts and debts when transaction is deleted (balance/debt changes)
+    // Refresh accounts, debts and savings (reverse triggers)
     await Promise.all([
       accountsHook.refetch(),
       debtsHook.refetch(),
+      savingsHook.refetch(),
     ]);
   };
 
