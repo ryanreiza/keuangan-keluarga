@@ -245,6 +245,7 @@ export type Database = {
           description: string | null
           destination_account_id: string | null
           id: string
+          savings_goal_id: string | null
           transaction_date: string
           type: string
           updated_at: string
@@ -259,6 +260,7 @@ export type Database = {
           description?: string | null
           destination_account_id?: string | null
           id?: string
+          savings_goal_id?: string | null
           transaction_date?: string
           type: string
           updated_at?: string
@@ -273,6 +275,7 @@ export type Database = {
           description?: string | null
           destination_account_id?: string | null
           id?: string
+          savings_goal_id?: string | null
           transaction_date?: string
           type?: string
           updated_at?: string
