@@ -73,6 +73,11 @@ export default function Transactions() {
       if (!formData.debt_id) {
         return;
       }
+    } else if (formData.type === 'savings') {
+      // For savings contributions, savings_goal_id is required
+      if (!formData.savings_goal_id) {
+        return;
+      }
     } else {
       // For non-transfer and non-debt-payment transactions, category is required
       if (!formData.category_id) {
