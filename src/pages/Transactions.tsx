@@ -130,6 +130,7 @@ export default function Transactions() {
         account_id: "",
         destination_account_id: "",
         debt_id: "",
+        savings_goal_id: "",
       });
       setDate(new Date());
       setShowForm(false);
