@@ -17,6 +17,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useDebts } from "@/hooks/useDebts";
+import { useSavings } from "@/hooks/useSavings";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
 import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 import { TransactionDetailDialog } from "@/components/TransactionDetailDialog";
