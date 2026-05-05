@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc, Receipt, Inbox } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, CalendarIcon, Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, SortAsc, SortDesc, Receipt, Inbox, PiggyBank } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
@@ -17,6 +17,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useDebts } from "@/hooks/useDebts";
+import { useSavings } from "@/hooks/useSavings";
 import { ResetTransactionsDialog } from "@/components/ResetTransactionsDialog";
 import { DeleteTransactionDialog } from "@/components/DeleteTransactionDialog";
 import { TransactionDetailDialog } from "@/components/TransactionDetailDialog";
@@ -35,6 +36,7 @@ export default function Transactions() {
     account_id: "",
     destination_account_id: "",
     debt_id: "",
+    savings_goal_id: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,9 +49,10 @@ export default function Transactions() {
   const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
 
   const { transactions, loading: transactionsLoading, createTransaction, updateTransaction, deleteTransaction, resetAllTransactions } = useTransactions();
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories, loading: categoriesLoading, createCategory } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { debts, loading: debtsLoading } = useDebts();
+  const { savingsGoals, loading: savingsLoading } = useSavings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +73,11 @@ export default function Transactions() {
       if (!formData.debt_id) {
         return;
       }
+    } else if (formData.type === 'savings') {
+      // For savings contributions, savings_goal_id is required
+      if (!formData.savings_goal_id) {
+        return;
+      }
     } else {
       // For non-transfer and non-debt-payment transactions, category is required
       if (!formData.category_id) {
@@ -79,8 +87,8 @@ export default function Transactions() {
 
     setLoading(true);
     
-    // For debt_payment, save as 'expense' type for proper financial reporting
-    const actualType = formData.type === 'debt_payment' ? 'expense' : formData.type;
+    // For debt_payment & savings, save as 'expense' type for proper financial reporting
+    const actualType = (formData.type === 'debt_payment' || formData.type === 'savings') ? 'expense' : formData.type;
     
     const transactionData: any = {
       description: formData.description,
@@ -108,6 +116,20 @@ export default function Transactions() {
       }
       transactionData.category_id = debtCategory.id;
       transactionData.debt_id = formData.debt_id;
+    } else if (formData.type === 'savings') {
+      // Find or auto-create a "Tabungan" expense category
+      let savingsCategory = categories?.find(cat => cat.name === 'Tabungan' && cat.type === 'expense');
+      if (!savingsCategory) {
+        const result = await createCategory({ name: 'Tabungan', type: 'expense', color: '#10B981' });
+        if (result.error || !result.data) {
+          console.error('Failed to create Tabungan category');
+          setLoading(false);
+          return;
+        }
+        savingsCategory = result.data;
+      }
+      transactionData.category_id = savingsCategory.id;
+      transactionData.savings_goal_id = formData.savings_goal_id;
     } else {
       transactionData.category_id = formData.category_id;
       // If expense type with "Bayar Utang" category, also link to debt
@@ -127,6 +149,7 @@ export default function Transactions() {
         account_id: "",
         destination_account_id: "",
         debt_id: "",
+        savings_goal_id: "",
       });
       setDate(new Date());
       setShowForm(false);
@@ -225,7 +248,7 @@ export default function Transactions() {
   // Filter out paid off debts
   const activeDebts = debts?.filter(debt => !debt.is_paid_off) || [];
 
-  if (transactionsLoading || categoriesLoading || accountsLoading || debtsLoading) {
+  if (transactionsLoading || categoriesLoading || accountsLoading || debtsLoading || savingsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -313,19 +336,20 @@ export default function Transactions() {
 
               <div className="space-y-2">
                 <Label>Tipe</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: "", debt_id: ""})}>
+                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category_id: "", destination_account_id: "", debt_id: "", savings_goal_id: ""})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih tipe transaksi" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border z-50">
                     <SelectItem value="income">Pemasukan</SelectItem>
                     <SelectItem value="expense">Pengeluaran</SelectItem>
+                    <SelectItem value="savings">Menabung</SelectItem>
                     <SelectItem value="transfer">Transfer Antar Rekening</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.type !== 'transfer' && formData.type !== 'debt_payment' && (
+              {formData.type !== 'transfer' && formData.type !== 'debt_payment' && formData.type !== 'savings' && (
                 <div className="space-y-2">
                   <Label>Kategori</Label>
                   <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value, debt_id: ""})} disabled={!formData.type}>
@@ -340,6 +364,32 @@ export default function Transactions() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* Show savings goal selection when type is 'savings' */}
+              {formData.type === 'savings' && (
+                <div className="space-y-2">
+                  <Label>Tujuan Tabungan</Label>
+                  <Select value={formData.savings_goal_id} onValueChange={(value) => setFormData({...formData, savings_goal_id: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih tujuan tabungan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {savingsGoals.filter(g => !g.is_achieved).length > 0 ? (
+                        savingsGoals.filter(g => !g.is_achieved).map((goal) => (
+                          <SelectItem key={goal.id} value={goal.id}>
+                            {goal.name} — Rp {goal.current_amount.toLocaleString("id-ID")} / {goal.target_amount.toLocaleString("id-ID")}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Belum ada tujuan tabungan aktif
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Progress tabungan akan otomatis bertambah.</p>
                 </div>
               )}
 
@@ -579,13 +629,18 @@ export default function Transactions() {
                       </div>
                       <div>
                         <p className="font-semibold text-foreground">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                           {transaction.type === 'transfer' 
                             ? `Transfer antar rekening`
                             : transaction.type === 'debt_payment'
                             ? `Pembayaran Utang`
                             : transaction.categories?.name
                           } • {transaction.accounts?.name}
+                          {transaction.savings_goal_id && (
+                            <span className="inline-flex items-center gap-1 text-success">
+                              <PiggyBank className="h-3 w-3" /> Menabung
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -597,7 +652,8 @@ export default function Transactions() {
                           ? 'destructive'
                           : 'secondary'
                       } className="mb-1 rounded-md">
-                        {transaction.type === 'income' ? 'Pemasukan' : 
+                        {transaction.savings_goal_id ? 'Menabung' :
+                         transaction.type === 'income' ? 'Pemasukan' : 
                          transaction.type === 'expense' ? 'Pengeluaran' : 
                          transaction.type === 'debt_payment' ? 'Bayar Utang' : 'Transfer'}
                       </Badge>

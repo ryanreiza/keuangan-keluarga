@@ -13,6 +13,7 @@ export interface Transaction {
   account_id: string;
   destination_account_id?: string; // For transfer transactions
   debt_id?: string; // For debt payment transactions
+  savings_goal_id?: string; // For savings contribution transactions
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -32,6 +33,7 @@ export interface CreateTransactionData {
   account_id: string;
   destination_account_id?: string; // Required only for transfer type
   debt_id?: string; // Required only for debt_payment type
+  savings_goal_id?: string; // Required only for savings contribution
   transaction_date: string;
 }
 
@@ -93,6 +95,11 @@ export const useTransactions = () => {
         insertData.debt_id = transactionData.debt_id;
       }
 
+      // Add savings_goal_id for savings contributions
+      if (transactionData.savings_goal_id) {
+        insertData.savings_goal_id = transactionData.savings_goal_id;
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .insert([insertData])
@@ -142,6 +149,7 @@ export const useTransactions = () => {
       if (transactionData.transaction_date !== undefined) updateData.transaction_date = transactionData.transaction_date;
       if (transactionData.destination_account_id !== undefined) updateData.destination_account_id = transactionData.destination_account_id;
       if (transactionData.debt_id !== undefined) updateData.debt_id = transactionData.debt_id;
+      if (transactionData.savings_goal_id !== undefined) updateData.savings_goal_id = transactionData.savings_goal_id;
 
       const { data, error } = await supabase
         .from('transactions')

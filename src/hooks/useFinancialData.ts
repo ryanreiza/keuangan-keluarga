@@ -29,11 +29,11 @@ export const useFinancialData = () => {
   const createTransactionWithRefresh = async (data: any) => {
     const result = await transactionsHook.createTransaction(data);
     if (!result.error) {
-      // Refresh accounts when transaction is created (balance changes)
-      // Refresh debts when transaction might be a debt payment
+      // Refresh accounts (balance), debts (payments), savings (contributions)
       await Promise.all([
         accountsHook.refetch(),
         debtsHook.refetch(),
+        savingsHook.refetch(),
       ]);
     }
     return result;
@@ -50,10 +50,11 @@ export const useFinancialData = () => {
 
   const deleteTransactionWithRefresh = async (id: string) => {
     await transactionsHook.deleteTransaction(id);
-    // Refresh accounts and debts when transaction is deleted (balance/debt changes)
+    // Refresh accounts, debts and savings (reverse triggers)
     await Promise.all([
       accountsHook.refetch(),
       debtsHook.refetch(),
+      savingsHook.refetch(),
     ]);
   };
 
