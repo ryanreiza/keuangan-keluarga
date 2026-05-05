@@ -52,6 +52,7 @@ export default function Transactions() {
   const { categories, loading: categoriesLoading } = useCategories();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { debts, loading: debtsLoading } = useDebts();
+  const { savingsGoals, loading: savingsLoading } = useSavings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
