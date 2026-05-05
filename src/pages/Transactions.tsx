@@ -629,13 +629,18 @@ export default function Transactions() {
                       </div>
                       <div>
                         <p className="font-semibold text-foreground">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                           {transaction.type === 'transfer' 
                             ? `Transfer antar rekening`
                             : transaction.type === 'debt_payment'
                             ? `Pembayaran Utang`
                             : transaction.categories?.name
                           } • {transaction.accounts?.name}
+                          {transaction.savings_goal_id && (
+                            <span className="inline-flex items-center gap-1 text-success">
+                              <PiggyBank className="h-3 w-3" /> Menabung
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -647,7 +652,8 @@ export default function Transactions() {
                           ? 'destructive'
                           : 'secondary'
                       } className="mb-1 rounded-md">
-                        {transaction.type === 'income' ? 'Pemasukan' : 
+                        {transaction.savings_goal_id ? 'Menabung' :
+                         transaction.type === 'income' ? 'Pemasukan' : 
                          transaction.type === 'expense' ? 'Pengeluaran' : 
                          transaction.type === 'debt_payment' ? 'Bayar Utang' : 'Transfer'}
                       </Badge>
