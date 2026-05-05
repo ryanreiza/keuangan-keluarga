@@ -149,6 +149,7 @@ export const useTransactions = () => {
       if (transactionData.transaction_date !== undefined) updateData.transaction_date = transactionData.transaction_date;
       if (transactionData.destination_account_id !== undefined) updateData.destination_account_id = transactionData.destination_account_id;
       if (transactionData.debt_id !== undefined) updateData.debt_id = transactionData.debt_id;
+      if (transactionData.savings_goal_id !== undefined) updateData.savings_goal_id = transactionData.savings_goal_id;
 
       const { data, error } = await supabase
         .from('transactions')
