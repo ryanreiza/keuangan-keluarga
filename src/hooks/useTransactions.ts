@@ -13,6 +13,7 @@ export interface Transaction {
   account_id: string;
   destination_account_id?: string; // For transfer transactions
   debt_id?: string; // For debt payment transactions
+  savings_goal_id?: string; // For savings contribution transactions
   user_id: string;
   created_at: string;
   updated_at: string;
