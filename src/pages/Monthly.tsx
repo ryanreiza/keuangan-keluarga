@@ -172,6 +172,17 @@ export default function Monthly() {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8);
 
+    // Savings contributions per goal (this month)
+    const savingsMap = new Map<string, number>();
+    let totalSavingsContribution = 0;
+    currentTransactions
+      .filter(t => t.savings_goal_id)
+      .forEach(t => {
+        const gid = t.savings_goal_id as string;
+        savingsMap.set(gid, (savingsMap.get(gid) || 0) + Number(t.amount));
+        totalSavingsContribution += Number(t.amount);
+      });
+
     // Account activity
     const accountMap = new Map();
     currentTransactions.forEach(t => {
@@ -204,7 +215,9 @@ export default function Monthly() {
         transactionCount: currentTransactions.length,
         dailyData,
         categoryBreakdown,
-        accountActivity
+        accountActivity,
+        savingsByGoal: savingsMap,
+        totalSavingsContribution,
       },
       previousMonth: {
         totalIncome: previousIncome,
@@ -652,6 +665,55 @@ export default function Monthly() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Savings Contribution Widget */}
+      <Card className="shadow-card border border-border/50">
+        <CardHeader>
+          <CardTitle className="text-xl font-display flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            Kontribusi Menabung Bulan Ini
+          </CardTitle>
+          <CardDescription>
+            Total kontribusi: <span className="font-semibold text-primary font-mono-num">Rp {monthlyData.currentMonth.totalSavingsContribution.toLocaleString('id-ID')}</span>
+            {" "}dari {monthlyData.currentMonth.savingsByGoal.size} target
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {savingsGoals && savingsGoals.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {savingsGoals.map((goal) => {
+                const monthContribution = monthlyData.currentMonth.savingsByGoal.get(goal.id) || 0;
+                const overallProgress = goal.target_amount > 0 ? Math.min((goal.current_amount / goal.target_amount) * 100, 100) : 0;
+                return (
+                  <div key={goal.id} className="p-4 rounded-xl border border-border/60 bg-gradient-card hover:shadow-md transition-all">
+                    <div className="flex items-start justify-between mb-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground truncate">{goal.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Bulan ini: <span className="font-semibold text-primary font-mono-num">+Rp {monthContribution.toLocaleString('id-ID')}</span>
+                        </p>
+                      </div>
+                      <Badge variant={goal.is_achieved ? "default" : "outline"} className="shrink-0">
+                        {overallProgress.toFixed(0)}%
+                      </Badge>
+                    </div>
+                    <Progress value={overallProgress} className="h-2 mt-2" />
+                    <div className="flex items-center justify-between text-xs mt-2 font-mono-num">
+                      <span className="text-muted-foreground">Rp {goal.current_amount.toLocaleString('id-ID')}</span>
+                      <span className="text-muted-foreground">Rp {goal.target_amount.toLocaleString('id-ID')}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Target className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Belum ada target tabungan. Buat target di halaman Tabungan.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Budget Tracking Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
