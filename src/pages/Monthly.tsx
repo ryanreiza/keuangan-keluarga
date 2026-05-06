@@ -174,13 +174,19 @@ export default function Monthly() {
 
     // Savings contributions per goal (this month)
     const savingsMap = new Map<string, number>();
+    const savingsCategoryMap = new Map<string, number>();
     let totalSavingsContribution = 0;
     currentTransactions
       .filter(t => t.savings_goal_id)
       .forEach(t => {
         const gid = t.savings_goal_id as string;
-        savingsMap.set(gid, (savingsMap.get(gid) || 0) + Number(t.amount));
-        totalSavingsContribution += Number(t.amount);
+        const amt = Number(t.amount);
+        savingsMap.set(gid, (savingsMap.get(gid) || 0) + amt);
+        const goal = savingsGoals?.find(g => g.id === gid);
+        const cat = categories?.find(c => c.id === goal?.category_id);
+        const catName = cat?.name || t.categories?.name || 'Tabungan';
+        savingsCategoryMap.set(catName, (savingsCategoryMap.get(catName) || 0) + amt);
+        totalSavingsContribution += amt;
       });
 
     // Account activity
