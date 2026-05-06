@@ -215,7 +215,9 @@ export default function Monthly() {
         transactionCount: currentTransactions.length,
         dailyData,
         categoryBreakdown,
-        accountActivity
+        accountActivity,
+        savingsByGoal: savingsMap,
+        totalSavingsContribution,
       },
       previousMonth: {
         totalIncome: previousIncome,
