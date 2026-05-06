@@ -237,7 +237,7 @@ export default function Monthly() {
         savings: savingsGrowth
       }
     };
-  }, [transactions, selectedMonth]);
+  }, [transactions, selectedMonth, savingsGoals, categories]);
 
   // Generate month options based on actual transaction dates
   const monthOptions = useMemo(() => {
