@@ -172,6 +172,17 @@ export default function Monthly() {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8);
 
+    // Savings contributions per goal (this month)
+    const savingsMap = new Map<string, number>();
+    let totalSavingsContribution = 0;
+    currentTransactions
+      .filter(t => t.savings_goal_id)
+      .forEach(t => {
+        const gid = t.savings_goal_id as string;
+        savingsMap.set(gid, (savingsMap.get(gid) || 0) + Number(t.amount));
+        totalSavingsContribution += Number(t.amount);
+      });
+
     // Account activity
     const accountMap = new Map();
     currentTransactions.forEach(t => {
