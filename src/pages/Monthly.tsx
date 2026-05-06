@@ -223,6 +223,7 @@ export default function Monthly() {
         categoryBreakdown,
         accountActivity,
         savingsByGoal: savingsMap,
+        savingsByCategory: savingsCategoryMap,
         totalSavingsContribution,
       },
       previousMonth: {
