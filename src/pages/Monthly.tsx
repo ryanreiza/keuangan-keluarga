@@ -35,6 +35,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameD
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function Monthly() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
