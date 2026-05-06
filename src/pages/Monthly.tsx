@@ -35,6 +35,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameD
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function Monthly() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -174,13 +175,19 @@ export default function Monthly() {
 
     // Savings contributions per goal (this month)
     const savingsMap = new Map<string, number>();
+    const savingsCategoryMap = new Map<string, number>();
     let totalSavingsContribution = 0;
     currentTransactions
       .filter(t => t.savings_goal_id)
       .forEach(t => {
         const gid = t.savings_goal_id as string;
-        savingsMap.set(gid, (savingsMap.get(gid) || 0) + Number(t.amount));
-        totalSavingsContribution += Number(t.amount);
+        const amt = Number(t.amount);
+        savingsMap.set(gid, (savingsMap.get(gid) || 0) + amt);
+        const goal = savingsGoals?.find(g => g.id === gid);
+        const cat = categories?.find(c => c.id === goal?.category_id);
+        const catName = cat?.name || t.categories?.name || 'Tabungan';
+        savingsCategoryMap.set(catName, (savingsCategoryMap.get(catName) || 0) + amt);
+        totalSavingsContribution += amt;
       });
 
     // Account activity
@@ -217,6 +224,7 @@ export default function Monthly() {
         categoryBreakdown,
         accountActivity,
         savingsByGoal: savingsMap,
+        savingsByCategory: savingsCategoryMap,
         totalSavingsContribution,
       },
       previousMonth: {
@@ -230,7 +238,7 @@ export default function Monthly() {
         savings: savingsGrowth
       }
     };
-  }, [transactions, selectedMonth]);
+  }, [transactions, selectedMonth, savingsGoals, categories]);
 
   // Generate month options based on actual transaction dates
   const monthOptions = useMemo(() => {
@@ -714,6 +722,83 @@ export default function Monthly() {
           )}
         </CardContent>
       </Card>
+
+      {/* Savings Charts */}
+      {monthlyData.currentMonth.totalSavingsContribution > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-card border border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl font-display flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Kontribusi per Goal
+              </CardTitle>
+              <CardDescription>Jumlah menabung bulan ini per target</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart
+                  data={Array.from(monthlyData.currentMonth.savingsByGoal.entries()).map(([gid, amount]) => ({
+                    name: savingsGoals?.find(g => g.id === gid)?.name || 'Goal',
+                    amount,
+                  }))}
+                  margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
+                    formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Kontribusi']}
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl font-display flex items-center gap-2">
+                <PieChart className="h-5 w-5 text-primary" />
+                Kontribusi per Kategori
+              </CardTitle>
+              <CardDescription>Distribusi tabungan berdasarkan kategori</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <RPieChart>
+                  <Pie
+                    data={Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map(([name, value]) => ({ name, value }))}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    innerRadius={50}
+                    paddingAngle={2}
+                  >
+                    {Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map((_, i) => {
+                      const palette = [
+                        'hsl(var(--primary))',
+                        'hsl(var(--accent))',
+                        'hsl(var(--secondary))',
+                        'hsl(var(--muted-foreground))',
+                        'hsl(var(--destructive))',
+                      ];
+                      return <Cell key={i} fill={palette[i % palette.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
+                    formatter={(value: number) => `Rp ${value.toLocaleString('id-ID')}`}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </RPieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Budget Tracking Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
