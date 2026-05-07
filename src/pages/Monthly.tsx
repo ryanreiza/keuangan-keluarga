@@ -775,16 +775,22 @@ export default function Monthly() {
                     name: savingsGoals?.find(g => g.id === gid)?.name || 'Goal',
                     amount,
                   }))}
-                  margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+                  margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                    formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Kontribusi']}
-                  />
-                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                  <Tooltip content={<SavingsTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]}>
+                    <LabelList
+                      dataKey="amount"
+                      position="top"
+                      formatter={(value: number) => formatRupiah(value)}
+                      fill="hsl(var(--foreground))"
+                      fontSize={10}
+                      fontWeight={600}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
