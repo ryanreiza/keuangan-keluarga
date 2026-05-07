@@ -35,7 +35,41 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameD
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend, LabelList } from 'recharts';
+
+const formatRupiah = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
+
+const SavingsTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+        <p className="font-semibold text-foreground mb-1">{label}</p>
+        <p className="text-primary font-mono font-medium">
+          {formatRupiah(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const SavingsPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const total = payload[0].payload._total || payload[0].value;
+    const percent = total > 0 ? ((payload[0].value / total) * 100).toFixed(1) : '0';
+    return (
+      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+        <p className="font-semibold text-foreground mb-1">{data.name}</p>
+        <p className="text-primary font-mono font-medium">
+          {formatRupiah(payload[0].value)}
+        </p>
+        <p className="text-muted-foreground mt-0.5">{percent}% dari total</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Monthly() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
