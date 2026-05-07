@@ -54,7 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
-          <header className="h-14 md:h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+          <header className="h-14 md:h-16 glass-strong border-b border-border/60 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
             <div className="flex items-center gap-3 md:gap-4 min-w-0">
               {!isMobile && (
                 <SidebarTrigger className="p-2 hover:bg-accent rounded-lg transition-colors shrink-0" />
@@ -194,10 +194,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content - add bottom padding on mobile for nav */}
-          <main className="flex-1 p-4 md:p-6 overflow-auto pb-20 md:pb-6">
-            <AnimatePresence mode="wait">
-              <PageTransition>{children}</PageTransition>
-            </AnimatePresence>
+          <main className="flex-1 overflow-auto pb-20 md:pb-6">
+            <div className="container-app p-4 md:p-6 lg:p-8">
+              <AnimatePresence mode="wait">
+                <PageTransition>{children}</PageTransition>
+              </AnimatePresence>
+            </div>
           </main>
         </div>
 

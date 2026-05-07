@@ -452,7 +452,7 @@ export default function Monthly() {
 
   if (loading.transactions || loading.accounts || loading.categories) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 md:space-y-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -464,7 +464,7 @@ export default function Monthly() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

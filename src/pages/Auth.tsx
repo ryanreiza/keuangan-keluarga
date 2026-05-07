@@ -257,8 +257,13 @@ const Auth = () => {
 
       {/* Right: Brand panel (desktop only) */}
       <div className="hidden lg:flex flex-1 relative overflow-hidden bg-sidebar">
-        <div className="absolute inset-0 bg-mesh opacity-50" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent-brand/20" />
+        <div className="absolute inset-0 bg-mesh opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-accent-brand/15" />
+        <div className="absolute inset-0 bg-noise opacity-40 mix-blend-overlay" />
+
+        {/* Decorative blurred orbs */}
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/30 blur-[120px]" />
+        <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-accent-brand/20 blur-[120px]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full text-sidebar-foreground">
           <div className="flex items-center gap-3">
@@ -273,34 +278,59 @@ const Auth = () => {
 
           <div className="space-y-8 max-w-lg">
             <div>
-              <h2 className="text-4xl xl:text-5xl font-bold font-display tracking-tight leading-tight">
-                Kelola keuangan keluarga<br />
+              <h2 className="text-4xl xl:text-5xl font-bold font-display tracking-tight leading-[1.05]">
+                Kelola keuangan<br />keluarga{" "}
                 <span className="text-gradient-primary">lebih cerdas.</span>
               </h2>
-              <p className="text-lg text-sidebar-foreground/70 mt-4 leading-relaxed">
+              <p className="text-lg text-sidebar-foreground/70 mt-5 leading-relaxed">
                 Catat, lacak, dan analisis pemasukan & pengeluaran rumah tangga Anda dalam satu dashboard yang elegan.
               </p>
             </div>
 
-            <div className="space-y-4">
-              {benefits.map(({ icon: Icon, title, desc }) => (
-                <div key={title} className="flex gap-4 items-start glass rounded-xl p-4 border border-sidebar-border/50">
-                  <div className="p-2 bg-gradient-primary rounded-lg shrink-0">
-                    <Icon className="h-5 w-5 text-primary-foreground" />
+            {/* Mini balance preview card */}
+            <div className="relative">
+              <div className="glass-strong rounded-2xl p-5 border border-sidebar-border/60 shadow-2xl">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/60">Saldo Bulan Ini</span>
+                  <span className="pill-success text-[10px]">+12.4%</span>
+                </div>
+                <p className="num-hero text-3xl text-sidebar-foreground">Rp 24.580.000</p>
+                <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-sidebar-border/40">
+                  <div>
+                    <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-wider">Masuk</p>
+                    <p className="text-sm font-mono-num font-semibold text-success-light">+8.2jt</p>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sidebar-foreground">{title}</h3>
-                    <p className="text-sm text-sidebar-foreground/70 mt-0.5">{desc}</p>
+                    <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-wider">Keluar</p>
+                    <p className="text-sm font-mono-num font-semibold text-danger-light">-3.4jt</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-wider">Tabungan</p>
+                    <p className="text-sm font-mono-num font-semibold text-primary-light">+4.8jt</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {benefits.map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="flex gap-3.5 items-start glass rounded-xl p-3.5 border border-sidebar-border/40 hover:border-sidebar-border/70 transition-colors">
+                  <div className="p-2 bg-primary/15 border border-primary/20 rounded-lg shrink-0">
+                    <Icon className="h-4 w-4 text-primary-light" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm text-sidebar-foreground">{title}</h3>
+                    <p className="text-xs text-sidebar-foreground/65 mt-0.5 leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-sm text-sidebar-foreground/60">
+          <div className="flex items-center gap-6 text-xs text-sidebar-foreground/60">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-success-light" />
-              <span>Data terenkripsi</span>
+              <span>Data terenkripsi end-to-end</span>
             </div>
             <div className="h-4 w-px bg-sidebar-border" />
             <span>© {new Date().getFullYear()} Keuangan Keluarga</span>

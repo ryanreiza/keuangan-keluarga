@@ -48,27 +48,31 @@ export function MobileBottomNav() {
   const isMoreActive = moreNavItems.some((item) => isActive(item.url));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-border/60 md:hidden safe-area-bottom shadow-[0_-4px_20px_-8px_hsl(222_47%_11%/0.1)]">
       <div className="flex items-center justify-around h-16 px-1">
-        {mainNavItems.map((item) => (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium transition-colors ${
-              isActive(item.url)
-                ? "text-primary"
-                : "text-muted-foreground"
-            }`}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="truncate max-w-[64px]">{item.title}</span>
-          </NavLink>
-        ))}
+        {mainNavItems.map((item) => {
+          const active = isActive(item.url);
+          return (
+            <NavLink
+              key={item.url}
+              to={item.url}
+              className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[11px] font-semibold transition-all touch-target ${
+                active ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 rounded-b-full bg-primary" />
+              )}
+              <item.icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
+              <span className="truncate max-w-[64px]">{item.title}</span>
+            </NavLink>
+          );
+        })}
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <button
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[11px] font-semibold transition-colors touch-target ${
                 isMoreActive
                   ? "text-primary"
                   : "text-muted-foreground"

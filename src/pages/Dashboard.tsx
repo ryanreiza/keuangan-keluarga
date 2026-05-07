@@ -165,21 +165,25 @@ export default function Dashboard() {
     { icon: CreditCard, label: "Rekening Baru", to: "/accounts", gradient: "from-primary-dark to-primary" },
   ];
 
+  // Hero sparkline (net = income - expense per month, last 6 months)
+  const heroSparkData = sparklineData.map((m) => ({ value: m.income - m.expense }));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground tracking-tight">
-            Dashboard Keuangan
+          <p className="text-eyebrow mb-1.5">Dashboard</p>
+          <h1 className="text-display-2 text-foreground">
+            Ringkasan Keuangan
           </h1>
           <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Ringkasan keuangan {monthOptions.find((opt) => opt.value === selectedMonth)?.label || ""}
+            Periode {monthOptions.find((opt) => opt.value === selectedMonth)?.label || ""}
           </p>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-36 md:w-44 bg-background">
+            <SelectTrigger className="w-36 md:w-44 bg-background h-10">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -191,8 +195,7 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
           <Button
-            className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant"
-            size="sm"
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant h-10"
             onClick={() => navigate("/transactions")}
           >
             <Plus className="h-4 w-4 mr-1 md:mr-2" />
@@ -201,6 +204,62 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* HERO Balance */}
+      <StaggerItem>
+        <div className="card-hero p-6 md:p-8 lg:p-10">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6 lg:gap-10 items-center">
+            <div>
+              <p className="text-eyebrow mb-2 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                Total Saldo Tersedia
+              </p>
+              <p className="num-hero text-display-1 text-foreground animate-count-in">
+                Rp {totalBalance.toLocaleString("id-ID")}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                <span className="pill-primary">
+                  <Wallet className="h-3 w-3" />
+                  {accounts.length} rekening
+                </span>
+                {totalDebt > 0 && (
+                  <span className="pill-warning">
+                    <CreditCard className="h-3 w-3" />
+                    Utang Rp {totalDebt.toLocaleString("id-ID")}
+                  </span>
+                )}
+                {savingsGoals.length > 0 && (
+                  <span className="pill-success">
+                    <Target className="h-3 w-3" />
+                    {savingsGoals.length} target
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Hero sparkline */}
+            <div className="h-24 md:h-32 -mx-2 md:mx-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={heroSparkData}>
+                  <defs>
+                    <linearGradient id="hero-spark" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2.5}
+                    fill="url(#hero-spark)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              <p className="text-eyebrow text-right mt-1">Tren 6 bulan</p>
+            </div>
+          </div>
+        </div>
+      </StaggerItem>
 
       {/* Stats Overview */}
       <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
@@ -218,30 +277,26 @@ export default function Dashboard() {
 
           return (
             <StaggerItem key={index} index={index}>
-              <Card className="bg-gradient-card shadow-card border border-border/50 h-full hover-lift overflow-hidden">
+              <Card className="card-metric h-full overflow-hidden">
                 <CardContent className="p-4 md:p-5 relative">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5 truncate uppercase tracking-wide">
-                        {stat.title}
-                      </p>
-                      <p className="text-lg md:text-2xl font-bold font-mono-num text-foreground truncate tracking-tight">
-                        Rp {stat.value.toLocaleString("id-ID")}
-                      </p>
-                      <div className="flex items-center mt-2 gap-1">
-                        {ChangeIcon && <ChangeIcon className={`h-3.5 w-3.5 ${changeColor}`} />}
-                        <span className={`text-xs font-semibold ${changeColor}`}>
-                          {change ? `${change.pct.toFixed(1)}%` : stat.subText || "—"}
-                        </span>
-                        {change && <span className="text-xs text-muted-foreground hidden sm:inline">vs bulan lalu</span>}
-                      </div>
-                    </div>
-                    <div className={`p-2 md:p-2.5 rounded-xl ${stat.bgColor} shrink-0`}>
-                      <stat.icon className={`h-4 w-4 md:h-5 md:w-5 ${stat.iconColor}`} />
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="text-eyebrow truncate">{stat.title}</p>
+                    <div className={`p-2 rounded-xl ${stat.bgColor} shrink-0`}>
+                      <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
                     </div>
                   </div>
+                  <p className="num-hero text-xl md:text-2xl text-foreground truncate">
+                    Rp {stat.value.toLocaleString("id-ID")}
+                  </p>
+                  <div className="flex items-center mt-2 gap-1">
+                    {ChangeIcon && <ChangeIcon className={`h-3.5 w-3.5 ${changeColor}`} />}
+                    <span className={`text-xs font-semibold ${changeColor}`}>
+                      {change ? `${change.pct.toFixed(1)}%` : stat.subText || "—"}
+                    </span>
+                    {change && <span className="text-xs text-muted-foreground hidden sm:inline">vs bulan lalu</span>}
+                  </div>
                   {stat.sparkData && stat.sparkData.some((d) => d.value > 0) && (
-                    <div className="absolute bottom-0 left-0 right-0 h-12 opacity-70 pointer-events-none">
+                    <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60 pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={stat.sparkData}>
                           <defs>

@@ -168,8 +168,73 @@
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
   }
+
+  /* Premium typography scale */
+  .text-display-1 {
+    @apply font-display font-bold tracking-tight;
+    font-size: clamp(2rem, 4vw + 0.5rem, 3.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+  .text-display-2 {
+    @apply font-display font-bold tracking-tight;
+    font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+  .text-eyebrow {
+    @apply text-[11px] font-semibold uppercase text-muted-foreground;
+    letter-spacing: 0.12em;
+  }
+  .num-hero {
+    @apply font-mono-num font-bold tracking-tight;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Card system */
+  .card-hero {
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border) / 0.6);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-elegant);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-mesh);
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .card-metric {
+    @apply bg-card border border-border/60 rounded-2xl shadow-sm transition-all duration-200;
+  }
+  .card-metric:hover {
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  /* Container */
+  .container-app {
+    @apply mx-auto w-full;
+    max-width: 1440px;
+  }
+
+  /* Status pills */
+  .pill-success { @apply inline-flex items-center gap-1 rounded-full bg-success-bg text-success px-2.5 py-0.5 text-xs font-semibold; }
+  .pill-danger  { @apply inline-flex items-center gap-1 rounded-full bg-danger-bg text-danger px-2.5 py-0.5 text-xs font-semibold; }
+  .pill-warning { @apply inline-flex items-center gap-1 rounded-full bg-warning-bg text-warning px-2.5 py-0.5 text-xs font-semibold; }
+  .pill-primary { @apply inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-semibold; }
+
   .bg-mesh {
     background-image: var(--gradient-mesh);
+  }
+  .bg-noise {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
   .bg-dot-pattern {
     background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
@@ -186,8 +251,13 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+  .glass-strong {
+    background: hsl(var(--background) / 0.75);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
   .hover-lift {
-    transition: transform 200ms ease, box-shadow 200ms ease;
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
   }
   .hover-lift:hover {
     transform: translateY(-2px);
@@ -199,6 +269,15 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
+  }
+
+  /* Subtle entrance for hero numbers */
+  @keyframes count-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-count-in {
+    animation: count-fade-in 600ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 
