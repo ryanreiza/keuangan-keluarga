@@ -808,7 +808,11 @@ export default function Monthly() {
               <ResponsiveContainer width="100%" height={280}>
                 <RPieChart>
                   <Pie
-                    data={Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map(([name, value]) => ({ name, value }))}
+                    data={(() => {
+                      const entries = Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map(([name, value]) => ({ name, value }));
+                      const total = entries.reduce((sum, e) => sum + e.value, 0);
+                      return entries.map(e => ({ ...e, _total: total }));
+                    })()}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -816,6 +820,19 @@ export default function Monthly() {
                     outerRadius={90}
                     innerRadius={50}
                     paddingAngle={2}
+                    labelLine={false}
+                    label={({ name, value, percent }) => (
+                      <text
+                        fill="hsl(var(--foreground))"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={10}
+                        fontWeight={600}
+                      >
+                        <tspan x="0" dy="-0.5em">{name}</tspan>
+                        <tspan x="0" dy="1.2em" fill="hsl(var(--primary))">{formatRupiah(value)}</tspan>
+                      </text>
+                    )}
                   >
                     {Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map((_, i) => {
                       const palette = [
@@ -828,11 +845,15 @@ export default function Monthly() {
                       return <Cell key={i} fill={palette[i % palette.length]} />;
                     })}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                    formatter={(value: number) => `Rp ${value.toLocaleString('id-ID')}`}
+                  <Tooltip content={<SavingsPieTooltip />} />
+                  <Legend
+                    formatter={(value: string, entry: any) => (
+                      <span className="text-xs text-muted-foreground">
+                        {value}: <span className="font-mono font-medium text-foreground">{formatRupiah(entry.payload.value)}</span>
+                      </span>
+                    )}
+                    wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
                 </RPieChart>
               </ResponsiveContainer>
             </CardContent>
