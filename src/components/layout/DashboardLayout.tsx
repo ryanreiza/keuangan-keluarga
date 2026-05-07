@@ -194,10 +194,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content - add bottom padding on mobile for nav */}
-          <main className="flex-1 p-4 md:p-6 overflow-auto pb-20 md:pb-6">
-            <AnimatePresence mode="wait">
-              <PageTransition>{children}</PageTransition>
-            </AnimatePresence>
+          <main className="flex-1 overflow-auto pb-20 md:pb-6">
+            <div className="container-app p-4 md:p-6 lg:p-8">
+              <AnimatePresence mode="wait">
+                <PageTransition>{children}</PageTransition>
+              </AnimatePresence>
+            </div>
           </main>
         </div>
 
