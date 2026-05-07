@@ -16,15 +16,20 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <Card className={cn("border-dashed border-2 bg-gradient-card shadow-none", className)}>
-      <CardContent className="flex flex-col items-center justify-center text-center py-12 px-6">
-        <div className="p-4 rounded-2xl bg-gradient-primary-soft mb-4">
-          <Icon className="h-8 w-8 text-primary" strokeWidth={1.75} />
+    <Card className={cn("border-dashed border-2 border-border/70 bg-gradient-card shadow-none overflow-hidden relative", className)}>
+      {/* Decorative grid */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] pointer-events-none" />
+      <CardContent className="relative flex flex-col items-center justify-center text-center py-14 px-6">
+        <div className="relative mb-5">
+          <div className="absolute inset-0 bg-gradient-primary blur-2xl opacity-25 rounded-full" />
+          <div className="relative h-16 w-16 rounded-2xl bg-gradient-primary-soft border border-primary/20 flex items-center justify-center shadow-md">
+            <Icon className="h-7 w-7 text-primary" strokeWidth={1.75} />
+          </div>
         </div>
-        <h3 className="text-lg font-semibold font-display text-foreground mb-1">{title}</h3>
-        <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>
+        <h3 className="text-lg font-semibold font-display text-foreground mb-1.5 tracking-tight">{title}</h3>
+        <p className="text-sm text-muted-foreground max-w-sm mb-6 leading-relaxed">{description}</p>
         {action && (
-          <Button onClick={action.onClick} className="bg-gradient-primary shadow-elegant hover:opacity-90">
+          <Button onClick={action.onClick} className="bg-gradient-primary shadow-elegant hover:shadow-glow hover:opacity-95 transition-all">
             {action.label}
           </Button>
         )}
