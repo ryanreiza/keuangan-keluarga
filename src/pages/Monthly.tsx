@@ -35,7 +35,41 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameD
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend, LabelList } from 'recharts';
+
+const formatRupiah = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
+
+const SavingsTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+        <p className="font-semibold text-foreground mb-1">{label}</p>
+        <p className="text-primary font-mono font-medium">
+          {formatRupiah(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const SavingsPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const total = payload[0].payload._total || payload[0].value;
+    const percent = total > 0 ? ((payload[0].value / total) * 100).toFixed(1) : '0';
+    return (
+      <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+        <p className="font-semibold text-foreground mb-1">{data.name}</p>
+        <p className="text-primary font-mono font-medium">
+          {formatRupiah(payload[0].value)}
+        </p>
+        <p className="text-muted-foreground mt-0.5">{percent}% dari total</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Monthly() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
@@ -741,16 +775,22 @@ export default function Monthly() {
                     name: savingsGoals?.find(g => g.id === gid)?.name || 'Goal',
                     amount,
                   }))}
-                  margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+                  margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                    formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Kontribusi']}
-                  />
-                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                  <Tooltip content={<SavingsTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]}>
+                    <LabelList
+                      dataKey="amount"
+                      position="top"
+                      formatter={(value: number) => formatRupiah(value)}
+                      fill="hsl(var(--foreground))"
+                      fontSize={10}
+                      fontWeight={600}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -768,7 +808,11 @@ export default function Monthly() {
               <ResponsiveContainer width="100%" height={280}>
                 <RPieChart>
                   <Pie
-                    data={Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map(([name, value]) => ({ name, value }))}
+                    data={(() => {
+                      const entries = Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map(([name, value]) => ({ name, value }));
+                      const total = entries.reduce((sum, e) => sum + e.value, 0);
+                      return entries.map(e => ({ ...e, _total: total }));
+                    })()}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -776,6 +820,19 @@ export default function Monthly() {
                     outerRadius={90}
                     innerRadius={50}
                     paddingAngle={2}
+                    labelLine={false}
+                    label={({ name, value, percent }) => (
+                      <text
+                        fill="hsl(var(--foreground))"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={10}
+                        fontWeight={600}
+                      >
+                        <tspan x="0" dy="-0.5em">{name}</tspan>
+                        <tspan x="0" dy="1.2em" fill="hsl(var(--primary))">{formatRupiah(value)}</tspan>
+                      </text>
+                    )}
                   >
                     {Array.from(monthlyData.currentMonth.savingsByCategory.entries()).map((_, i) => {
                       const palette = [
@@ -788,11 +845,15 @@ export default function Monthly() {
                       return <Cell key={i} fill={palette[i % palette.length]} />;
                     })}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-                    formatter={(value: number) => `Rp ${value.toLocaleString('id-ID')}`}
+                  <Tooltip content={<SavingsPieTooltip />} />
+                  <Legend
+                    formatter={(value: string, entry: any) => (
+                      <span className="text-xs text-muted-foreground">
+                        {value}: <span className="font-mono font-medium text-foreground">{formatRupiah(entry.payload.value)}</span>
+                      </span>
+                    )}
+                    wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
                 </RPieChart>
               </ResponsiveContainer>
             </CardContent>
