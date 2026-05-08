@@ -17,6 +17,7 @@ import { createAndDownloadExcel } from '@/lib/excel-export';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from "@/components/PageHeader";
 
 type SortField = 'category' | 'expected' | 'actual' | 'difference' | 'percentage';
 type SortDirection = 'asc' | 'desc';

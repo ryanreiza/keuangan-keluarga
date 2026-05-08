@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User, Bell, Shield, Palette, Loader2 } from "lucide-react";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Settings() {
   const { user } = useAuth();

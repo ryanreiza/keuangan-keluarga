@@ -19,6 +19,7 @@ import { useState, useMemo } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { format, startOfYear, endOfYear, eachMonthOfInterval, subYears, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Annual() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());

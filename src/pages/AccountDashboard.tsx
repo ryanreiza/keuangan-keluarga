@@ -17,6 +17,7 @@ import {
 import { useState, useMemo } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function AccountDashboard() {
   const [showBalances, setShowBalances] = useState(true);
