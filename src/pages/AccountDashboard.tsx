@@ -134,28 +134,29 @@ export default function AccountDashboard() {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Rekening</h1>
-          <p className="text-muted-foreground mt-1">Ringkasan dan analisis semua rekening bank</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowBalances(!showBalances)}
-          >
-            {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-          <Button 
-            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
-            onClick={() => navigate('/accounts')}
-          >
-            <Building2 className="h-4 w-4 mr-2" />
-            Tambah Rekening
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Dashboard Rekening"
+        subtitle="Ringkasan dan analisis semua rekening bank"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowBalances(!showBalances)}
+            >
+              {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+            <Button 
+              className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+              onClick={() => navigate('/accounts')}
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              Tambah Rekening
+            </Button>
+          </>
+        }
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

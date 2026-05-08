@@ -139,20 +139,20 @@ export default function Categories() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Kategori Keuangan</h1>
-          <p className="text-muted-foreground mt-1">Kelola kategori pemasukan, pengeluaran, tabungan, dan utang</p>
-        </div>
-        <Button 
-          className="bg-gradient-primary text-primary-foreground hover:opacity-90"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {showForm ? "Tutup Form" : "Tambah Kategori"}
-        </Button>
-      </div>
+      <PageHeader
+        icon={DollarSign}
+        title="Kategori Keuangan"
+        subtitle="Kelola kategori pemasukan, pengeluaran, tabungan, dan utang"
+        actions={
+          <Button 
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {showForm ? "Tutup Form" : "Tambah Kategori"}
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Category Form */}
