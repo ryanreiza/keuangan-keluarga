@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User, Bell, Shield, Palette, Loader2 } from "lucide-react";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -96,10 +97,11 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Pengaturan</h1>
-        <p className="text-sm md:text-base text-muted-foreground mt-1">Kelola preferensi dan konfigurasi akun Anda</p>
-      </div>
+      <PageHeader
+        icon={User}
+        title="Pengaturan"
+        subtitle="Kelola preferensi dan konfigurasi akun Anda"
+      />
 
       <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Profile Settings */}

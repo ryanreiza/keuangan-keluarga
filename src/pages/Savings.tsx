@@ -25,6 +25,7 @@ import { useSavings, CreateSavingsGoalData } from "@/hooks/useSavings";
 import { useCategories } from "@/hooks/useCategories";
 import { format } from "date-fns";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Savings() {
   const [formData, setFormData] = useState({
@@ -120,25 +121,20 @@ export default function Savings() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-primary shadow-elegant">
-            <PiggyBank className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-foreground">Pelacak Tabungan</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Kelola target tabungan dan pantau progress pencapaian</p>
-          </div>
-        </div>
-        <Button 
-          className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {showForm ? 'Sembunyikan Form' : 'Tambah Target'}
-        </Button>
-      </div>
+      <PageHeader
+        icon={PiggyBank}
+        title="Pelacak Tabungan"
+        subtitle="Kelola target tabungan dan pantau progress pencapaian"
+        actions={
+          <Button 
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {showForm ? 'Sembunyikan Form' : 'Tambah Target'}
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Goal Form */}

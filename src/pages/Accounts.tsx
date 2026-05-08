@@ -23,6 +23,7 @@ import { useAccounts, CreateAccountData } from "@/hooks/useAccounts";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Accounts() {
   const [showBalance, setShowBalance] = useState(true);
@@ -162,32 +163,32 @@ export default function Accounts() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rekening Bank</h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">Kelola semua rekening bank dan saldo Anda</p>
-        </div>
-        <div className="flex items-center gap-2 md:gap-3">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 md:h-10 md:w-10"
-            onClick={() => setShowBalance(!showBalance)}
-          >
-            {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-          <Button 
-            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
-            size="sm"
-            onClick={() => setShowForm(!showForm)}
-          >
-            <Plus className="h-4 w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">{showForm ? "Tutup Form" : "Tambah Rekening"}</span>
-            <span className="sm:hidden">{showForm ? "Tutup" : "Tambah"}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Rekening Bank"
+        subtitle="Kelola semua rekening bank dan saldo Anda"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 md:h-10 md:w-10"
+              onClick={() => setShowBalance(!showBalance)}
+            >
+              {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+            <Button 
+              className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+              size="sm"
+              onClick={() => setShowForm(!showForm)}
+            >
+              <Plus className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">{showForm ? "Tutup Form" : "Tambah Rekening"}</span>
+              <span className="sm:hidden">{showForm ? "Tutup" : "Tambah"}</span>
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Account Form */}

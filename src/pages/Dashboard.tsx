@@ -15,12 +15,14 @@ import {
   BarChart3,
   Loader2,
   Plus,
+  LayoutDashboard,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
 import { useState, useMemo } from "react";
 import { format, subMonths } from "date-fns";
 import { id } from "date-fns/locale";
@@ -170,40 +172,36 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <p className="text-eyebrow mb-1.5">Dashboard</p>
-          <h1 className="text-display-2 text-foreground">
-            Ringkasan Keuangan
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Periode {monthOptions.find((opt) => opt.value === selectedMonth)?.label || ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 md:gap-3">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-36 md:w-44 bg-background h-10">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant h-10"
-            onClick={() => navigate("/transactions")}
-          >
-            <Plus className="h-4 w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Tambah Transaksi</span>
-            <span className="sm:hidden">Tambah</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={LayoutDashboard}
+        eyebrow="Dashboard"
+        title="Ringkasan Keuangan"
+        subtitle={`Periode ${monthOptions.find((opt) => opt.value === selectedMonth)?.label || ""}`}
+        actions={
+          <>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-36 md:w-44 bg-background h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant h-10"
+              onClick={() => navigate("/transactions")}
+            >
+              <Plus className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Tambah Transaksi</span>
+              <span className="sm:hidden">Tambah</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* HERO Balance */}
       <StaggerItem>

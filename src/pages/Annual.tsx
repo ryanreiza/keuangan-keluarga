@@ -19,6 +19,7 @@ import { useState, useMemo } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { format, startOfYear, endOfYear, eachMonthOfInterval, subYears, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Annual() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -199,34 +200,35 @@ export default function Annual() {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Tahunan</h1>
-          <p className="text-muted-foreground mt-1">Analisis dan perbandingan keuangan tahunan</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {yearOptions.map(year => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <Eye className="h-4 w-4 mr-2" />
-            Lihat Detail
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Calendar}
+        title="Dashboard Tahunan"
+        subtitle="Analisis dan perbandingan keuangan tahunan"
+        actions={
+          <>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {yearOptions.map(year => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+              <Eye className="h-4 w-4 mr-2" />
+              Lihat Detail
+            </Button>
+          </>
+        }
+      />
 
       {/* Annual Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

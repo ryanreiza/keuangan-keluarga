@@ -35,6 +35,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameD
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
+import { PageHeader } from "@/components/PageHeader";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend, LabelList } from 'recharts';
 
 const formatRupiah = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
@@ -465,14 +466,13 @@ export default function Monthly() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Bulanan</h1>
-          <p className="text-muted-foreground mt-1">Analisis keuangan bulanan dan tren harian</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+      <PageHeader
+        icon={Calendar}
+        title="Dashboard Bulanan"
+        subtitle="Analisis keuangan bulanan dan tren harian"
+        actions={
+          <>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
@@ -609,8 +609,9 @@ export default function Monthly() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Monthly Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

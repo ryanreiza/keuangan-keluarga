@@ -22,6 +22,7 @@ import {
 import { DebtPaymentHistory } from "@/components/DebtPaymentHistory";
 import { useState, useEffect } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateDebtData } from "@/hooks/useDebts";
 import { format } from "date-fns";
@@ -161,20 +162,20 @@ export default function Debts() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Pelacak Utang</h1>
-          <p className="text-muted-foreground mt-1">Kelola dan pantau semua utang dan kewajiban pembayaran</p>
-        </div>
-        <Button 
-          className="bg-gradient-primary text-primary-foreground hover:opacity-90"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {showForm ? 'Sembunyikan Form' : 'Tambah Utang'}
-        </Button>
-      </div>
+      <PageHeader
+        icon={CreditCard}
+        title="Pelacak Utang"
+        subtitle="Kelola dan pantau semua utang dan kewajiban pembayaran"
+        actions={
+          <Button 
+            className="bg-gradient-primary text-primary-foreground hover:opacity-90"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {showForm ? 'Sembunyikan Form' : 'Tambah Utang'}
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Debt Form */}
