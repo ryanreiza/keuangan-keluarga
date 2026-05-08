@@ -24,6 +24,7 @@ import { TransactionDetailDialog } from "@/components/TransactionDetailDialog";
 import { TransactionExport } from "@/components/TransactionExport";
 import { Transaction } from "@/hooks/useTransactions";
 import { StaggerContainer, StaggerItem } from "@/components/StaggerItem";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Transactions() {
   const [date, setDate] = useState<Date>(new Date());
@@ -258,48 +259,41 @@ export default function Transactions() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-primary shadow-elegant">
-            <Receipt className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground tracking-tight">Transaksi</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Kelola semua transaksi keuangan Anda'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-36 md:w-40 rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <TransactionExport 
-            transactions={filteredTransactions} 
-            selectedMonth={selectedMonth} 
-          />
-          <ResetTransactionsDialog onReset={resetAllTransactions} />
-          <Button 
-            className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
-            size="sm"
-            onClick={() => setShowForm(!showForm)}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">{showForm ? "Tutup Form" : "Tambah Transaksi"}</span>
-            <span className="sm:hidden">{showForm ? "Tutup" : "Tambah"}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Receipt}
+        title="Transaksi"
+        subtitle={monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Kelola semua transaksi keuangan Anda'}
+        actions={
+          <>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-36 md:w-40 rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <TransactionExport 
+              transactions={filteredTransactions} 
+              selectedMonth={selectedMonth} 
+            />
+            <ResetTransactionsDialog onReset={resetAllTransactions} />
+            <Button 
+              className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
+              size="sm"
+              onClick={() => setShowForm(!showForm)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">{showForm ? "Tutup Form" : "Tambah Transaksi"}</span>
+              <span className="sm:hidden">{showForm ? "Tutup" : "Tambah"}</span>
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Transaction Form */}

@@ -35,6 +35,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isSameD
 import { id } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import MonthlyBudgetTracker from "@/components/MonthlyBudgetTracker";
+import { PageHeader } from "@/components/PageHeader";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend, LabelList } from 'recharts';
 
 const formatRupiah = (value: number) => `Rp ${value.toLocaleString('id-ID')}`;
