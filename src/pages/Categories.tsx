@@ -23,6 +23,7 @@ import {
   Loader2
 } from "lucide-react";
 import { useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 import { useCategories, CreateCategoryData } from "@/hooks/useCategories";
 
 export default function Categories() {
