@@ -42,7 +42,7 @@ export function PageHeader({
         </div>
       </div>
       {actions && (
-        <div className="flex items-center gap-2 md:gap-3 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-start sm:justify-end">
           {actions}
         </div>
       )}

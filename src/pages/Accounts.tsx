@@ -172,14 +172,12 @@ export default function Accounts() {
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 md:h-10 md:w-10"
               onClick={() => setShowBalance(!showBalance)}
             >
               {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
             <Button 
               className="bg-gradient-primary text-primary-foreground hover:opacity-90"
-              size="sm"
               onClick={() => setShowForm(!showForm)}
             >
               <Plus className="h-4 w-4 mr-1 md:mr-2" />

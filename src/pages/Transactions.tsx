@@ -284,7 +284,6 @@ export default function Transactions() {
             <ResetTransactionsDialog onReset={resetAllTransactions} />
             <Button 
               className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant rounded-xl"
-              size="sm"
               onClick={() => setShowForm(!showForm)}
             >
               <Plus className="h-4 w-4 mr-1" />
