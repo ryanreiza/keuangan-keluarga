@@ -58,7 +58,7 @@ export function ResetTransactionsDialog({ onReset }: ResetTransactionsDialogProp
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive">
           <RotateCcw className="h-4 w-4 mr-2" />
           Reset Transaksi
         </Button>
