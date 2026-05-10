@@ -51,22 +51,24 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
-              <Route path="/transactions" element={<ProtectedPage><Transactions /></ProtectedPage>} />
-              <Route path="/categories" element={<ProtectedPage><Categories /></ProtectedPage>} />
-              <Route path="/accounts" element={<ProtectedPage><Accounts /></ProtectedPage>} />
-              <Route path="/account-dashboard" element={<ProtectedPage><AccountDashboard /></ProtectedPage>} />
-              <Route path="/savings" element={<ProtectedPage><Savings /></ProtectedPage>} />
-              <Route path="/debts" element={<ProtectedPage><Debts /></ProtectedPage>} />
-              <Route path="/annual" element={<ProtectedPage><Annual /></ProtectedPage>} />
-              <Route path="/reports" element={<ProtectedPage><Reports /></ProtectedPage>} />
-              <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          <RouteErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+                <Route path="/transactions" element={<ProtectedPage><Transactions /></ProtectedPage>} />
+                <Route path="/categories" element={<ProtectedPage><Categories /></ProtectedPage>} />
+                <Route path="/accounts" element={<ProtectedPage><Accounts /></ProtectedPage>} />
+                <Route path="/account-dashboard" element={<ProtectedPage><AccountDashboard /></ProtectedPage>} />
+                <Route path="/savings" element={<ProtectedPage><Savings /></ProtectedPage>} />
+                <Route path="/debts" element={<ProtectedPage><Debts /></ProtectedPage>} />
+                <Route path="/annual" element={<ProtectedPage><Annual /></ProtectedPage>} />
+                <Route path="/reports" element={<ProtectedPage><Reports /></ProtectedPage>} />
+                <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </RouteErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
