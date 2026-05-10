@@ -35,9 +35,11 @@ const PageLoader = () => (
 const ProtectedPage = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>
     <DashboardLayout>
-      <Suspense fallback={<PageLoader />}>
-        {children}
-      </Suspense>
+      <RouteErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          {children}
+        </Suspense>
+      </RouteErrorBoundary>
     </DashboardLayout>
   </ProtectedRoute>
 );
