@@ -20,7 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-				display: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'sans-serif'],
+				display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'ui-sans-serif', 'sans-serif'],
 				mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
 			},
 			colors: {
