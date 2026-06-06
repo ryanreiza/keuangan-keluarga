@@ -97,7 +97,7 @@ export function MobileBottomNav() {
               <SheetHeader className="text-left">
                 <SheetTitle>Menu Lainnya</SheetTitle>
               </SheetHeader>
-              <div className="grid grid-cols-2 xs:grid-cols-3 gap-3 py-4">
+              <div className="grid grid-cols-2 min-[420px]:grid-cols-3 gap-3 py-4">
                 {moreNavItems.map((item) => {
                   const active = isActive(item.url);
                   return (
