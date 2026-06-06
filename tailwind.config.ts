@@ -95,6 +95,7 @@ export default {
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-primary-soft': 'var(--gradient-primary-soft)',
+				'gradient-warm': 'var(--gradient-warm)',
 				'gradient-success': 'var(--gradient-success)',
 				'gradient-danger': 'var(--gradient-danger)',
 				'gradient-warning': 'var(--gradient-warning)',
