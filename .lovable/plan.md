@@ -1,51 +1,83 @@
-# Perbaikan Akurasi Progress Pelunasan Utang
 
-## Penyebab
+# Rencana: Palet Hangat Navy · Mint · Cream
 
-Pada tabel `transactions` terdapat **dua pasang trigger duplikat** yang menjalankan fungsi yang sama setiap kali transaksi pembayaran utang dibuat atau dihapus:
+Mengubah tema light mode agar lebih nyaman dipakai harian: background cream lembut, surface beige untuk pembeda, sidebar navy medium (tidak lagi "lubang hitam"), navy & mint tetap dominan sebagai brand identity. Dark mode tidak diubah.
 
-INSERT (mengurangi `remaining_amount`):
-- `trigger_update_debt_on_payment` → `update_debt_on_payment()`
-- `update_debt_on_transaction_insert` → `update_debt_on_payment()` *(duplikat)*
+## Token baru (light mode) — `src/index.css`
 
-DELETE (mengembalikan `remaining_amount`):
-- `trigger_reverse_debt_payment` → `reverse_debt_payment()`
-- `reverse_debt_on_transaction_delete` → `reverse_debt_payment()` *(duplikat)*
+**Canvas & surface (cream/beige):**
+- `--background`: `40 30% 97%` (cream lembut, hangat)
+- `--card`: `40 25% 99%` (putih krem)
+- `--surface`: `38 25% 94%` (beige muted untuk section pembeda)
+- `--secondary`: `38 22% 92%`
+- `--muted`: `38 20% 93%`
+- `--muted-foreground`: `30 8% 40%` (abu hangat, bukan abu dingin)
+- `--border`: `36 18% 86%` (border beige halus)
+- `--input`: `36 18% 88%`
+- `--popover`: `40 25% 99%`
 
-Karena keduanya aktif, setiap pembayaran utang Rp 500.000 dipotong dua kali sehingga progress di "Daftar Utang Aktif" tercatat Rp 1.000.000. Ini menjelaskan kenapa semua utang aktif terdampak.
+**Brand (navy lebih hidup, tidak terlalu gelap):**
+- `--primary`: `218 55% 22%`
+- `--primary-light`: `218 45% 35%`
+- `--primary-dark`: `218 65% 16%`
+- `--primary-glow`: `165 70% 55%`
+- `--foreground`: `218 40% 14%` (navy tint, bukan hitam mati)
+- `--card-foreground` / `--surface-foreground` / `--popover-foreground`: sama
 
-## Perbaikan
+**Aksen mint:**
+- `--accent-brand`: `165 65% 42%`
+- `--accent-brand-foreground`: `218 65% 14%`
+- `--accent`: `165 55% 92%` (mint pucat untuk hover/badge)
+- `--accent-foreground`: `165 75% 22%`
+- `--ring`: `165 65% 45%`
 
-Buat migration yang menghapus trigger duplikat (menyimpan satu trigger untuk INSERT dan satu untuk DELETE), lalu jalankan koreksi data untuk utang yang sudah terlanjur terpotong ganda.
+**Status (warna hangat, tidak neon):**
+- `--success`: `160 60% 38%` / `--success-bg`: `160 50% 93%`
+- `--danger`: `8 65% 52%` (terracotta hangat, bukan merah neon) / `--danger-bg`: `12 60% 95%`
+- `--warning`: `35 88% 50%` / `--warning-bg`: `38 85% 93%`
+- `--destructive`: `8 65% 52%`
 
-### Langkah 1 — Drop trigger duplikat
-```sql
-DROP TRIGGER IF EXISTS update_debt_on_transaction_insert ON public.transactions;
-DROP TRIGGER IF EXISTS reverse_debt_on_transaction_delete ON public.transactions;
-```
+**Sidebar (navy medium + teks cream):**
+- `--sidebar-background`: `218 45% 18%` (lebih terang dari `222 70% 10%` saat ini)
+- `--sidebar-foreground`: `40 25% 90%` (teks cream hangat)
+- `--sidebar-primary`: `165 70% 55%` (mint)
+- `--sidebar-primary-foreground`: `218 65% 14%`
+- `--sidebar-accent`: `218 38% 24%` (hover state)
+- `--sidebar-accent-foreground`: `40 30% 96%`
+- `--sidebar-border`: `218 35% 26%`
+- `--sidebar-ring`: `165 70% 55%`
 
-### Langkah 2 — Rekonsiliasi data utang yang sudah ada
-Hitung ulang `remaining_amount` semua utang dari `total_amount` dikurangi total pembayaran riil pada `transactions` (yang memiliki `debt_id`), lalu perbarui status `is_paid_off`.
+**Gradient & shadow (selaras):**
+- `--gradient-primary`: `linear-gradient(135deg, hsl(218 60% 16%) 0%, hsl(218 50% 26%) 55%, hsl(165 65% 42%) 100%)`
+- `--gradient-primary-soft`: `linear-gradient(135deg, hsl(40 35% 96%), hsl(165 55% 93%))`
+- `--gradient-warm` (baru): `linear-gradient(135deg, hsl(40 35% 97%), hsl(36 30% 92%))`
+- `--gradient-success`: `linear-gradient(135deg, hsl(160 60% 38%), hsl(165 65% 45%))`
+- `--gradient-surface`: `linear-gradient(180deg, hsl(40 32% 98%), hsl(38 25% 94%))`
+- `--gradient-card`: `linear-gradient(145deg, hsl(40 25% 99%), hsl(38 22% 96%))`
+- `--gradient-mesh`: titik-titik radial pakai cream + mint pucat + navy pucat (bukan biru dingin)
+- Shadow: ganti tint dari `222 47% 11%` ke `218 40% 14%` agar bayangan terasa selaras dengan navy hangat
+- `--shadow-elegant`: `0 14px 40px -12px hsl(218 55% 18% / 0.22)` (sedikit lebih halus)
+- `--shadow-glow`: `0 0 40px hsl(165 70% 55% / 0.32)`
 
-```sql
-UPDATE public.debts d
-SET
-  remaining_amount = d.total_amount - COALESCE(p.paid, 0),
-  is_paid_off = (d.total_amount - COALESCE(p.paid, 0)) <= 0,
-  updated_at = now()
-FROM (
-  SELECT debt_id, SUM(amount) AS paid
-  FROM public.transactions
-  WHERE debt_id IS NOT NULL
-  GROUP BY debt_id
-) p
-WHERE p.debt_id = d.id;
-```
+## File yang diubah
 
-## Verifikasi
-- Tambahkan pembayaran utang baru Rp 500.000 → progress hanya berkurang Rp 500.000.
-- Hapus transaksi pembayaran → progress kembali bertambah Rp 500.000 (satu kali).
-- Daftar utang aktif yang sebelumnya salah akan menampilkan sisa utang yang benar setelah migration dijalankan.
+- **`src/index.css`** — hanya blok `:root` (light mode token) + utility `bg-mesh`/`gradient-warm` jika perlu. Dark mode tidak disentuh.
+- **`tailwind.config.ts`** — tambah satu entry `'gradient-warm': 'var(--gradient-warm)'` di `backgroundImage` agar bisa dipakai komponen nanti. Tidak ada perubahan struktural.
 
-## File yang tersentuh
-Hanya migration database baru. Tidak ada perubahan kode frontend.
+## Yang TIDAK diubah
+
+- Dark mode token
+- Struktur komponen (semua otomatis ikut karena pakai semantic token)
+- Logika/business code
+- Sidebar/MobileBottomNav (sudah dirapikan di iterasi sebelumnya)
+- PWA manifest & ikon
+
+## Verifikasi setelah implementasi
+
+1. Screenshot Dashboard (desktop) — cek kehangatan & kontras
+2. Screenshot Transactions (route saat ini) — cek table & form
+3. Screenshot sidebar — pastikan navy tidak lagi "lubang hitam"
+4. Cek mode mobile bottom nav tetap kontras
+5. Cek tombol primer (navy) & CTA mint masih menonjol di atas cream
+
+Hasil yang diharapkan: kesan **"private banking hangat"** — profesional, premium, tapi tidak dingin atau klinis. Cocok dipakai berjam-jam.
