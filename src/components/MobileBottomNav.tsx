@@ -21,7 +21,7 @@ import {
 import { useState } from "react";
 
 const mainNavItems = [
-  { title: "Dashboard", url: "/", icon: BarChart3 },
+  { title: "Beranda", url: "/", icon: BarChart3 },
   { title: "Transaksi", url: "/transactions", icon: Receipt },
   { title: "Rekening", url: "/accounts", icon: Building2 },
   { title: "Tabungan", url: "/savings", icon: Target },
@@ -48,64 +48,81 @@ export function MobileBottomNav() {
   const isMoreActive = moreNavItems.some((item) => isActive(item.url));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-border/60 md:hidden safe-area-bottom shadow-[0_-4px_20px_-8px_hsl(222_47%_11%/0.1)]">
-      <div className="flex items-center justify-around h-16 px-1">
+    <nav
+      role="navigation"
+      aria-label="Navigasi utama"
+      className="fixed bottom-0 inset-x-0 z-50 glass-strong border-t border-border/60 md:hidden safe-area-bottom shadow-[0_-4px_20px_-8px_hsl(222_47%_11%/0.12)]"
+    >
+      <ul className="flex items-stretch justify-around h-16 px-0.5 gap-0.5 max-w-full overflow-hidden">
         {mainNavItems.map((item) => {
           const active = isActive(item.url);
           return (
-            <NavLink
-              key={item.url}
-              to={item.url}
-              className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[11px] font-semibold transition-all touch-target ${
-                active ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 rounded-b-full bg-primary" />
-              )}
-              <item.icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
-              <span className="truncate max-w-[64px]">{item.title}</span>
-            </NavLink>
+            <li key={item.url} className="flex-1 min-w-0">
+              <NavLink
+                to={item.url}
+                aria-label={item.title}
+                aria-current={active ? "page" : undefined}
+                className={`relative flex flex-col items-center justify-center gap-0.5 w-full h-full px-1 text-[10.5px] font-semibold leading-tight transition-colors touch-target active:scale-[0.97] ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {active && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 rounded-b-full bg-primary" />
+                )}
+                <item.icon className={`h-[20px] w-[20px] shrink-0 transition-transform ${active ? "scale-110" : ""}`} />
+                <span className="block w-full truncate text-center">{item.title}</span>
+              </NavLink>
+            </li>
           );
         })}
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <button
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[11px] font-semibold transition-colors touch-target ${
-                isMoreActive
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              }`}
+        <li className="flex-1 min-w-0">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                aria-label="Buka menu lainnya"
+                className={`flex flex-col items-center justify-center gap-0.5 w-full h-full px-1 text-[10.5px] font-semibold leading-tight transition-colors touch-target active:scale-[0.97] ${
+                  isMoreActive ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <MoreHorizontal className="h-[20px] w-[20px] shrink-0" />
+                <span className="block w-full truncate text-center">Lainnya</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="rounded-t-2xl max-h-[85vh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]"
             >
-              <MoreHorizontal className="h-5 w-5" />
-              <span>Lainnya</span>
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl">
-            <SheetHeader>
-              <SheetTitle>Menu Lainnya</SheetTitle>
-            </SheetHeader>
-            <div className="grid grid-cols-3 gap-3 py-4">
-              {moreNavItems.map((item) => (
-                <NavLink
-                  key={item.url}
-                  to={item.url}
-                  onClick={() => setOpen(false)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors ${
-                    isActive(item.url)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent"
-                  }`}
-                >
-                  <item.icon className="h-6 w-6" />
-                  <span className="text-xs font-medium text-center leading-tight">{item.title}</span>
-                </NavLink>
-              ))}
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+              <SheetHeader className="text-left">
+                <SheetTitle>Menu Lainnya</SheetTitle>
+              </SheetHeader>
+              <div className="grid grid-cols-2 min-[420px]:grid-cols-3 gap-3 py-4">
+                {moreNavItems.map((item) => {
+                  const active = isActive(item.url);
+                  return (
+                    <NavLink
+                      key={item.url}
+                      to={item.url}
+                      onClick={() => setOpen(false)}
+                      className={`flex flex-col items-center justify-center gap-2 p-4 min-h-[88px] rounded-xl border transition-colors text-center ${
+                        active
+                          ? "bg-primary/10 text-primary border-primary/30"
+                          : "text-foreground border-border/60 hover:bg-accent"
+                      }`}
+                    >
+                      <item.icon className="h-6 w-6 shrink-0" />
+                      <span className="text-xs font-medium leading-tight break-words">
+                        {item.title}
+                      </span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </li>
+      </ul>
     </nav>
   );
 }
