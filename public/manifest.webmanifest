@@ -1,0 +1,18 @@
+{
+  "name": "Keuangan Keluarga — Personal Finance Suite",
+  "short_name": "Keuangan",
+  "description": "Aplikasi pengelolaan keuangan pribadi & rumah tangga: transaksi, anggaran, tabungan, dan pelacak utang.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F1B3D",
+  "theme_color": "#0F1B3D",
+  "lang": "id",
+  "categories": ["finance", "productivity", "business"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
