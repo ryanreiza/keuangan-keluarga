@@ -48,7 +48,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-surface">
+      <div className="min-h-screen flex w-full bg-gradient-surface overflow-x-hidden">
         {/* Sidebar - hidden on mobile */}
         {!isMobile && <FinancialSidebar />}
 
