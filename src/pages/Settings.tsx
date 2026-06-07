@@ -28,6 +28,17 @@ export default function Settings() {
   // Appearance
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   const [animations, setAnimations] = useState(() => localStorage.getItem('animations') !== 'false');
+  const [palette, setPalette] = useState<'cream' | 'classic'>(() => (localStorage.getItem('palette') === 'classic' ? 'classic' : 'cream'));
+
+  useEffect(() => {
+    if (palette === 'classic') {
+      document.documentElement.classList.add('theme-classic');
+      localStorage.setItem('palette', 'classic');
+    } else {
+      document.documentElement.classList.remove('theme-classic');
+      localStorage.setItem('palette', 'cream');
+    }
+  }, [palette]);
 
   // Notifications (localStorage-based)
   const [budgetAlert, setBudgetAlert] = useState(() => localStorage.getItem('notif_budget') !== 'false');
