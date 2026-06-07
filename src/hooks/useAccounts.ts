@@ -142,6 +142,44 @@ export const useAccounts = () => {
     fetchAccounts();
   }, [user]);
 
+  // Realtime sync: keep account balances up-to-date across pages
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`accounts-realtime-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accounts',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newAcc = payload.new as Account;
+            setAccounts((prev) =>
+              prev.some((a) => a.id === newAcc.id) ? prev : [newAcc, ...prev]
+            );
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Account;
+            setAccounts((prev) =>
+              prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            const oldAcc = payload.old as Account;
+            setAccounts((prev) => prev.filter((a) => a.id !== oldAcc.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   return {
     accounts,
     loading,

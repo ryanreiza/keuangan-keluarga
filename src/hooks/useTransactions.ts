@@ -239,6 +239,32 @@ export const useTransactions = () => {
     fetchTransactions();
   }, [user]);
 
+  // Realtime sync: refetch when transactions change anywhere (other pages/devices)
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`transactions-realtime-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Refetch to get joined categories/accounts data
+          fetchTransactions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   return {
     transactions,
     loading,
