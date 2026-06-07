@@ -243,6 +243,39 @@ export default function Settings() {
               <CardDescription>Sesuaikan tampilan aplikasi</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground mb-2">Palet Warna</p>
+                <p className="text-xs text-muted-foreground mb-3">Pilih skema warna sesuai kenyamanan Anda</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPalette('cream')}
+                    className={`relative rounded-xl border-2 p-3 text-left transition-all ${palette === 'cream' ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <div className="flex gap-1 mb-2">
+                      <span className="h-6 w-6 rounded-md" style={{ background: 'hsl(40 30% 97%)', border: '1px solid hsl(36 18% 86%)' }} />
+                      <span className="h-6 w-6 rounded-md" style={{ background: 'hsl(218 55% 22%)' }} />
+                      <span className="h-6 w-6 rounded-md" style={{ background: 'hsl(165 65% 42%)' }} />
+                    </div>
+                    <p className="text-xs font-semibold text-foreground">Cream · Mint · Navy</p>
+                    <p className="text-[10px] text-muted-foreground">Hangat & nyaman (default)</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPalette('classic')}
+                    className={`relative rounded-xl border-2 p-3 text-left transition-all ${palette === 'classic' ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <div className="flex gap-1 mb-2">
+                      <span className="h-6 w-6 rounded-md" style={{ background: 'hsl(220 20% 97%)', border: '1px solid hsl(220 14% 88%)' }} />
+                      <span className="h-6 w-6 rounded-md" style={{ background: 'hsl(222 70% 14%)' }} />
+                      <span className="h-6 w-6 rounded-md" style={{ background: 'hsl(165 70% 40%)' }} />
+                    </div>
+                    <p className="text-xs font-semibold text-foreground">Classic Navy</p>
+                    <p className="text-[10px] text-muted-foreground">Versi sebelumnya</p>
+                  </button>
+                </div>
+              </div>
+              <Separator />
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground">Mode Gelap</p>
