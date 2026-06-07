@@ -96,6 +96,63 @@
     --radius: 1rem;
   }
 
+  /* Classic palette - versi sebelumnya (navy gelap, tanpa cream) */
+  .theme-classic {
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --surface: 220 20% 95%;
+    --surface-foreground: 222 47% 11%;
+
+    --primary: 222 70% 14%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 222 55% 28%;
+    --primary-dark: 222 75% 10%;
+    --primary-glow: 165 75% 50%;
+
+    --accent-brand: 165 70% 40%;
+    --accent-brand-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 93%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 16% 94%;
+    --muted-foreground: 220 9% 42%;
+    --accent: 165 60% 92%;
+    --accent-foreground: 165 80% 20%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 90%;
+    --ring: 165 70% 42%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --success-bg: 160 50% 93%;
+    --danger-bg: 0 70% 95%;
+    --warning-bg: 38 85% 93%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(222 75% 10%) 0%, hsl(222 60% 22%) 55%, hsl(165 70% 42%) 100%);
+    --gradient-primary-soft: linear-gradient(135deg, hsl(220 30% 96%), hsl(165 55% 93%));
+    --gradient-warm: linear-gradient(135deg, hsl(220 20% 97%), hsl(220 16% 93%));
+    --gradient-surface: linear-gradient(180deg, hsl(220 22% 98%), hsl(220 18% 94%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 18% 96%));
+    --gradient-mesh: radial-gradient(at 20% 20%, hsl(222 45% 92%) 0px, transparent 50%),
+                     radial-gradient(at 80% 0%, hsl(165 55% 92%) 0px, transparent 50%),
+                     radial-gradient(at 80% 80%, hsl(222 55% 90%) 0px, transparent 50%);
+
+    --shadow-elegant: 0 14px 40px -12px hsl(222 70% 10% / 0.25);
+    --shadow-glow: 0 0 40px hsl(165 75% 50% / 0.3);
+
+    --sidebar-background: 222 70% 10%;
+    --sidebar-foreground: 220 14% 92%;
+    --sidebar-primary: 165 75% 50%;
+    --sidebar-primary-foreground: 222 75% 10%;
+    --sidebar-accent: 222 50% 16%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 45% 18%;
+    --sidebar-ring: 165 75% 50%;
+  }
+
   .dark {
     --background: 222 47% 7%;
     --foreground: 220 14% 96%;
