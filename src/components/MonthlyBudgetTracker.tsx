@@ -332,29 +332,34 @@ export default function MonthlyBudgetTracker({
               </tr>
             </thead>
             <tbody>
-              {filteredCategories.map((category) => {
-                const expected = expectedAmounts[category.id] || 0;
-                const actual = actualAmounts[category.id] || 0;
+              {rows.map((row) => {
+                const expected = expectedAmounts[row.key] || 0;
+                const actual = actualAmounts[row.key] || 0;
                 const progress = calculateProgress(expected, actual);
-                const progressColor = getProgressColor(expected, actual);
 
                 return (
-                  <tr key={category.id} className="border-b border-border/50">
+                  <tr key={row.key} className="border-b border-border/50">
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: category.color }}
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: row.color }}
                         />
-                        <span className="font-medium">{category.name}</span>
+                        <span className="font-medium">{row.name}</span>
+                        {row.kind === 'savings' && (
+                          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            <PiggyBank className="h-3 w-3" />
+                            Tabungan
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 px-2">
                       <Input
                         type="number"
-                        value={localExpected[category.id] || ''}
-                        onChange={(e) => handleExpectedChange(category.id, e.target.value)}
-                        onBlur={() => handleExpectedBlur(category.id)}
+                        value={localExpected[row.key] || ''}
+                        onChange={(e) => handleExpectedChange(row.key, e.target.value)}
+                        onBlur={() => handleExpectedBlur(row)}
                         placeholder="0"
                         className="text-right h-8 w-32 ml-auto"
                       />
@@ -365,7 +370,7 @@ export default function MonthlyBudgetTracker({
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                          <div 
+                          <div
                             className={`h-full transition-all ${getProgressColor(expected, actual)}`}
                             style={{ width: `${Math.min(progress, 100)}%` }}
                           />
@@ -378,7 +383,7 @@ export default function MonthlyBudgetTracker({
                   </tr>
                 );
               })}
-              {filteredCategories.length === 0 && (
+              {rows.length === 0 && (
                 <tr>
                   <td colSpan={4} className="text-center py-6 text-muted-foreground">
                     Tidak ada kategori {type === 'expense' ? 'pengeluaran' : 'pemasukan'}
@@ -386,7 +391,8 @@ export default function MonthlyBudgetTracker({
                 </tr>
               )}
             </tbody>
-            {filteredCategories.length > 0 && (
+            {rows.length > 0 && (
+
               <tfoot>
                 <tr className="border-t-2 border-border bg-muted/50">
                   <td className="py-3 px-2 font-bold text-base">Total</td>
