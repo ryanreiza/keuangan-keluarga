@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 export interface MonthlyBudget {
   id: string;
   user_id: string;
-  category_id: string;
+  category_id: string | null;
+  savings_goal_id: string | null;
   month: number;
   year: number;
   expected_amount: number;
@@ -15,7 +16,8 @@ export interface MonthlyBudget {
 }
 
 export interface CreateBudgetData {
-  category_id: string;
+  category_id?: string | null;
+  savings_goal_id?: string | null;
   month: number;
   year: number;
   expected_amount: number;
