@@ -6,10 +6,11 @@ import { useMonthlyBudgets } from '@/hooks/useMonthlyBudgets';
 import { Category } from '@/hooks/useCategories';
 import { Transaction } from '@/hooks/useTransactions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Copy, ClipboardPaste } from 'lucide-react';
+import { Copy, ClipboardPaste, PiggyBank } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import type { SavingsGoal } from '@/hooks/useSavings';
 
 // Storage key for copied budget data
 const COPIED_BUDGET_KEY = 'copiedBudgetData';
@@ -19,6 +20,7 @@ interface MonthlyBudgetTrackerProps {
   transactions: Transaction[];
   selectedMonth: string; // Format: yyyy-MM
   type: 'income' | 'expense';
+  savingsGoals?: SavingsGoal[];
 }
 
 export default function MonthlyBudgetTracker({ 
