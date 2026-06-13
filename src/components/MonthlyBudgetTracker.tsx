@@ -43,62 +43,109 @@ export default function MonthlyBudgetTracker({
     return categories.filter(cat => cat.type === type);
   }, [categories, type]);
 
-  // Calculate actual amounts from transactions
+  // Build unified rows: categories + (for expense) savings goals
+  interface Row {
+    key: string;
+    kind: 'category' | 'savings';
+    id: string;
+    name: string;
+    color: string;
+  }
+
+  const rows = useMemo<Row[]>(() => {
+    const catRows: Row[] = filteredCategories.map(cat => ({
+      key: `cat:${cat.id}`,
+      kind: 'category',
+      id: cat.id,
+      name: cat.name,
+      color: cat.color,
+    }));
+    if (type !== 'expense') return catRows;
+    const savRows: Row[] = (savingsGoals || []).map(g => ({
+      key: `sav:${g.id}`,
+      kind: 'savings',
+      id: g.id,
+      name: g.name,
+      color: '#10B981',
+    }));
+    return [...catRows, ...savRows];
+  }, [filteredCategories, savingsGoals, type]);
+
+  // Calculate actual amounts from transactions, keyed by row.key
   const actualAmounts = useMemo(() => {
     const amounts: Record<string, number> = {};
-    
-    filteredCategories.forEach(cat => {
-      const categoryTransactions = transactions.filter(
-        t => t.category_id === cat.id && t.type === type
-      );
-      amounts[cat.id] = categoryTransactions.reduce(
-        (sum, t) => sum + Number(t.amount), 
-        0
-      );
-    });
-    
-    return amounts;
-  }, [transactions, filteredCategories, type]);
 
-  // Get expected amounts from budgets
+    // Category rows: sum transactions for that category & type,
+    // EXCLUDING transactions linked to a savings goal (to avoid double-count).
+    filteredCategories.forEach(cat => {
+      const sum = transactions
+        .filter(t => t.category_id === cat.id && t.type === type && !t.savings_goal_id)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      amounts[`cat:${cat.id}`] = sum;
+    });
+
+    if (type === 'expense') {
+      (savingsGoals || []).forEach(goal => {
+        const sum = transactions
+          .filter(t => t.savings_goal_id === goal.id)
+          .reduce((s, t) => s + Number(t.amount), 0);
+        amounts[`sav:${goal.id}`] = sum;
+      });
+    }
+
+    return amounts;
+  }, [transactions, filteredCategories, savingsGoals, type]);
+
+  // Get expected amounts from budgets, keyed by row.key
   const expectedAmounts = useMemo(() => {
     const amounts: Record<string, number> = {};
-    
+
     filteredCategories.forEach(cat => {
       const budget = budgets.find(
         b => b.category_id === cat.id && b.month === month && b.year === year
       );
-      amounts[cat.id] = budget?.expected_amount || 0;
+      amounts[`cat:${cat.id}`] = budget?.expected_amount || 0;
     });
-    
+
+    if (type === 'expense') {
+      (savingsGoals || []).forEach(goal => {
+        const budget = budgets.find(
+          b => b.savings_goal_id === goal.id && b.month === month && b.year === year
+        );
+        amounts[`sav:${goal.id}`] = budget?.expected_amount || 0;
+      });
+    }
+
     return amounts;
-  }, [budgets, filteredCategories, month, year]);
+  }, [budgets, filteredCategories, savingsGoals, month, year, type]);
 
   // Initialize local expected values
   useEffect(() => {
     const initial: Record<string, string> = {};
-    filteredCategories.forEach(cat => {
-      const expected = expectedAmounts[cat.id];
-      initial[cat.id] = expected > 0 ? expected.toString() : '';
+    rows.forEach(r => {
+      const expected = expectedAmounts[r.key];
+      initial[r.key] = expected > 0 ? expected.toString() : '';
     });
     setLocalExpected(initial);
-  }, [expectedAmounts, filteredCategories]);
+  }, [expectedAmounts, rows]);
 
 
-  const handleExpectedChange = (categoryId: string, value: string) => {
-    setLocalExpected(prev => ({ ...prev, [categoryId]: value }));
+  const handleExpectedChange = (rowKey: string, value: string) => {
+    setLocalExpected(prev => ({ ...prev, [rowKey]: value }));
   };
 
-  const handleExpectedBlur = async (categoryId: string) => {
-    const value = localExpected[categoryId];
+  const handleExpectedBlur = async (row: Row) => {
+    const value = localExpected[row.key];
     const numValue = parseFloat(value) || 0;
-    
+
     if (numValue >= 0) {
       await upsertBudget({
-        category_id: categoryId,
+        ...(row.kind === 'savings'
+          ? { savings_goal_id: row.id }
+          : { category_id: row.id }),
         month,
         year,
-        expected_amount: numValue
+        expected_amount: numValue,
       });
     }
   };
@@ -132,17 +179,18 @@ export default function MonthlyBudgetTracker({
     }).format(amount);
   };
 
-  // Calculate totals
+  // Calculate totals across all rows
   const totalExpected = useMemo(() => {
-    return filteredCategories.reduce((sum, cat) => sum + (expectedAmounts[cat.id] || 0), 0);
-  }, [filteredCategories, expectedAmounts]);
+    return rows.reduce((sum, r) => sum + (expectedAmounts[r.key] || 0), 0);
+  }, [rows, expectedAmounts]);
 
   const totalActual = useMemo(() => {
-    return filteredCategories.reduce((sum, cat) => sum + (actualAmounts[cat.id] || 0), 0);
-  }, [filteredCategories, actualAmounts]);
+    return rows.reduce((sum, r) => sum + (actualAmounts[r.key] || 0), 0);
+  }, [rows, actualAmounts]);
 
   const totalProgress = useMemo(() => {
     if (totalExpected === 0) return 0;
+
     return Math.round((totalActual / totalExpected) * 100);
   }, [totalExpected, totalActual]);
 
