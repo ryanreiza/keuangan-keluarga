@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 export interface MonthlyBudget {
   id: string;
   user_id: string;
-  category_id: string;
+  category_id: string | null;
+  savings_goal_id: string | null;
   month: number;
   year: number;
   expected_amount: number;
@@ -15,7 +16,8 @@ export interface MonthlyBudget {
 }
 
 export interface CreateBudgetData {
-  category_id: string;
+  category_id?: string | null;
+  savings_goal_id?: string | null;
   month: number;
   year: number;
   expected_amount: number;
@@ -59,15 +61,22 @@ export const useMonthlyBudgets = () => {
     if (!user) return { error: 'No user found' };
 
     try {
+      const isSavings = !!budgetData.savings_goal_id;
+      const payload: any = {
+        user_id: user.id,
+        month: budgetData.month,
+        year: budgetData.year,
+        expected_amount: budgetData.expected_amount,
+        category_id: isSavings ? null : budgetData.category_id ?? null,
+        savings_goal_id: isSavings ? budgetData.savings_goal_id : null,
+      };
+
       const { data, error } = await supabase
         .from('monthly_budgets')
-        .upsert([
-          {
-            ...budgetData,
-            user_id: user.id,
-          }
-        ], {
-          onConflict: 'user_id,category_id,month,year'
+        .upsert([payload], {
+          onConflict: isSavings
+            ? 'user_id,savings_goal_id,month,year'
+            : 'user_id,category_id,month,year',
         })
         .select()
         .single();
@@ -76,10 +85,11 @@ export const useMonthlyBudgets = () => {
 
       // Update local state
       setBudgets(prev => {
-        const index = prev.findIndex(b => 
-          b.category_id === data.category_id && 
-          b.month === data.month && 
-          b.year === data.year
+        const index = prev.findIndex(b =>
+          b.month === data.month &&
+          b.year === data.year &&
+          ((isSavings && b.savings_goal_id === data.savings_goal_id) ||
+           (!isSavings && b.category_id === data.category_id))
         );
         if (index >= 0) {
           const newBudgets = [...prev];
@@ -88,6 +98,7 @@ export const useMonthlyBudgets = () => {
         }
         return [...prev, data];
       });
+
 
       return { data, error: null };
     } catch (error: any) {

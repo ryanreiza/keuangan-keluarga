@@ -334,6 +334,7 @@ export default function Dashboard() {
               categories={categories}
               transactions={currentMonthTransactions}
               selectedMonth={selectedMonth}
+              savingsGoals={savingsGoals}
             />
           </CardContent>
         </Card>
