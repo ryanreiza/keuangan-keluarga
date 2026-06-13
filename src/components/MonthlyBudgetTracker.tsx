@@ -200,14 +200,15 @@ export default function MonthlyBudgetTracker({
 
   // Copy only expected amounts to localStorage for pasting to other months
   const handleCopyExpected = () => {
-    const budgetData: Record<string, { categoryName: string; amount: number }> = {};
-    
-    filteredCategories.forEach(cat => {
-      const expected = expectedAmounts[cat.id] || 0;
+    const budgetData: Record<string, { name: string; amount: number; kind: 'category' | 'savings' }> = {};
+
+    rows.forEach(row => {
+      const expected = expectedAmounts[row.key] || 0;
       if (expected > 0) {
-        budgetData[cat.id] = {
-          categoryName: cat.name,
-          amount: expected
+        budgetData[row.key] = {
+          name: row.name,
+          amount: expected,
+          kind: row.kind,
         };
       }
     });
@@ -219,7 +220,7 @@ export default function MonthlyBudgetTracker({
     };
 
     localStorage.setItem(COPIED_BUDGET_KEY + '_' + type, JSON.stringify(dataToStore));
-    
+
     toast({
       title: "Berhasil Disalin",
       description: `Target ${type === 'expense' ? 'pengeluaran' : 'pemasukan'} dari ${monthLabel} telah disalin. Pilih bulan lain dan klik Tempel.`,
@@ -229,7 +230,7 @@ export default function MonthlyBudgetTracker({
   // Paste copied budget data to current month
   const handlePasteExpected = async () => {
     const stored = localStorage.getItem(COPIED_BUDGET_KEY + '_' + type);
-    
+
     if (!stored) {
       toast({
         title: "Tidak Ada Data",
@@ -241,20 +242,25 @@ export default function MonthlyBudgetTracker({
 
     try {
       const data = JSON.parse(stored);
-      const budgetData = data.budgets as Record<string, { categoryName: string; amount: number }>;
-      
-      // Apply each budget to current month
-      for (const [categoryId, budget] of Object.entries(budgetData)) {
-        // Check if category still exists
-        const categoryExists = filteredCategories.find(cat => cat.id === categoryId);
-        if (categoryExists) {
-          await upsertBudget({
-            category_id: categoryId,
-            month,
-            year,
-            expected_amount: budget.amount
-          });
-        }
+      const budgetData = data.budgets as Record<string, { name?: string; categoryName?: string; amount: number; kind?: 'category' | 'savings' }>;
+
+      for (const [rowKey, budget] of Object.entries(budgetData)) {
+        // Backwards compat: old format stored raw categoryId as key
+        const isSavings = budget.kind === 'savings' || rowKey.startsWith('sav:');
+        const targetId = rowKey.includes(':') ? rowKey.split(':')[1] : rowKey;
+
+        const exists = isSavings
+          ? (savingsGoals || []).some(g => g.id === targetId)
+          : filteredCategories.some(cat => cat.id === targetId);
+
+        if (!exists) continue;
+
+        await upsertBudget({
+          ...(isSavings ? { savings_goal_id: targetId } : { category_id: targetId }),
+          month,
+          year,
+          expected_amount: budget.amount,
+        });
       }
 
       toast({
@@ -269,6 +275,7 @@ export default function MonthlyBudgetTracker({
       });
     }
   };
+
 
   // Check if there's copied data available
   const hasCopiedData = useMemo(() => {
