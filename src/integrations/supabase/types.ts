@@ -130,36 +130,47 @@ export type Database = {
       }
       monthly_budgets: {
         Row: {
-          category_id: string
+          category_id: string | null
           created_at: string
           expected_amount: number
           id: string
           month: number
+          savings_goal_id: string | null
           updated_at: string
           user_id: string
           year: number
         }
         Insert: {
-          category_id: string
+          category_id?: string | null
           created_at?: string
           expected_amount?: number
           id?: string
           month: number
+          savings_goal_id?: string | null
           updated_at?: string
           user_id: string
           year: number
         }
         Update: {
-          category_id?: string
+          category_id?: string | null
           created_at?: string
           expected_amount?: number
           id?: string
           month?: number
+          savings_goal_id?: string | null
           updated_at?: string
           user_id?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "monthly_budgets_savings_goal_id_fkey"
+            columns: ["savings_goal_id"]
+            isOneToOne: false
+            referencedRelation: "savings_goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
