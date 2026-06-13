@@ -27,7 +27,8 @@ export default function MonthlyBudgetTracker({
   categories, 
   transactions, 
   selectedMonth,
-  type 
+  type,
+  savingsGoals = [],
 }: MonthlyBudgetTrackerProps) {
   const { budgets, loading, upsertBudget } = useMonthlyBudgets();
   const [localExpected, setLocalExpected] = useState<Record<string, string>>({});
