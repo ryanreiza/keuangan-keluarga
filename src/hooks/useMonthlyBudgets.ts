@@ -62,42 +62,80 @@ export const useMonthlyBudgets = () => {
 
     try {
       const isSavings = !!budgetData.savings_goal_id;
-      const payload: any = {
-        user_id: user.id,
-        month: budgetData.month,
-        year: budgetData.year,
-        expected_amount: budgetData.expected_amount,
-        category_id: isSavings ? null : budgetData.category_id ?? null,
-        savings_goal_id: isSavings ? budgetData.savings_goal_id : null,
-      };
+      let data: MonthlyBudget | null = null;
 
-      const { data, error } = await supabase
-        .from('monthly_budgets')
-        .upsert([payload], {
-          onConflict: isSavings
-            ? 'user_id,savings_goal_id,month,year'
-            : 'user_id,category_id,month,year',
-        })
-        .select()
-        .single();
+      if (isSavings) {
+        // Partial unique index can't be used as PostgREST upsert conflict target.
+        // Do select -> update or insert manually.
+        const { data: existing, error: selErr } = await supabase
+          .from('monthly_budgets')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('savings_goal_id', budgetData.savings_goal_id!)
+          .eq('month', budgetData.month)
+          .eq('year', budgetData.year)
+          .maybeSingle();
+        if (selErr) throw selErr;
 
-      if (error) throw error;
+        if (existing?.id) {
+          const { data: updated, error: updErr } = await supabase
+            .from('monthly_budgets')
+            .update({ expected_amount: budgetData.expected_amount })
+            .eq('id', existing.id)
+            .select()
+            .single();
+          if (updErr) throw updErr;
+          data = updated as MonthlyBudget;
+        } else {
+          const { data: inserted, error: insErr } = await supabase
+            .from('monthly_budgets')
+            .insert([{
+              user_id: user.id,
+              month: budgetData.month,
+              year: budgetData.year,
+              expected_amount: budgetData.expected_amount,
+              category_id: null,
+              savings_goal_id: budgetData.savings_goal_id!,
+            }])
+            .select()
+            .single();
+          if (insErr) throw insErr;
+          data = inserted as MonthlyBudget;
+        }
+      } else {
+        const payload = {
+          user_id: user.id,
+          month: budgetData.month,
+          year: budgetData.year,
+          expected_amount: budgetData.expected_amount,
+          category_id: budgetData.category_id ?? null,
+          savings_goal_id: null,
+        };
+        const { data: upserted, error } = await supabase
+          .from('monthly_budgets')
+          .upsert([payload], { onConflict: 'user_id,category_id,month,year' })
+          .select()
+          .single();
+        if (error) throw error;
+        data = upserted as MonthlyBudget;
+      }
 
       // Update local state
       setBudgets(prev => {
         const index = prev.findIndex(b =>
-          b.month === data.month &&
-          b.year === data.year &&
-          ((isSavings && b.savings_goal_id === data.savings_goal_id) ||
-           (!isSavings && b.category_id === data.category_id))
+          b.month === data!.month &&
+          b.year === data!.year &&
+          ((isSavings && b.savings_goal_id === data!.savings_goal_id) ||
+           (!isSavings && b.category_id === data!.category_id))
         );
         if (index >= 0) {
           const newBudgets = [...prev];
-          newBudgets[index] = data;
+          newBudgets[index] = data!;
           return newBudgets;
         }
-        return [...prev, data];
+        return [...prev, data!];
       });
+
 
 
       return { data, error: null };
