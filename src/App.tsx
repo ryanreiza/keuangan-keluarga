@@ -20,6 +20,7 @@ const AccountDashboard = lazy(() => import("./pages/AccountDashboard"));
 const Savings = lazy(() => import("./pages/Savings"));
 const Debts = lazy(() => import("./pages/Debts"));
 const Annual = lazy(() => import("./pages/Annual"));
+const MonthlyPlan = lazy(() => import("./pages/MonthlyPlan"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/savings" element={<ProtectedPage><Savings /></ProtectedPage>} />
                 <Route path="/debts" element={<ProtectedPage><Debts /></ProtectedPage>} />
                 <Route path="/annual" element={<ProtectedPage><Annual /></ProtectedPage>} />
+                <Route path="/monthly-plan" element={<ProtectedPage><MonthlyPlan /></ProtectedPage>} />
                 <Route path="/reports" element={<ProtectedPage><Reports /></ProtectedPage>} />
                 <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
                 <Route path="*" element={<NotFound />} />
