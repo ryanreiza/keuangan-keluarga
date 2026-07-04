@@ -75,7 +75,7 @@ export default function MonthlyPlan() {
       <PageHeader
         icon={Target}
         title="TARGET KEUANGAN BULANAN"
-        description="Rencanakan pemasukan, pengeluaran tetap, dan alokasi target berbasis persentase."
+        subtitle="Rencanakan pemasukan, pengeluaran tetap, dan alokasi target berbasis persentase."
       />
 
       {/* Period picker */}
