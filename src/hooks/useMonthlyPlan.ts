@@ -92,7 +92,8 @@ export const useMonthlyPlan = (month: number, year: number) => {
   };
   const deleteIncome = async (id: string) => {
     setIncomes(prev => prev.filter(r => r.id !== id));
-    await wrap(() => supabase.from('monthly_plan_incomes').delete().eq('id', id).then(r => ({ data: null, error: r.error })), 'Gagal menghapus');
+    const { error } = await supabase.from('monthly_plan_incomes').delete().eq('id', id);
+    if (error) toast({ title: 'Gagal menghapus', description: error.message, variant: 'destructive' });
   };
 
   // Fixed
@@ -107,7 +108,8 @@ export const useMonthlyPlan = (month: number, year: number) => {
   };
   const deleteFixed = async (id: string) => {
     setFixed(prev => prev.filter(r => r.id !== id));
-    await wrap(() => supabase.from('monthly_plan_fixed_expenses').delete().eq('id', id).then(r => ({ data: null, error: r.error })), 'Gagal menghapus');
+    const { error } = await supabase.from('monthly_plan_fixed_expenses').delete().eq('id', id);
+    if (error) toast({ title: 'Gagal menghapus', description: error.message, variant: 'destructive' });
   };
 
   // Allocations
@@ -128,7 +130,8 @@ export const useMonthlyPlan = (month: number, year: number) => {
   };
   const deleteAllocation = async (id: string) => {
     setAllocations(prev => prev.filter(r => r.id !== id));
-    await wrap(() => supabase.from('monthly_plan_allocations').delete().eq('id', id).then(r => ({ data: null, error: r.error })), 'Gagal menghapus');
+    const { error } = await supabase.from('monthly_plan_allocations').delete().eq('id', id);
+    if (error) toast({ title: 'Gagal menghapus', description: error.message, variant: 'destructive' });
   };
 
   return {
