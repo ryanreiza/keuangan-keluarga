@@ -172,6 +172,145 @@ export type Database = {
           },
         ]
       }
+      monthly_plan_allocations: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          month: number
+          note: string | null
+          percentage: number
+          remark: string | null
+          sort_order: number
+          updated_at: string
+          user_id: string
+          web_category_id: string | null
+          year: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          month: number
+          note?: string | null
+          percentage?: number
+          remark?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+          web_category_id?: string | null
+          year: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          month?: number
+          note?: string | null
+          percentage?: number
+          remark?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+          web_category_id?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_plan_allocations_web_category_id_fkey"
+            columns: ["web_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_plan_fixed_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          month: number
+          remark: string | null
+          sort_order: number
+          updated_at: string
+          user_id: string
+          web_category_id: string | null
+          year: number
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          month: number
+          remark?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+          web_category_id?: string | null
+          year: number
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          month?: number
+          remark?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+          web_category_id?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_plan_fixed_expenses_web_category_id_fkey"
+            columns: ["web_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_plan_incomes: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          month: number
+          sort_order: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          month: number
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          month?: number
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
