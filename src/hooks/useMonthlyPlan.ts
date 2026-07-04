@@ -71,7 +71,7 @@ export const useMonthlyPlan = (month: number, year: number) => {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // Generic helpers
-  const wrap = async <T,>(op: () => Promise<{ data: any; error: any }>, errMsg: string): Promise<T | null> => {
+  const wrap = async <T,>(op: () => PromiseLike<{ data: any; error: any }>, errMsg: string): Promise<T | null> => {
     const { data, error } = await op();
     if (error) {
       toast({ title: errMsg, description: error.message, variant: 'destructive' });
