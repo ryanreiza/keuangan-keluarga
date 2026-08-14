@@ -228,15 +228,11 @@ export default function MonthlyPlan() {
                       />
                     </td>
                     <td className="px-4 py-2">
-                      <Input
-                        type="number" min={0}
-                        className="text-right font-mono-num"
-                        defaultValue={row.amount}
-                        onBlur={(e) => {
-                          const v = parseNum(e.target.value);
-                          if (v !== Number(row.amount)) plan.updateIncome(row.id, { amount: v });
-                        }}
+                      <AmountInput
+                        value={Number(row.amount)}
+                        onCommit={(v) => plan.updateIncome(row.id, { amount: v })}
                       />
+
                     </td>
                     <td className="px-2 py-2 text-center">
                       <Button variant="ghost" size="icon" onClick={() => plan.deleteIncome(row.id)}>
