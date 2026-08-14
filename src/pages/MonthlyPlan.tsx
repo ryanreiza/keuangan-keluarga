@@ -287,11 +287,8 @@ export default function MonthlyPlan() {
                         onBlur={(e) => e.target.value !== row.category && plan.updateFixed(row.id, { category: e.target.value })} />
                     </td>
                     <td className="px-4 py-2">
-                      <Input type="number" min={0} className="text-right font-mono-num" defaultValue={row.amount}
-                        onBlur={(e) => {
-                          const v = parseNum(e.target.value);
-                          if (v !== Number(row.amount)) plan.updateFixed(row.id, { amount: v });
-                        }} />
+                      <AmountInput value={Number(row.amount)} onCommit={(v) => plan.updateFixed(row.id, { amount: v })} />
+
                     </td>
                     <td className="px-4 py-2">
                       <Select
