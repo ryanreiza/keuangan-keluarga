@@ -134,11 +134,67 @@ export const useMonthlyPlan = (month: number, year: number) => {
     if (error) toast({ title: 'Gagal menghapus', description: error.message, variant: 'destructive' });
   };
 
+  // Bulk paste (copy targets from another month)
+  const pasteIncomes = async (rows: Partial<PlanIncome>[]) => {
+    if (!user || rows.length === 0) return 0;
+    const payload = rows.map((r, idx) => ({
+      user_id: user.id, month, year,
+      category: r.category ?? '', amount: Number(r.amount ?? 0),
+      sort_order: incomes.length + idx,
+    }));
+    const data = await wrap<PlanIncome[]>(() => supabase.from('monthly_plan_incomes').insert(payload).select(), 'Gagal menempel pemasukan');
+    if (data) setIncomes(prev => [...prev, ...data]);
+    return data?.length ?? 0;
+  };
+  const pasteFixed = async (rows: Partial<PlanFixedExpense>[]) => {
+    if (!user || rows.length === 0) return 0;
+    const payload = rows.map((r, idx) => ({
+      user_id: user.id, month, year,
+      category: r.category ?? '', amount: Number(r.amount ?? 0),
+      web_category_id: r.web_category_id ?? null, remark: r.remark ?? null,
+      sort_order: fixed.length + idx,
+    }));
+    const data = await wrap<PlanFixedExpense[]>(() => supabase.from('monthly_plan_fixed_expenses').insert(payload).select(), 'Gagal menempel pengeluaran tetap');
+    if (data) setFixed(prev => [...prev, ...data]);
+    return data?.length ?? 0;
+  };
+  const pasteAllocations = async (rows: Partial<PlanAllocation>[]) => {
+    if (!user || rows.length === 0) return 0;
+    const payload = rows.map((r, idx) => ({
+      user_id: user.id, month, year,
+      percentage: Number(r.percentage ?? 0), category: r.category ?? '',
+      note: r.note ?? null, web_category_id: r.web_category_id ?? null, remark: r.remark ?? null,
+      sort_order: allocations.length + idx,
+    }));
+    const data = await wrap<PlanAllocation[]>(() => supabase.from('monthly_plan_allocations').insert(payload).select(), 'Gagal menempel alokasi');
+    if (data) setAllocations(prev => [...prev, ...data]);
+    return data?.length ?? 0;
+  };
+
+  const clearIncomes = async () => {
+    if (!user) return;
+    setIncomes([]);
+    await supabase.from('monthly_plan_incomes').delete().eq('user_id', user.id).eq('month', month).eq('year', year);
+  };
+  const clearFixed = async () => {
+    if (!user) return;
+    setFixed([]);
+    await supabase.from('monthly_plan_fixed_expenses').delete().eq('user_id', user.id).eq('month', month).eq('year', year);
+  };
+  const clearAllocations = async () => {
+    if (!user) return;
+    setAllocations([]);
+    await supabase.from('monthly_plan_allocations').delete().eq('user_id', user.id).eq('month', month).eq('year', year);
+  };
+
   return {
     loading,
     incomes, addIncome, updateIncome, deleteIncome,
     fixed, addFixed, updateFixed, deleteFixed,
     allocations, addAllocation, updateAllocation, deleteAllocation,
+    pasteIncomes, pasteFixed, pasteAllocations,
+    clearIncomes, clearFixed, clearAllocations,
     refetch: fetchAll,
   };
 };
+
