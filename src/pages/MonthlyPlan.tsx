@@ -25,10 +25,43 @@ const CLIP_KEY = "monthly-plan-clipboard";
 const fmtIDR = (n: number) => `Rp ${Math.round(n || 0).toLocaleString("id-ID")}`;
 
 const parseNum = (v: string) => {
-  const cleaned = v.replace(/[^\d.-]/g, "");
+  const cleaned = String(v).replace(/[^\d]/g, "");
   const n = Number(cleaned);
   return Number.isFinite(n) && n >= 0 ? n : 0;
 };
+
+const groupThousands = (v: string) => {
+  const digits = String(v).replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
+  return digits ? Number(digits).toLocaleString("id-ID") : "";
+};
+
+function AmountInput({
+  value,
+  onCommit,
+  className = "",
+}: {
+  value: number;
+  onCommit: (n: number) => void;
+  className?: string;
+}) {
+  const [text, setText] = useState(() => groupThousands(String(value ?? 0)));
+  useEffect(() => { setText(groupThousands(String(value ?? 0))); }, [value]);
+  return (
+    <Input
+      inputMode="numeric"
+      className={`text-right font-mono-num ${className}`}
+      value={text}
+      placeholder="0"
+      onChange={(e) => setText(groupThousands(e.target.value))}
+      onBlur={() => {
+        const v = parseNum(text);
+        setText(groupThousands(String(v)));
+        if (v !== Number(value)) onCommit(v);
+      }}
+    />
+  );
+}
+
 
 export default function MonthlyPlan() {
   const now = new Date();
