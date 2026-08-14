@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus, Trash2, AlertCircle, CheckCircle2, Target } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Plus, Trash2, AlertCircle, CheckCircle2, Target, Copy, ClipboardPaste } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useMonthlyPlan, PlanAllocation } from "@/hooks/useMonthlyPlan";
 import { useCategories } from "@/hooks/useCategories";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_CATEGORIES = [
   "Sedekah", "Makanan / Minuman", "Perlengkapan Bayi", "PDAM", "Listrik",
@@ -18,6 +19,8 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+const CLIP_KEY = "monthly-plan-clipboard";
 
 const fmtIDR = (n: number) => `Rp ${Math.round(n || 0).toLocaleString("id-ID")}`;
 
@@ -67,8 +70,58 @@ export default function MonthlyPlan() {
     }
   };
 
+  // ---- Copy / Paste antar bulan ----
+  const { toast } = useToast();
+  const [clip, setClip] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CLIP_KEY);
+      if (raw) setClip(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const saveClip = (data: any) => {
+    setClip(data);
+    try { localStorage.setItem(CLIP_KEY, JSON.stringify(data)); } catch { /* ignore */ }
+  };
+
+  const copySection = (section: "incomes" | "fixed" | "allocations" | "all") => {
+    const next = { ...(clip || {}), from: `${MONTHS[month - 1]} ${year}` };
+    if (section === "incomes" || section === "all") {
+      next.incomes = plan.incomes.map(r => ({ category: r.category, amount: r.amount }));
+    }
+    if (section === "fixed" || section === "all") {
+      next.fixed = plan.fixed.map(r => ({ category: r.category, amount: r.amount, web_category_id: r.web_category_id, remark: r.remark }));
+    }
+    if (section === "allocations" || section === "all") {
+      next.allocations = plan.allocations.map(r => ({ percentage: r.percentage, category: r.category, note: r.note, web_category_id: r.web_category_id, remark: r.remark }));
+    }
+    saveClip(next);
+    toast({ title: "Disalin", description: `Data ${MONTHS[month - 1]} ${year} siap ditempel ke bulan lain.` });
+  };
+
+  const pasteSection = async (section: "incomes" | "fixed" | "allocations" | "all") => {
+    if (!clip) return;
+    let count = 0;
+    if ((section === "incomes" || section === "all") && clip.incomes?.length) {
+      await plan.clearIncomes();
+      count += await plan.pasteIncomes(clip.incomes);
+    }
+    if ((section === "fixed" || section === "all") && clip.fixed?.length) {
+      await plan.clearFixed();
+      count += await plan.pasteFixed(clip.fixed);
+    }
+    if ((section === "allocations" || section === "all") && clip.allocations?.length) {
+      await plan.clearAllocations();
+      count += await plan.pasteAllocations(clip.allocations);
+    }
+    toast({ title: "Ditempel", description: `${count} baris disalin ke ${MONTHS[month - 1]} ${year}.` });
+  };
+
   const currentYear = now.getFullYear();
   const years = [currentYear - 1, currentYear, currentYear + 1];
+
 
   return (
     <div className="space-y-6">
@@ -94,14 +147,29 @@ export default function MonthlyPlan() {
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => copySection("all")}>
+              <Copy className="h-4 w-4 mr-1" />Salin Semua
+            </Button>
+            <Button size="sm" disabled={!clip} onClick={() => pasteSection("all")}>
+              <ClipboardPaste className="h-4 w-4 mr-1" />Tempel Semua
+            </Button>
+          </div>
+          {clip?.from && (
+            <p className="w-full text-xs text-muted-foreground">Data tersalin dari: <span className="font-medium">{clip.from}</span></p>
+          )}
         </CardContent>
       </Card>
 
       {/* Section 1 — Incomes */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-lg">Pemasukan Utama</CardTitle>
-          <Button size="sm" onClick={plan.addIncome}><Plus className="h-4 w-4 mr-1" />Tambah Baris</Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => copySection("incomes")}><Copy className="h-4 w-4 mr-1" />Salin</Button>
+            <Button size="sm" variant="outline" disabled={!clip?.incomes?.length} onClick={() => pasteSection("incomes")}><ClipboardPaste className="h-4 w-4 mr-1" />Tempel</Button>
+            <Button size="sm" onClick={plan.addIncome}><Plus className="h-4 w-4 mr-1" />Tambah Baris</Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -159,9 +227,13 @@ export default function MonthlyPlan() {
 
       {/* Section 2 — Fixed expenses */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-lg">Pengeluaran Tetap Sebelum Target</CardTitle>
-          <Button size="sm" onClick={plan.addFixed}><Plus className="h-4 w-4 mr-1" />Tambah Baris</Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => copySection("fixed")}><Copy className="h-4 w-4 mr-1" />Salin</Button>
+            <Button size="sm" variant="outline" disabled={!clip?.fixed?.length} onClick={() => pasteSection("fixed")}><ClipboardPaste className="h-4 w-4 mr-1" />Tempel</Button>
+            <Button size="sm" onClick={plan.addFixed}><Plus className="h-4 w-4 mr-1" />Tambah Baris</Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -248,10 +320,12 @@ export default function MonthlyPlan() {
             <CardTitle className="text-lg">Target Alokasi Keuangan</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">Jumlah dihitung otomatis: (Persentase ÷ 100) × Sisa Keuangan.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {plan.allocations.length === 0 && (
               <Button size="sm" variant="outline" onClick={seedDefaults}>Gunakan Template Default</Button>
             )}
+            <Button size="sm" variant="outline" onClick={() => copySection("allocations")}><Copy className="h-4 w-4 mr-1" />Salin</Button>
+            <Button size="sm" variant="outline" disabled={!clip?.allocations?.length} onClick={() => pasteSection("allocations")}><ClipboardPaste className="h-4 w-4 mr-1" />Tempel</Button>
             <Button size="sm" onClick={() => plan.addAllocation()}><Plus className="h-4 w-4 mr-1" />Tambah Baris</Button>
           </div>
         </CardHeader>
