@@ -327,7 +327,7 @@ export default function MonthlyPlan() {
                 <tr>
                   <td className="px-4 py-2 font-semibold">Total Pengeluaran Tetap</td>
                   <td className="px-4 py-2 text-right font-bold font-mono-num text-warning">{fmtIDR(totalFixed)}</td>
-                  <td colSpan={3}></td>
+                  <td colSpan={4}></td>
                 </tr>
               </tfoot>
             </table>
