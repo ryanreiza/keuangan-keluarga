@@ -1,0 +1,1 @@
+ALTER TABLE public.monthly_plan_fixed_expenses ADD COLUMN IF NOT EXISTS is_done boolean NOT NULL DEFAULT false;

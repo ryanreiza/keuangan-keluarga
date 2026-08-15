@@ -22,6 +22,7 @@ export interface PlanFixedExpense {
   amount: number;
   web_category_id: string | null;
   remark: string | null;
+  is_done: boolean;
   sort_order: number;
 }
 
