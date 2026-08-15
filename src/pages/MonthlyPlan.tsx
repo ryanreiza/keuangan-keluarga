@@ -273,12 +273,13 @@ export default function MonthlyPlan() {
                   <th className="text-right px-4 py-2 font-semibold w-44">Jumlah</th>
                   <th className="text-left px-4 py-2 font-semibold w-56">Kategori Web</th>
                   <th className="text-left px-4 py-2 font-semibold">Remark</th>
+                  <th className="text-center px-4 py-2 font-semibold w-28">Sudah Dilakukan</th>
                   <th className="w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 {plan.fixed.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Belum ada pengeluaran tetap.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Belum ada pengeluaran tetap.</td></tr>
                 )}
                 {plan.fixed.map((row) => (
                   <tr key={row.id} className="border-t border-border">
