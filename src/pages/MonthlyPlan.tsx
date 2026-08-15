@@ -307,6 +307,13 @@ export default function MonthlyPlan() {
                       <Input defaultValue={row.remark ?? ""} placeholder="Catatan"
                         onBlur={(e) => e.target.value !== (row.remark ?? "") && plan.updateFixed(row.id, { remark: e.target.value })} />
                     </td>
+                    <td className="px-4 py-2 text-center">
+                      <Checkbox
+                        checked={!!row.is_done}
+                        onCheckedChange={(v) => plan.updateFixed(row.id, { is_done: v === true })}
+                        aria-label="Tandai pengeluaran sudah dilakukan"
+                      />
+                    </td>
                     <td className="px-2 py-2 text-center">
                       <Button variant="ghost" size="icon" onClick={() => plan.deleteFixed(row.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
