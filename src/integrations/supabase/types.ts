@@ -231,6 +231,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          is_done: boolean
           month: number
           remark: string | null
           sort_order: number
@@ -244,6 +245,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          is_done?: boolean
           month: number
           remark?: string | null
           sort_order?: number
@@ -257,6 +259,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          is_done?: boolean
           month?: number
           remark?: string | null
           sort_order?: number
