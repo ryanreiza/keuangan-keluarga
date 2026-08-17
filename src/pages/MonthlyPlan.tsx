@@ -283,7 +283,7 @@ export default function MonthlyPlan() {
                   <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Belum ada pengeluaran tetap.</td></tr>
                 )}
                 {plan.fixed.map((row) => (
-                  <tr key={row.id} className="border-t border-border">
+                  <tr key={row.id} className={`border-t border-border transition-colors ${row.is_done ? "bg-success/10 hover:bg-success/15" : ""}`}>
                     <td className="px-4 py-2">
                       <Input defaultValue={row.category} placeholder="Cth: Cicilan Rumah"
                         onBlur={(e) => e.target.value !== row.category && plan.updateFixed(row.id, { category: e.target.value })} />
