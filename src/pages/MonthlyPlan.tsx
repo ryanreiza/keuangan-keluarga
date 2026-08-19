@@ -387,18 +387,21 @@ export default function MonthlyPlan() {
                   const planned = (Number(row.percentage) / 100) * Math.max(remaining, 0);
                   const actual = row.web_category_id ? (actualsByCategory.get(row.web_category_id) || 0) : 0;
                   const usedPct = planned > 0 ? (actual / planned) * 100 : 0;
-                  const status: "green" | "yellow" | "red" | "gray" =
+                  const status: "progress" | "near" | "reached" | "over" | "gray" =
                     !row.web_category_id ? "gray" :
-                    usedPct > 100 ? "red" :
-                    usedPct >= 80 ? "yellow" : "green";
+                    usedPct > 100 ? "over" :
+                    usedPct >= 95 ? "reached" :
+                    usedPct >= 80 ? "near" : "progress";
                   const statusText =
                     status === "gray" ? "Belum dipetakan" :
-                    status === "red" ? "Melebihi target" :
-                    status === "yellow" ? "Mendekati batas" : "Target tercapai";
+                    status === "over" ? "Melebihi Target" :
+                    status === "reached" ? "Target Tercapai" :
+                    status === "near" ? "Mendekati Batas" : "Sedang Proses";
                   const badgeClass =
-                    status === "red" ? "bg-destructive/15 text-destructive border-destructive/30" :
-                    status === "yellow" ? "bg-warning/15 text-warning border-warning/30" :
-                    status === "green" ? "bg-success/15 text-success border-success/30" :
+                    status === "over" ? "bg-destructive/15 text-destructive border-destructive/30" :
+                    status === "reached" ? "bg-success/15 text-success border-success/30" :
+                    status === "near" ? "bg-warning/15 text-warning border-warning/30" :
+                    status === "progress" ? "bg-primary/10 text-primary border-primary/30" :
                     "bg-muted text-muted-foreground border-border";
                   return (
                     <tr key={row.id} className="border-t border-border align-top">
