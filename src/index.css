@@ -42,6 +42,8 @@
     --warning-foreground: 218 50% 14%;
     --warning-light: 35 88% 65%;
     --warning-bg: 38 85% 93%;
+    --info: 214 88% 52%;
+    --info-foreground: 0 0% 100%;
 
     /* Neutrals - beige tinted */
     --secondary: 38 22% 92%;
@@ -130,6 +132,8 @@
     --success-bg: 160 50% 93%;
     --danger-bg: 0 70% 95%;
     --warning-bg: 38 85% 93%;
+    --info: 214 88% 52%;
+    --info-foreground: 0 0% 100%;
 
     --gradient-primary: linear-gradient(135deg, hsl(222 75% 10%) 0%, hsl(222 60% 22%) 55%, hsl(165 70% 42%) 100%);
     --gradient-primary-soft: linear-gradient(135deg, hsl(220 30% 96%), hsl(165 55% 93%));
@@ -177,6 +181,8 @@
     --success-bg: 152 60% 12%;
     --danger-bg: 0 60% 14%;
     --warning-bg: 38 60% 14%;
+    --info: 214 90% 62%;
+    --info-foreground: 222 47% 7%;
     --accent-foreground: 221 83% 75%;
     --sidebar-background: 224 71% 6%;
     --sidebar-foreground: 220 14% 90%;
