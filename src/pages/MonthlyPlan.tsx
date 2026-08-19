@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeader } from "@/components/PageHeader";
 import { useMonthlyPlan, PlanAllocation } from "@/hooks/useMonthlyPlan";
@@ -398,11 +397,12 @@ export default function MonthlyPlan() {
                     status === "reached" ? "Target Tercapai" :
                     status === "near" ? "Mendekati Batas" : "Sedang Proses";
                   const badgeClass =
-                    status === "over" ? "bg-danger/15 text-danger border-danger/40 font-medium" :
-                    status === "reached" ? "bg-success/15 text-success border-success/40 font-medium" :
-                    status === "near" ? "bg-warning/20 text-warning border-warning/40 font-medium" :
-                    status === "progress" ? "bg-info/15 text-info border-info/40 font-medium" :
-                    "bg-muted text-muted-foreground border-border font-medium";
+                    status === "over" ? "bg-danger-bg text-danger border-danger/50" :
+                    status === "reached" ? "bg-success-bg text-success border-success/50" :
+                    status === "near" ? "bg-warning-bg text-warning border-warning/50" :
+                    status === "progress" ? "bg-info/15 text-info border-info/50" :
+                    "bg-muted text-muted-foreground border-border";
+
                   return (
                     <tr key={row.id} className="border-t border-border align-top">
                       <td className="px-3 py-2">
@@ -441,7 +441,7 @@ export default function MonthlyPlan() {
                         )}
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <Badge variant="outline" className={badgeClass}>{statusText}</Badge>
+                        <span className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-semibold whitespace-nowrap ${badgeClass}`}>{statusText}</span>
                       </td>
                       <td className="px-2 py-2 text-center">
                         <Button variant="ghost" size="icon" onClick={() => plan.deleteAllocation(row.id)}>
