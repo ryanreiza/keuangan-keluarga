@@ -398,11 +398,12 @@ export default function MonthlyPlan() {
                     status === "reached" ? "Target Tercapai" :
                     status === "near" ? "Mendekati Batas" : "Sedang Proses";
                   const badgeClass =
-                    status === "over" ? "bg-danger/15 text-danger border-danger/40 font-medium" :
-                    status === "reached" ? "bg-success/15 text-success border-success/40 font-medium" :
-                    status === "near" ? "bg-warning/20 text-warning border-warning/40 font-medium" :
-                    status === "progress" ? "bg-info/15 text-info border-info/40 font-medium" :
-                    "bg-muted text-muted-foreground border-border font-medium";
+                    status === "over" ? "bg-danger-bg text-danger border-danger/50" :
+                    status === "reached" ? "bg-success-bg text-success border-success/50" :
+                    status === "near" ? "bg-warning-bg text-warning border-warning/50" :
+                    status === "progress" ? "bg-info/15 text-info border-info/50" :
+                    "bg-muted text-muted-foreground border-border";
+
                   return (
                     <tr key={row.id} className="border-t border-border align-top">
                       <td className="px-3 py-2">
