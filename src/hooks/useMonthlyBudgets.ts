@@ -11,6 +11,7 @@ export interface MonthlyBudget {
   month: number;
   year: number;
   expected_amount: number;
+  is_manual: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -21,7 +22,9 @@ export interface CreateBudgetData {
   month: number;
   year: number;
   expected_amount: number;
+  is_manual?: boolean;
 }
+
 
 export const useMonthlyBudgets = () => {
   const [budgets, setBudgets] = useState<MonthlyBudget[]>([]);
