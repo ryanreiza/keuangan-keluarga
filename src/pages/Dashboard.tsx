@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,13 +8,16 @@ import {
   CreditCard,
   ArrowUpRight,
   ArrowDownRight,
-  DollarSign,
+  ArrowRight,
   Target,
-  PieChart,
+  PieChart as PieChartIcon,
   BarChart3,
   Loader2,
   Plus,
   LayoutDashboard,
+  PiggyBank,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFinancialData } from "@/hooks/useFinancialData";
@@ -26,7 +28,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { useState, useMemo } from "react";
 import { format, subMonths } from "date-fns";
 import { id } from "date-fns/locale";
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Cell, Pie, PieChart } from "recharts";
+
+const rp = (n: number) => `Rp ${Math.round(n).toLocaleString("id-ID")}`;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -66,7 +70,14 @@ export default function Dashboard() {
   const totalIncome = currentMonthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const totalExpense = currentMonthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const totalBalance = accounts.reduce((s, a) => s + a.current_balance, 0);
-  const totalDebt = debts.filter((d) => !d.is_paid_off).reduce((s, d) => s + d.remaining_amount, 0);
+  const activeDebts = debts.filter((d) => !d.is_paid_off);
+  const totalDebt = activeDebts.reduce((s, d) => s + d.remaining_amount, 0);
+  const totalDebtOriginal = activeDebts.reduce((s, d) => s + d.total_amount, 0);
+  const debtPaidPct = totalDebtOriginal > 0 ? ((totalDebtOriginal - totalDebt) / totalDebtOriginal) * 100 : 0;
+
+  const netCashflow = totalIncome - totalExpense;
+  const expenseRatio = totalIncome > 0 ? Math.min((totalExpense / totalIncome) * 100, 100) : 0;
+  const savingRate = totalIncome > 0 ? Math.max(0, Math.min((netCashflow / totalIncome) * 100, 100)) : 0;
 
   // Previous month comparison
   const prevMonthKey = format(subMonths(new Date(selectedMonth + "-01"), 1), "yyyy-MM");
@@ -87,7 +98,7 @@ export default function Dashboard() {
     };
   };
 
-  // Sparkline data: last 6 months income/expense per type
+  // Sparkline data: last 6 months income/expense
   const sparklineData = useMemo(() => {
     const months: { key: string; income: number; expense: number }[] = [];
     for (let i = 5; i >= 0; i--) {
@@ -113,62 +124,38 @@ export default function Dashboard() {
     );
   }
 
-  const stats = [
-    {
-      title: "Total Pemasukan",
-      value: totalIncome,
-      change: incomeChange,
-      icon: TrendingUp,
-      bgColor: "bg-success-bg",
-      iconColor: "text-success",
-      sparkColor: "hsl(var(--success))",
-      sparkData: sparklineData.map((m) => ({ value: m.income })),
-    },
-    {
-      title: "Total Pengeluaran",
-      value: totalExpense,
-      change: expenseChange,
-      icon: TrendingDown,
-      bgColor: "bg-danger-bg",
-      iconColor: "text-danger",
-      sparkColor: "hsl(var(--danger))",
-      sparkData: sparklineData.map((m) => ({ value: m.expense })),
-      // For expense: increase is BAD (red), decrease is GOOD (green) — invert visually
-      invertChange: true,
-    },
-    {
-      title: "Saldo Tersedia",
-      value: totalBalance,
-      change: null,
-      subText: `${accounts.length} rekening aktif`,
-      icon: Wallet,
-      bgColor: "bg-primary/10",
-      iconColor: "text-primary",
-      sparkColor: "hsl(var(--primary))",
-      sparkData: null,
-    },
-    {
-      title: "Total Utang",
-      value: totalDebt,
-      change: null,
-      subText: `${debts.filter((d) => !d.is_paid_off).length} utang aktif`,
-      icon: CreditCard,
-      bgColor: "bg-warning-bg",
-      iconColor: "text-warning",
-      sparkColor: "hsl(var(--warning))",
-      sparkData: null,
-    },
-  ];
+  const heroSparkData = sparklineData.map((m) => ({ value: m.income - m.expense }));
 
   const quickActions = [
-    { icon: PieChart, label: "Analisis Kategori", to: "/categories", gradient: "from-primary to-primary-light" },
-    { icon: BarChart3, label: "Laporan Bulanan", to: "/reports", gradient: "from-accent-brand to-success-light" },
-    { icon: Target, label: "Set Target Baru", to: "/savings", gradient: "from-warning to-warning-light" },
-    { icon: CreditCard, label: "Rekening Baru", to: "/accounts", gradient: "from-primary-dark to-primary" },
+    { icon: PieChartIcon, label: "Analisis Kategori", desc: "Sebaran pengeluaran", to: "/categories", gradient: "from-primary to-primary-light" },
+    { icon: BarChart3, label: "Laporan Bulanan", desc: "Ringkasan & ekspor", to: "/reports", gradient: "from-accent-brand to-success-light" },
+    { icon: Target, label: "Target Baru", desc: "Rencana menabung", to: "/savings", gradient: "from-warning to-warning-light" },
+    { icon: CreditCard, label: "Rekening Baru", desc: "Kelola sumber dana", to: "/accounts", gradient: "from-primary-dark to-primary" },
   ];
 
-  // Hero sparkline (net = income - expense per month, last 6 months)
-  const heroSparkData = sparklineData.map((m) => ({ value: m.income - m.expense }));
+  const ChangeBadge = ({
+    change,
+    invert,
+  }: { change: ReturnType<typeof calcChange>; invert?: boolean }) => {
+    if (!change) return <span className="text-xs text-muted-foreground">Tidak ada pembanding</span>;
+    const isPositive = invert ? change.type === "decrease" : change.type === "increase";
+    const isNegative = invert ? change.type === "increase" : change.type === "decrease";
+    const color = isPositive ? "text-success" : isNegative ? "text-danger" : "text-muted-foreground";
+    const Icon = change.type === "increase" ? ArrowUpRight : change.type === "decrease" ? ArrowDownRight : null;
+    return (
+      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${color}`}>
+        {Icon && <Icon className="h-3.5 w-3.5" />}
+        {change.pct.toFixed(1)}%
+        <span className="text-muted-foreground font-medium hidden sm:inline">vs bulan lalu</span>
+      </span>
+    );
+  };
+
+  const donutData = [
+    { name: "Pengeluaran", value: Math.max(totalExpense, 0) },
+    { name: "Sisa", value: Math.max(totalIncome - totalExpense, 0) },
+  ];
+  const hasDonut = totalIncome > 0 || totalExpense > 0;
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -203,154 +190,261 @@ export default function Dashboard() {
         }
       />
 
-      {/* HERO Balance */}
-      <StaggerItem>
-        <div className="card-hero p-6 md:p-8 lg:p-10">
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6 lg:gap-10 items-center">
-            <div>
-              <p className="text-eyebrow mb-2 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                Total Saldo Tersedia
-              </p>
-              <p className="num-hero text-display-1 text-foreground animate-count-in">
-                Rp {totalBalance.toLocaleString("id-ID")}
-              </p>
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                <span className="pill-primary">
-                  <Wallet className="h-3 w-3" />
-                  {accounts.length} rekening
-                </span>
-                {totalDebt > 0 && (
-                  <span className="pill-warning">
-                    <CreditCard className="h-3 w-3" />
-                    Utang Rp {totalDebt.toLocaleString("id-ID")}
+      {/* ---------- BENTO ROW 1 ---------- */}
+      <StaggerContainer className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
+        {/* Hero saldo (2 kolom) */}
+        <StaggerItem index={0} className="lg:col-span-2">
+          <div className="bento-hero h-full p-6 md:p-8 lg:p-10">
+            <div className="relative z-10 flex h-full flex-col justify-between gap-6">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/70 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent-brand animate-pulse" />
+                  Total Saldo Tersedia
+                </p>
+                <p className="num-hero text-display-1 mt-3 animate-count-in text-primary-foreground">
+                  {rp(totalBalance)}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-semibold text-primary-foreground/90 backdrop-blur">
+                    <Wallet className="h-3.5 w-3.5" />
+                    {accounts.length} rekening
                   </span>
-                )}
-                {savingsGoals.length > 0 && (
-                  <span className="pill-success">
-                    <Target className="h-3 w-3" />
-                    {savingsGoals.length} target
-                  </span>
-                )}
+                  {totalDebt > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning-foreground backdrop-blur">
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Utang {rp(totalDebt)}
+                    </span>
+                  )}
+                  {savingsGoals.length > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-brand/25 px-3 py-1 text-xs font-semibold text-primary-foreground backdrop-blur">
+                      <Target className="h-3.5 w-3.5" />
+                      {savingsGoals.length} target aktif
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-end justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">
+                    Tren arus kas bersih 6 bulan
+                  </p>
+                  <p className={`num-hero text-sm ${netCashflow >= 0 ? "text-accent-brand" : "text-warning"}`}>
+                    {netCashflow >= 0 ? "+" : "-"}{rp(Math.abs(netCashflow))}
+                  </p>
+                </div>
+                <div className="h-20 md:h-24 -mx-1 mt-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={heroSparkData}>
+                      <defs>
+                        <linearGradient id="hero-spark" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--accent-brand))" stopOpacity={0.55} />
+                          <stop offset="100%" stopColor="hsl(var(--accent-brand))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="hsl(var(--accent-brand))"
+                        strokeWidth={2.5}
+                        fill="url(#hero-spark)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
-            {/* Hero sparkline */}
-            <div className="h-24 md:h-32 -mx-2 md:mx-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={heroSparkData}>
-                  <defs>
-                    <linearGradient id="hero-spark" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2.5}
-                    fill="url(#hero-spark)"
+          </div>
+        </StaggerItem>
+
+        {/* Arus kas bulan ini */}
+        <StaggerItem index={1}>
+          <div className="card-bento h-full p-5 md:p-6 flex flex-col gap-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="card-bento-head">Arus Kas Bulan Ini</p>
+                <p className="text-sm text-muted-foreground mt-1">Masuk vs keluar</p>
+              </div>
+              <div className="p-2.5 rounded-2xl bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <TrendingUp className="h-4 w-4 text-success" /> Pemasukan
+                  </span>
+                  <span className="num-hero text-sm text-foreground">{rp(totalIncome)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                  <div className="h-full rounded-full bg-success transition-all" style={{ width: "100%" }} />
+                </div>
+                <div className="mt-1.5"><ChangeBadge change={incomeChange} /></div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <TrendingDown className="h-4 w-4 text-danger" /> Pengeluaran
+                  </span>
+                  <span className="num-hero text-sm text-foreground">{rp(totalExpense)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-danger transition-all"
+                    style={{ width: `${totalIncome > 0 ? expenseRatio : totalExpense > 0 ? 100 : 0}%` }}
                   />
-                </AreaChart>
-              </ResponsiveContainer>
-              <p className="text-eyebrow text-right mt-1">Tren 6 bulan</p>
+                </div>
+                <div className="mt-1.5"><ChangeBadge change={expenseChange} invert /></div>
+              </div>
+            </div>
+
+            <div className="mt-auto rounded-2xl border border-border/60 bg-muted/40 px-4 py-3">
+              <p className="text-eyebrow">Selisih Bersih</p>
+              <p className={`num-hero text-lg ${netCashflow >= 0 ? "text-success" : "text-danger"}`}>
+                {netCashflow >= 0 ? "+" : "-"}{rp(Math.abs(netCashflow))}
+              </p>
             </div>
           </div>
+        </StaggerItem>
+      </StaggerContainer>
+
+      {/* ---------- BENTO ROW 2 ---------- */}
+      <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+        {/* Komposisi pengeluaran */}
+        <StaggerItem index={0}>
+          <div className="card-bento h-full p-5 md:p-6">
+            <p className="card-bento-head">Komposisi Bulan Ini</p>
+            <div className="mt-3 flex items-center gap-4">
+              <div className="relative h-28 w-28 shrink-0">
+                {hasDonut ? (
+                  <>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={donutData}
+                          dataKey="value"
+                          innerRadius={38}
+                          outerRadius={54}
+                          startAngle={90}
+                          endAngle={-270}
+                          stroke="none"
+                          paddingAngle={2}
+                        >
+                          <Cell fill="hsl(var(--danger))" />
+                          <Cell fill="hsl(var(--accent-brand))" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="num-hero text-lg text-foreground">{Math.round(expenseRatio)}%</span>
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">terpakai</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-full w-full rounded-full border-[10px] border-secondary" />
+                )}
+              </div>
+              <div className="space-y-2 text-sm min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-danger shrink-0" />
+                  <span className="text-muted-foreground">Pengeluaran</span>
+                </div>
+                <p className="num-hero text-foreground truncate">{rp(totalExpense)}</p>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-accent-brand shrink-0" />
+                  <span className="text-muted-foreground">Tersisa</span>
+                </div>
+                <p className="num-hero text-foreground truncate">{rp(Math.max(totalIncome - totalExpense, 0))}</p>
+              </div>
+            </div>
+          </div>
+        </StaggerItem>
+
+        {/* Tingkat menabung */}
+        <StaggerItem index={1}>
+          <div className="card-bento h-full p-5 md:p-6 flex flex-col">
+            <div className="flex items-start justify-between">
+              <p className="card-bento-head">Tingkat Menabung</p>
+              <div className="p-2.5 rounded-2xl bg-success-bg">
+                <PiggyBank className="h-4 w-4 text-success" />
+              </div>
+            </div>
+            <p className="num-hero text-display-2 mt-4 text-foreground">{Math.round(savingRate)}%</p>
+            <p className="text-sm text-muted-foreground mt-1">dari pemasukan bulan ini</p>
+            <div className="mt-auto pt-5">
+              <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${savingRate >= 20 ? "bg-success" : savingRate >= 10 ? "bg-warning" : "bg-danger"}`}
+                  style={{ width: `${savingRate}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {savingRate >= 20 ? "Sangat sehat — pertahankan." : savingRate >= 10 ? "Cukup baik, bisa ditingkatkan." : "Perlu ditingkatkan bulan ini."}
+              </p>
+            </div>
+          </div>
+        </StaggerItem>
+
+        {/* Utang aktif */}
+        <StaggerItem index={2}>
+          <div className="card-bento h-full p-5 md:p-6 flex flex-col">
+            <div className="flex items-start justify-between">
+              <p className="card-bento-head">Utang Aktif</p>
+              <div className="p-2.5 rounded-2xl bg-warning-bg">
+                <CreditCard className="h-4 w-4 text-warning" />
+              </div>
+            </div>
+            <p className="num-hero text-display-2 mt-4 text-foreground">{rp(totalDebt)}</p>
+            <p className="text-sm text-muted-foreground mt-1">{activeDebts.length} utang berjalan</p>
+            <div className="mt-auto pt-5">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-muted-foreground">Progress pelunasan</span>
+                <span className="num-hero text-foreground">{Math.round(debtPaidPct)}%</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${debtPaidPct}%` }} />
+              </div>
+            </div>
+          </div>
+        </StaggerItem>
+      </StaggerContainer>
+
+      {/* ---------- RINGKASAN PENGELUARAN ---------- */}
+      <StaggerItem delay={0.3}>
+        <div className="card-bento p-5 md:p-7">
+          <div className="mb-5">
+            <p className="card-bento-head">Anggaran</p>
+            <h2 className="text-display-2 text-foreground mt-1">Ringkasan Pengeluaran Bulanan</h2>
+            <p className="text-sm text-muted-foreground mt-1">Target vs realisasi pengeluaran per kategori</p>
+          </div>
+          <MonthlyBudgetTracker
+            type="expense"
+            categories={categories}
+            transactions={currentMonthTransactions}
+            selectedMonth={selectedMonth}
+            savingsGoals={savingsGoals}
+          />
         </div>
       </StaggerItem>
 
-      {/* Stats Overview */}
-      <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-        {stats.map((stat, index) => {
-          const change = stat.change;
-          let changeColor = "text-muted-foreground";
-          let ChangeIcon: typeof ArrowUpRight | null = null;
-          if (change) {
-            const isPositive = stat.invertChange ? change.type === "decrease" : change.type === "increase";
-            const isNegative = stat.invertChange ? change.type === "increase" : change.type === "decrease";
-            if (isPositive) changeColor = "text-success";
-            else if (isNegative) changeColor = "text-danger";
-            ChangeIcon = change.type === "increase" ? ArrowUpRight : change.type === "decrease" ? ArrowDownRight : null;
-          }
+      {/* ---------- TARGET TABUNGAN + AKSI CEPAT ---------- */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
+        <StaggerItem delay={0.4}>
+          <div className="card-bento h-full p-5 md:p-7">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <p className="card-bento-head">Tabungan</p>
+                <h2 className="text-xl font-display font-bold text-foreground mt-1">Target Tabungan</h2>
+                <p className="text-sm text-muted-foreground mt-1">Progress setiap tujuan Anda</p>
+              </div>
+              <div className="p-2.5 rounded-2xl bg-primary/10">
+                <Target className="h-4 w-4 text-primary" />
+              </div>
+            </div>
 
-          return (
-            <StaggerItem key={index} index={index}>
-              <Card className="card-metric h-full overflow-hidden">
-                <CardContent className="p-4 md:p-5 relative">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-eyebrow truncate">{stat.title}</p>
-                    <div className={`p-2 rounded-xl ${stat.bgColor} shrink-0`}>
-                      <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
-                    </div>
-                  </div>
-                  <p className="num-hero text-xl md:text-2xl text-foreground truncate">
-                    Rp {stat.value.toLocaleString("id-ID")}
-                  </p>
-                  <div className="flex items-center mt-2 gap-1">
-                    {ChangeIcon && <ChangeIcon className={`h-3.5 w-3.5 ${changeColor}`} />}
-                    <span className={`text-xs font-semibold ${changeColor}`}>
-                      {change ? `${change.pct.toFixed(1)}%` : stat.subText || "—"}
-                    </span>
-                    {change && <span className="text-xs text-muted-foreground hidden sm:inline">vs bulan lalu</span>}
-                  </div>
-                  {stat.sparkData && stat.sparkData.some((d) => d.value > 0) && (
-                    <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60 pointer-events-none">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={stat.sparkData}>
-                          <defs>
-                            <linearGradient id={`spark-${index}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={stat.sparkColor} stopOpacity={0.4} />
-                              <stop offset="100%" stopColor={stat.sparkColor} stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke={stat.sparkColor}
-                            strokeWidth={1.5}
-                            fill={`url(#spark-${index})`}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </StaggerItem>
-          );
-        })}
-      </StaggerContainer>
-
-      {/* Expense Summary */}
-      <StaggerItem delay={0.3}>
-        <Card className="shadow-card border border-border/50">
-          <CardHeader>
-            <CardTitle className="text-xl font-display">Ringkasan Pengeluaran Bulanan</CardTitle>
-            <CardDescription>Target vs Realisasi pengeluaran per kategori bulan ini</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MonthlyBudgetTracker
-              type="expense"
-              categories={categories}
-              transactions={currentMonthTransactions}
-              selectedMonth={selectedMonth}
-              savingsGoals={savingsGoals}
-            />
-          </CardContent>
-        </Card>
-      </StaggerItem>
-
-      {/* Savings Goals */}
-      <StaggerItem delay={0.4}>
-        <Card className="shadow-card border border-border/50">
-          <CardHeader>
-            <CardTitle className="text-xl font-display flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Target Tabungan
-            </CardTitle>
-            <CardDescription>Progress target Anda</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
             {savingsGoals.length === 0 ? (
               <EmptyState
                 icon={Target}
@@ -359,59 +453,65 @@ export default function Dashboard() {
                 action={{ label: "Buat Target Pertama", onClick: () => navigate("/savings") }}
               />
             ) : (
-              savingsGoals.map((goal, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-foreground">{goal.name}</p>
-                    <p className="text-sm font-mono-num font-semibold text-primary">
-                      {Math.round((goal.current_amount / goal.target_amount) * 100)}%
-                    </p>
-                  </div>
-                  <Progress value={(goal.current_amount / goal.target_amount) * 100} className="h-2" />
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground font-mono-num">
-                      Rp {goal.current_amount.toLocaleString("id-ID")}
-                    </span>
-                    <span className="text-muted-foreground font-mono-num">
-                      Rp {goal.target_amount.toLocaleString("id-ID")}
-                    </span>
-                  </div>
-                </div>
-              ))
+              <div className="space-y-5">
+                {savingsGoals.map((goal) => {
+                  const pct = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
+                  const done = pct >= 100;
+                  return (
+                    <div key={goal.id} className="rounded-2xl border border-border/50 bg-muted/30 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-foreground truncate">{goal.name}</p>
+                        {done ? (
+                          <span className="pill-success shrink-0">
+                            <CheckCircle2 className="h-3 w-3" /> Tercapai
+                          </span>
+                        ) : (
+                          <span className="num-hero text-sm text-primary shrink-0">{Math.round(pct)}%</span>
+                        )}
+                      </div>
+                      <Progress value={Math.min(pct, 100)} className="h-2.5 mt-3" />
+                      <div className="flex items-center justify-between text-xs mt-2">
+                        <span className="num-hero text-muted-foreground">{rp(goal.current_amount)}</span>
+                        <span className="num-hero text-muted-foreground">{rp(goal.target_amount)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </CardContent>
-        </Card>
-      </StaggerItem>
+          </div>
+        </StaggerItem>
 
-      {/* Quick Actions */}
-      <StaggerItem delay={0.5}>
-        <Card className="shadow-card border border-border/50">
-          <CardHeader>
-            <CardTitle className="text-xl font-display">Aksi Cepat</CardTitle>
-            <CardDescription>Fitur yang sering digunakan</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <StaggerItem delay={0.5}>
+          <div className="card-bento h-full p-5 md:p-7">
+            <div className="mb-5">
+              <p className="card-bento-head">Pintasan</p>
+              <h2 className="text-xl font-display font-bold text-foreground mt-1">Aksi Cepat</h2>
+              <p className="text-sm text-muted-foreground mt-1">Fitur yang sering digunakan</p>
+            </div>
+            <div className="space-y-3">
               {quickActions.map((qa) => (
                 <button
                   key={qa.label}
                   onClick={() => navigate(qa.to)}
-                  className="group flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-border bg-gradient-card hover-lift transition-all"
+                  className="group w-full flex items-center gap-4 rounded-2xl border border-border/60 bg-gradient-card px-4 py-3.5 text-left transition-all hover:border-primary/40 hover:shadow-md"
                 >
-                  <div
-                    className={`h-11 w-11 rounded-xl bg-gradient-to-br ${qa.gradient} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}
+                  <span
+                    className={`h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br ${qa.gradient} flex items-center justify-center shadow-md transition-transform group-hover:scale-105`}
                   >
-                    <qa.icon className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="text-xs md:text-sm font-medium text-foreground text-center leading-tight">
-                    {qa.label}
+                    <qa.icon className="h-5 w-5 text-primary-foreground" />
                   </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-foreground truncate">{qa.label}</span>
+                    <span className="block text-xs text-muted-foreground truncate">{qa.desc}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                 </button>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </StaggerItem>
+          </div>
+        </StaggerItem>
+      </div>
     </div>
   );
 }
