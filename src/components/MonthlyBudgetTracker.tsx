@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import type { SavingsGoal } from '@/hooks/useSavings';
+import { useMonthlyPlan } from '@/hooks/useMonthlyPlan';
+import { Sparkles, RotateCcw } from 'lucide-react';
 
 // Storage key for copied budget data
 const COPIED_BUDGET_KEY = 'copiedBudgetData';
@@ -37,6 +39,32 @@ export default function MonthlyBudgetTracker({
   const month = parseInt(selectedMonth.split('-')[1]);
   const year = parseInt(selectedMonth.split('-')[0]);
   const monthLabel = format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: localeId });
+
+  // Rencana bulanan (Target Keuangan Bulanan) untuk periode yang sama
+  const plan = useMonthlyPlan(month, year);
+
+  // Total target per kategori web: Pengeluaran Tetap + Target Alokasi
+  const planByCategory = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (type !== 'expense') return map;
+
+    for (const row of plan.fixed) {
+      if (!row.web_category_id) continue;
+      map[row.web_category_id] = (map[row.web_category_id] || 0) + Number(row.amount || 0);
+    }
+
+    const totalIncome = plan.incomes.reduce((s, r) => s + Number(r.amount || 0), 0);
+    const totalFixed = plan.fixed.reduce((s, r) => s + Number(r.amount || 0), 0);
+    const remainingPlan = totalIncome - totalFixed;
+
+    for (const row of plan.allocations) {
+      if (!row.web_category_id) continue;
+      const amount = (Number(row.percentage || 0) / 100) * remainingPlan;
+      map[row.web_category_id] = (map[row.web_category_id] || 0) + Math.max(0, Math.round(amount));
+    }
+
+    return map;
+  }, [plan.fixed, plan.allocations, plan.incomes, type]);
 
   // Filter categories by type
   const filteredCategories = useMemo(() => {
@@ -104,7 +132,12 @@ export default function MonthlyBudgetTracker({
       const budget = budgets.find(
         b => b.category_id === cat.id && b.month === month && b.year === year
       );
-      amounts[`cat:${cat.id}`] = budget?.expected_amount || 0;
+      const auto = planByCategory[cat.id];
+      if (!budget?.is_manual && auto !== undefined) {
+        amounts[`cat:${cat.id}`] = auto;
+      } else {
+        amounts[`cat:${cat.id}`] = budget?.expected_amount || 0;
+      }
     });
 
     if (type === 'expense') {
@@ -117,7 +150,40 @@ export default function MonthlyBudgetTracker({
     }
 
     return amounts;
-  }, [budgets, filteredCategories, savingsGoals, month, year, type]);
+  }, [budgets, filteredCategories, savingsGoals, month, year, type, planByCategory]);
+
+  // Baris mana yang nilainya berasal dari Target Bulanan (otomatis) vs manual
+  const autoInfo = useMemo(() => {
+    const info: Record<string, { hasAuto: boolean; isManual: boolean; autoValue: number }> = {};
+    filteredCategories.forEach(cat => {
+      const budget = budgets.find(
+        b => b.category_id === cat.id && b.month === month && b.year === year
+      );
+      const auto = planByCategory[cat.id];
+      info[`cat:${cat.id}`] = {
+        hasAuto: auto !== undefined,
+        isManual: !!budget?.is_manual,
+        autoValue: auto ?? 0,
+      };
+    });
+    return info;
+  }, [budgets, filteredCategories, month, year, planByCategory]);
+
+  // Simpan nilai otomatis ke database agar grafik & notifikasi tetap konsisten
+  useEffect(() => {
+    if (loading || plan.loading || type !== 'expense') return;
+    filteredCategories.forEach(cat => {
+      const auto = planByCategory[cat.id];
+      if (auto === undefined) return;
+      const budget = budgets.find(
+        b => b.category_id === cat.id && b.month === month && b.year === year
+      );
+      if (budget?.is_manual) return;
+      if (Number(budget?.expected_amount || 0) === auto) return;
+      upsertBudget({ category_id: cat.id, month, year, expected_amount: auto, is_manual: false });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planByCategory, budgets, loading, plan.loading, filteredCategories, month, year, type]);
 
   // Initialize local expected values
   useEffect(() => {
@@ -146,8 +212,22 @@ export default function MonthlyBudgetTracker({
         month,
         year,
         expected_amount: numValue,
+        is_manual: true,
       });
     }
+  };
+
+  const handleUseAuto = async (row: Row) => {
+    const info = autoInfo[row.key];
+    if (!info?.hasAuto) return;
+    await upsertBudget({
+      category_id: row.id,
+      month,
+      year,
+      expected_amount: info.autoValue,
+      is_manual: false,
+    });
+    setLocalExpected(prev => ({ ...prev, [row.key]: info.autoValue ? String(info.autoValue) : '' }));
   };
 
   const calculateProgress = (expected: number, actual: number) => {
@@ -303,7 +383,14 @@ export default function MonthlyBudgetTracker({
   return (
     <Card className={`${bgColor} ${borderColor}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <div>
+          <CardTitle className="text-lg">{title}</CardTitle>
+          {type === 'expense' && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Angka bertanda Otomatis diambil dari Target Keuangan Bulanan (Pengeluaran Tetap + Target Alokasi).
+            </p>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -362,14 +449,38 @@ export default function MonthlyBudgetTracker({
                       </div>
                     </td>
                     <td className="py-3 px-2">
-                      <Input
-                        type="number"
-                        value={localExpected[row.key] || ''}
-                        onChange={(e) => handleExpectedChange(row.key, e.target.value)}
-                        onBlur={() => handleExpectedBlur(row)}
-                        placeholder="0"
-                        className="text-right h-8 w-32 ml-auto"
-                      />
+                      <div className="flex flex-col items-end gap-1">
+                        <Input
+                          type="number"
+                          value={localExpected[row.key] || ''}
+                          onChange={(e) => handleExpectedChange(row.key, e.target.value)}
+                          onBlur={() => handleExpectedBlur(row)}
+                          placeholder="0"
+                          className="text-right h-8 w-32"
+                        />
+                        {autoInfo[row.key]?.hasAuto && (
+                          autoInfo[row.key].isManual ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                                Manual
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleUseAuto(row)}
+                                className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                                Pakai otomatis
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                              <Sparkles className="h-3 w-3" />
+                              Otomatis
+                            </span>
+                          )
+                        )}
+                      </div>
                     </td>
                     <td className="text-right py-3 px-2 font-medium">
                       {formatCurrency(actual)}

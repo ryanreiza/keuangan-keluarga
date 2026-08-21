@@ -11,6 +11,7 @@ export interface MonthlyBudget {
   month: number;
   year: number;
   expected_amount: number;
+  is_manual: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -21,7 +22,9 @@ export interface CreateBudgetData {
   month: number;
   year: number;
   expected_amount: number;
+  is_manual?: boolean;
 }
+
 
 export const useMonthlyBudgets = () => {
   const [budgets, setBudgets] = useState<MonthlyBudget[]>([]);
@@ -80,7 +83,7 @@ export const useMonthlyBudgets = () => {
         if (existing?.id) {
           const { data: updated, error: updErr } = await supabase
             .from('monthly_budgets')
-            .update({ expected_amount: budgetData.expected_amount })
+            .update({ expected_amount: budgetData.expected_amount, is_manual: budgetData.is_manual ?? false })
             .eq('id', existing.id)
             .select()
             .single();
@@ -94,6 +97,7 @@ export const useMonthlyBudgets = () => {
               month: budgetData.month,
               year: budgetData.year,
               expected_amount: budgetData.expected_amount,
+              is_manual: budgetData.is_manual ?? false,
               category_id: null,
               savings_goal_id: budgetData.savings_goal_id!,
             }])
@@ -108,6 +112,7 @@ export const useMonthlyBudgets = () => {
           month: budgetData.month,
           year: budgetData.year,
           expected_amount: budgetData.expected_amount,
+          is_manual: budgetData.is_manual ?? false,
           category_id: budgetData.category_id ?? null,
           savings_goal_id: null,
         };

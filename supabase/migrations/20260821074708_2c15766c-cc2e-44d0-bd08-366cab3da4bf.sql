@@ -1,0 +1,1 @@
+ALTER TABLE public.monthly_budgets ADD COLUMN IF NOT EXISTS is_manual boolean NOT NULL DEFAULT false;
