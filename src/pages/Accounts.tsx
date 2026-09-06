@@ -117,6 +117,18 @@ export default function Accounts() {
     setShowForm(false);
   };
 
+  const handleDeleteClick = async (accountId: string) => {
+    setDeletingId(accountId);
+    setDeleteTxCount(null);
+    const count = await getTransactionCount(accountId);
+    setDeleteTxCount(count < 0 ? 0 : count);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeletingId(null);
+    setDeleteTxCount(null);
+  };
+
   const handleDeleteAccount = async () => {
     if (!user || !deletingId) {
       toast({
@@ -131,14 +143,20 @@ export default function Accounts() {
     try {
       // Proceed with deletion - user is already authenticated via session
       // RLS policies ensure users can only delete their own accounts
-      await deleteAccount(deletingId);
-      
+      if (deleteTxCount && deleteTxCount > 0) {
+        await deleteAccountWithTransactions(deletingId);
+      } else {
+        await deleteAccount(deletingId);
+      }
+
       // Reset state
-      setDeletingId(null);
-      
+      closeDeleteDialog();
+
       toast({
         title: "Rekening dihapus",
-        description: "Rekening berhasil dihapus dari sistem",
+        description: deleteTxCount && deleteTxCount > 0
+          ? `Rekening beserta ${deleteTxCount} transaksi terkait berhasil dihapus`
+          : "Rekening berhasil dihapus dari sistem",
       });
     } catch (error: any) {
       toast({
@@ -149,6 +167,14 @@ export default function Accounts() {
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (!deletingId) return;
+    setDeleteLoading(true);
+    const result = await toggleActive(deletingId, false);
+    if (!result.error) closeDeleteDialog();
+    setDeleteLoading(false);
   };
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.current_balance, 0);
