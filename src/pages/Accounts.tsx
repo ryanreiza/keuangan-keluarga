@@ -177,8 +177,13 @@ export default function Accounts() {
     setDeleteLoading(false);
   };
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.current_balance, 0);
+  const handleReactivate = async (accountId: string) => {
+    await toggleActive(accountId, true);
+  };
+
   const activeAccounts = accounts.filter(acc => acc.is_active);
+  const inactiveAccounts = accounts.filter(acc => !acc.is_active);
+  const totalBalance = activeAccounts.reduce((sum, account) => sum + account.current_balance, 0);
 
   if (accountsLoading) {
     return (
