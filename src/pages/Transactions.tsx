@@ -427,7 +427,7 @@ export default function Transactions() {
                     } />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border z-50">
-                    {accounts.map((account) => (
+                    {accounts.filter((account) => account.is_active).map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         {account.name} - {account.bank_name}
                       </SelectItem>
@@ -444,7 +444,7 @@ export default function Transactions() {
                       <SelectValue placeholder="Pilih rekening tujuan" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-border z-50">
-                      {accounts.filter(account => account.id !== formData.account_id).map((account) => (
+                      {accounts.filter(account => account.is_active && account.id !== formData.account_id).map((account) => (
                         <SelectItem key={account.id} value={account.id}>
                           {account.name} - {account.bank_name}
                         </SelectItem>
