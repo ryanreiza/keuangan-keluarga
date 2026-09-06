@@ -341,18 +341,18 @@ export default function Accounts() {
           {/* Accounts List */}
           <StaggerItem delay={0.3}><Card className="shadow-card border-0">
             <CardHeader>
-              <CardTitle className="text-lg">Daftar Rekening</CardTitle>
-              <CardDescription>Semua rekening bank Anda ({accounts.length} rekening)</CardDescription>
+              <CardTitle className="text-lg">Daftar Rekening Aktif</CardTitle>
+              <CardDescription>Rekening yang tersedia untuk transaksi ({activeAccounts.length} rekening)</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-0">
-                {accounts.length === 0 ? (
+                {activeAccounts.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
-                    Belum ada rekening. Tambahkan rekening pertama Anda untuk mulai melacak keuangan.
+                    Belum ada rekening aktif. Tambahkan rekening pertama Anda untuk mulai melacak keuangan.
                   </div>
                 ) : (
-                  accounts.map((account, index) => (
-                    <div key={account.id} className={`p-4 md:p-6 hover:bg-surface/50 transition-colors group ${index !== accounts.length - 1 ? 'border-b border-border' : ''}`}>
+                  activeAccounts.map((account, index) => (
+                    <div key={account.id} className={`p-4 md:p-6 hover:bg-surface/50 transition-colors group ${index !== activeAccounts.length - 1 ? 'border-b border-border' : ''}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3 md:gap-4">
                           <div className="text-2xl md:text-3xl">
