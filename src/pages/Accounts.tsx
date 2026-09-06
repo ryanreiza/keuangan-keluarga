@@ -37,9 +37,10 @@ export default function Accounts() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [deleteTxCount, setDeleteTxCount] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useAccounts();
+  const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount, deleteAccountWithTransactions, getTransactionCount, toggleActive } = useAccounts();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -116,6 +117,18 @@ export default function Accounts() {
     setShowForm(false);
   };
 
+  const handleDeleteClick = async (accountId: string) => {
+    setDeletingId(accountId);
+    setDeleteTxCount(null);
+    const count = await getTransactionCount(accountId);
+    setDeleteTxCount(count < 0 ? 0 : count);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeletingId(null);
+    setDeleteTxCount(null);
+  };
+
   const handleDeleteAccount = async () => {
     if (!user || !deletingId) {
       toast({
@@ -130,14 +143,20 @@ export default function Accounts() {
     try {
       // Proceed with deletion - user is already authenticated via session
       // RLS policies ensure users can only delete their own accounts
-      await deleteAccount(deletingId);
-      
+      if (deleteTxCount && deleteTxCount > 0) {
+        await deleteAccountWithTransactions(deletingId);
+      } else {
+        await deleteAccount(deletingId);
+      }
+
       // Reset state
-      setDeletingId(null);
-      
+      closeDeleteDialog();
+
       toast({
         title: "Rekening dihapus",
-        description: "Rekening berhasil dihapus dari sistem",
+        description: deleteTxCount && deleteTxCount > 0
+          ? `Rekening beserta ${deleteTxCount} transaksi terkait berhasil dihapus`
+          : "Rekening berhasil dihapus dari sistem",
       });
     } catch (error: any) {
       toast({
@@ -148,6 +167,14 @@ export default function Accounts() {
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (!deletingId) return;
+    setDeleteLoading(true);
+    const result = await toggleActive(deletingId, false);
+    if (!result.error) closeDeleteDialog();
+    setDeleteLoading(false);
   };
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.current_balance, 0);
@@ -363,11 +390,11 @@ export default function Accounts() {
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="text-danger hover:text-danger"
-                                  onClick={() => setDeletingId(account.id)}
+                                  onClick={() => handleDeleteClick(account.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -375,25 +402,46 @@ export default function Accounts() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Hapus Rekening</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tindakan ini akan menghapus rekening "{account.name}" secara permanen. 
-                                    Apakah Anda yakin ingin melanjutkan?
+                                  <AlertDialogDescription asChild>
+                                    <div className="space-y-2">
+                                      <p>
+                                        Tindakan ini akan menghapus rekening "{account.name}" secara permanen.
+                                      </p>
+                                      {deletingId === account.id && deleteTxCount === null && (
+                                        <p className="text-muted-foreground">Memeriksa riwayat transaksi...</p>
+                                      )}
+                                      {deletingId === account.id && deleteTxCount !== null && deleteTxCount > 0 && (
+                                        <p className="rounded-md border border-warning/40 bg-warning/10 p-3 text-warning">
+                                          Rekening ini memiliki {deleteTxCount} transaksi. Menghapus rekening akan
+                                          menghapus seluruh transaksi tersebut secara permanen.
+                                        </p>
+                                      )}
+                                    </div>
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel 
-                                    onClick={() => {
-                                      setDeletingId(null);
-                                    }}
-                                  >
+                                <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+                                  <AlertDialogCancel onClick={closeDeleteDialog}>
                                     Batal
                                   </AlertDialogCancel>
+                                  {account.is_active && deletingId === account.id && deleteTxCount !== null && deleteTxCount > 0 && (
+                                    <AlertDialogAction
+                                      onClick={handleDeactivateAccount}
+                                      disabled={deleteLoading}
+                                      className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                    >
+                                      Nonaktifkan Saja
+                                    </AlertDialogAction>
+                                  )}
                                   <AlertDialogAction
                                     onClick={handleDeleteAccount}
-                                    disabled={deleteLoading}
+                                    disabled={deleteLoading || (deletingId === account.id && deleteTxCount === null)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
-                                    {deleteLoading ? "Menghapus..." : "Hapus Rekening"}
+                                    {deleteLoading
+                                      ? "Memproses..."
+                                      : deleteTxCount !== null && deleteTxCount > 0
+                                        ? "Hapus Rekening + Transaksi"
+                                        : "Hapus Rekening"}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
