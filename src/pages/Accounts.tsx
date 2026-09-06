@@ -460,6 +460,108 @@ export default function Accounts() {
               </div>
             </CardContent>
           </Card></StaggerItem>
+
+          {/* Inactive Accounts */}
+          {inactiveAccounts.length > 0 && (
+            <StaggerItem delay={0.4}><Card className="shadow-card border-0 opacity-90">
+              <CardHeader>
+                <CardTitle className="text-lg text-muted-foreground">Rekening Nonaktif</CardTitle>
+                <CardDescription>
+                  Disembunyikan dari pilihan transaksi baru, riwayat tetap tersimpan ({inactiveAccounts.length} rekening)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="space-y-0">
+                  {inactiveAccounts.map((account, index) => (
+                    <div key={account.id} className={`p-4 md:p-6 group opacity-60 hover:opacity-100 transition-opacity ${index !== inactiveAccounts.length - 1 ? 'border-b border-border' : ''}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <div className="text-2xl md:text-3xl grayscale">
+                            {getBankEmoji(account.bank_name)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-muted-foreground text-sm md:text-base truncate">{account.name}</h3>
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                Nonaktif
+                              </Badge>
+                            </div>
+                            <p className="text-xs md:text-sm text-muted-foreground">
+                              {account.bank_name} {account.account_number && `• •••• ${account.account_number.slice(-4)}`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-6 ml-11 sm:ml-0">
+                          <div className="text-left sm:text-right">
+                            <p className="text-xs text-muted-foreground mb-0.5">Saldo</p>
+                            <p className="text-lg md:text-2xl font-bold text-muted-foreground">
+                              {formatBalance(account.current_balance)}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <Button variant="outline" size="sm" onClick={() => handleReactivate(account.id)}>
+                              Aktifkan
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-danger hover:text-danger"
+                                  onClick={() => handleDeleteClick(account.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Rekening</AlertDialogTitle>
+                                  <AlertDialogDescription asChild>
+                                    <div className="space-y-2">
+                                      <p>
+                                        Tindakan ini akan menghapus rekening "{account.name}" secara permanen.
+                                      </p>
+                                      {deletingId === account.id && deleteTxCount === null && (
+                                        <p className="text-muted-foreground">Memeriksa riwayat transaksi...</p>
+                                      )}
+                                      {deletingId === account.id && deleteTxCount !== null && deleteTxCount > 0 && (
+                                        <p className="rounded-md border border-warning/40 bg-warning/10 p-3 text-warning">
+                                          Rekening ini memiliki {deleteTxCount} transaksi. Menghapus rekening akan
+                                          menghapus seluruh transaksi tersebut secara permanen.
+                                        </p>
+                                      )}
+                                    </div>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+                                  <AlertDialogCancel onClick={closeDeleteDialog}>
+                                    Batal
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleteLoading || (deletingId === account.id && deleteTxCount === null)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    {deleteLoading
+                                      ? "Memproses..."
+                                      : deleteTxCount !== null && deleteTxCount > 0
+                                        ? "Hapus Rekening + Transaksi"
+                                        : "Hapus Rekening"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card></StaggerItem>
+          )}
         </div>
       </div>
     </div>
