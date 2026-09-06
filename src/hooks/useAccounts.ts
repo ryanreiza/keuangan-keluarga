@@ -115,6 +115,70 @@ export const useAccounts = () => {
     }
   };
 
+  const getTransactionCount = async (id: string): Promise<number> => {
+    const { count, error } = await supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .or(`account_id.eq.${id},destination_account_id.eq.${id}`);
+
+    if (error) {
+      toast({
+        title: "Error memeriksa transaksi",
+        description: error.message,
+        variant: "destructive",
+      });
+      return -1;
+    }
+    return count ?? 0;
+  };
+
+  const deleteAccountWithTransactions = async (id: string) => {
+    try {
+      const { error: txError } = await supabase
+        .from('transactions')
+        .delete()
+        .or(`account_id.eq.${id},destination_account_id.eq.${id}`);
+
+      if (txError) throw txError;
+      await deleteAccount(id);
+    } catch (error: any) {
+      toast({
+        title: "Error deleting account",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleActive = async (id: string, isActive: boolean) => {
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .update({ is_active: isActive })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setAccounts(accounts.map(a => a.id === id ? data : a));
+      toast({
+        title: isActive ? "Rekening diaktifkan" : "Rekening dinonaktifkan",
+        description: isActive
+          ? "Rekening kembali tersedia untuk transaksi."
+          : "Rekening disembunyikan dari pilihan transaksi baru, riwayat tetap aman.",
+      });
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Error updating account",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error: error.message };
+    }
+  };
+
   const deleteAccount = async (id: string) => {
     try {
       const { error } = await supabase
@@ -186,6 +250,9 @@ export const useAccounts = () => {
     createAccount,
     updateAccount,
     deleteAccount,
+    deleteAccountWithTransactions,
+    getTransactionCount,
+    toggleActive,
     refetch: fetchAccounts,
   };
 };
