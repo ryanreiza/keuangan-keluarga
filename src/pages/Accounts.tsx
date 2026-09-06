@@ -37,9 +37,10 @@ export default function Accounts() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [deleteTxCount, setDeleteTxCount] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount } = useAccounts();
+  const { accounts, loading: accountsLoading, createAccount, updateAccount, deleteAccount, deleteAccountWithTransactions, getTransactionCount, toggleActive } = useAccounts();
   const { user } = useAuth();
   const { toast } = useToast();
 
