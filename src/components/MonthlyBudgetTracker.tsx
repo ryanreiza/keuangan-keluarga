@@ -66,6 +66,26 @@ export default function MonthlyBudgetTracker({
     return map;
   }, [plan.fixed, plan.allocations, plan.incomes, type]);
 
+  // Nilai otomatis untuk Tujuan Tabungan: cocokkan goal ke Kategori Web
+  // (prioritas: kategori dengan nama sama, lalu kategori milik goal jika tidak dipakai goal lain)
+  const goalAuto = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (type !== 'expense') return map;
+    const norm = (s: string) => (s || '').trim().toLowerCase();
+    const catCount: Record<string, number> = {};
+    (savingsGoals || []).forEach(g => {
+      const cid = (g as any).category_id;
+      if (cid) catCount[cid] = (catCount[cid] || 0) + 1;
+    });
+    (savingsGoals || []).forEach(g => {
+      const byName = categories.find(c => norm(c.name) === norm(g.name) && planByCategory[c.id] !== undefined);
+      const cid = (g as any).category_id as string | undefined;
+      if (byName) map[g.id] = planByCategory[byName.id];
+      else if (cid && catCount[cid] === 1 && planByCategory[cid] !== undefined) map[g.id] = planByCategory[cid];
+    });
+    return map;
+  }, [savingsGoals, categories, planByCategory, type]);
+
   // Filter categories by type
   const filteredCategories = useMemo(() => {
     return categories.filter(cat => cat.type === type);
@@ -145,12 +165,15 @@ export default function MonthlyBudgetTracker({
         const budget = budgets.find(
           b => b.savings_goal_id === goal.id && b.month === month && b.year === year
         );
-        amounts[`sav:${goal.id}`] = budget?.expected_amount || 0;
+        const auto = goalAuto[goal.id];
+        amounts[`sav:${goal.id}`] = !budget?.is_manual && auto !== undefined
+          ? auto
+          : budget?.expected_amount || 0;
       });
     }
 
     return amounts;
-  }, [budgets, filteredCategories, savingsGoals, month, year, type, planByCategory]);
+  }, [budgets, filteredCategories, savingsGoals, month, year, type, planByCategory, goalAuto]);
 
   // Baris mana yang nilainya berasal dari Target Bulanan (otomatis) vs manual
   const autoInfo = useMemo(() => {
@@ -166,8 +189,19 @@ export default function MonthlyBudgetTracker({
         autoValue: auto ?? 0,
       };
     });
+    (savingsGoals || []).forEach(goal => {
+      const budget = budgets.find(
+        b => b.savings_goal_id === goal.id && b.month === month && b.year === year
+      );
+      const auto = goalAuto[goal.id];
+      info[`sav:${goal.id}`] = {
+        hasAuto: auto !== undefined,
+        isManual: !!budget?.is_manual,
+        autoValue: auto ?? 0,
+      };
+    });
     return info;
-  }, [budgets, filteredCategories, month, year, planByCategory]);
+  }, [budgets, filteredCategories, savingsGoals, month, year, planByCategory, goalAuto]);
 
   // Simpan nilai otomatis ke database agar grafik & notifikasi tetap konsisten
   useEffect(() => {
@@ -182,8 +216,18 @@ export default function MonthlyBudgetTracker({
       if (Number(budget?.expected_amount || 0) === auto) return;
       upsertBudget({ category_id: cat.id, month, year, expected_amount: auto, is_manual: false });
     });
+    (savingsGoals || []).forEach(goal => {
+      const auto = goalAuto[goal.id];
+      if (auto === undefined) return;
+      const budget = budgets.find(
+        b => b.savings_goal_id === goal.id && b.month === month && b.year === year
+      );
+      if (budget?.is_manual) return;
+      if (Number(budget?.expected_amount || 0) === auto) return;
+      upsertBudget({ savings_goal_id: goal.id, month, year, expected_amount: auto, is_manual: false });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planByCategory, budgets, loading, plan.loading, filteredCategories, month, year, type]);
+  }, [planByCategory, goalAuto, budgets, loading, plan.loading, filteredCategories, savingsGoals, month, year, type]);
 
   // Initialize local expected values
   useEffect(() => {
@@ -221,7 +265,7 @@ export default function MonthlyBudgetTracker({
     const info = autoInfo[row.key];
     if (!info?.hasAuto) return;
     await upsertBudget({
-      category_id: row.id,
+      ...(row.kind === 'savings' ? { savings_goal_id: row.id } : { category_id: row.id }),
       month,
       year,
       expected_amount: info.autoValue,
