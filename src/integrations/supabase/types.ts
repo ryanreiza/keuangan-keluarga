@@ -53,6 +53,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: Json
+          message_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: Json
+          message_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: Json
+          message_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string | null
