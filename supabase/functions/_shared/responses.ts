@@ -1,5 +1,5 @@
 import { createOpenAI } from "npm:@ai-sdk/openai";
-import { streamText, type ModelMessage } from "npm:ai";
+import { streamText, type ModelMessage, type UIMessage } from "npm:ai";
 
 import {
   createLovableAiGatewayRunIdFetch,
@@ -23,7 +23,6 @@ export function createResponsesCall(
   const reasoning = config.model !== "openai/chat-latest";
   const result = streamText({
     model: provider.responses(config.model),
-    // AI SDK 6 lacks `instructions`: rename this key to `system` there.
     instructions,
     messages,
     abortSignal: request.signal,
@@ -43,7 +42,21 @@ export function createResponsesCall(
   });
   return {
     result,
-    response: () =>
-      withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ sendReasoning: true }), runIdFetch),
+    response: (opts: {
+      originalMessages: UIMessage[];
+      onFinish?: (e: { responseMessage: UIMessage }) => Promise<void> | void;
+      headers?: HeadersInit;
+      onError?: (error: unknown) => string;
+    }) =>
+      withLovableAiGatewayRunIdHeader(
+        result.toUIMessageStreamResponse({
+          sendReasoning: true,
+          originalMessages: opts.originalMessages,
+          onFinish: opts.onFinish,
+          onError: opts.onError,
+        }),
+        runIdFetch,
+        opts.headers,
+      ),
   };
 }
