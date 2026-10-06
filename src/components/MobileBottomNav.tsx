@@ -29,6 +29,7 @@ const mainNavItems = [
 
 const moreNavItems = [
   { title: "Target Bulanan", url: "/monthly-plan", icon: Target, description: "Rencana alokasi bulanan" },
+  { title: "Penasihat AI", url: "/assistant", icon: MessageCircleQuestion, description: "Tanya soal keuangan" },
   { title: "Kategori", url: "/categories", icon: PieChart, description: "Kelola kategori" },
   { title: "Dashboard Rekening", url: "/account-dashboard", icon: Wallet, description: "Ringkasan per rekening" },
   { title: "Pelacak Utang", url: "/debts", icon: TrendingDown, description: "Kelola utang" },
