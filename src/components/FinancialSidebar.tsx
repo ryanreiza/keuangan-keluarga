@@ -34,6 +34,7 @@ import {
 const overviewItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "Target Bulanan", url: "/monthly-plan", icon: Target },
+  { title: "Penasihat AI", url: "/assistant", icon: MessageCircleQuestion },
   { title: "Dashboard Tahunan", url: "/annual", icon: Calendar },
   { title: "Laporan Budget", url: "/reports", icon: FileBarChart },
 ];

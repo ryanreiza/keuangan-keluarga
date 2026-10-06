@@ -24,6 +24,7 @@ const MonthlyPlan = lazy(() => import("./pages/MonthlyPlan"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Assistant = lazy(() => import("./pages/Assistant"));
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="/monthly-plan" element={<ProtectedPage><MonthlyPlan /></ProtectedPage>} />
                 <Route path="/reports" element={<ProtectedPage><Reports /></ProtectedPage>} />
                 <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
+                <Route path="/assistant" element={<ProtectedPage><Assistant /></ProtectedPage>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
