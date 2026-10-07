@@ -23,10 +23,10 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import advisorLogo from "@/assets/advisor-logo.png";
 
 const SUGGESTIONS = [
-  "Kategori apa yang paling banyak menghabiskan uang bulan ini?",
-  "Apakah pengeluaran saya sesuai Target Alokasi Keuangan?",
-  "Buatkan rekomendasi anggaran untuk bulan depan",
-  "Bagaimana cara mempercepat pelunasan utang saya?",
+  "Duit bulan ini paling banyak abis buat apa ya?",
+  "Bulan ini aku boros gak dibanding target alokasi?",
+  "Bulan depan sebaiknya anggarannya gimana?",
+  "Gimana biar utangku cepet lunas?",
 ];
 
 function ChatWindow({ initialMessages }: { initialMessages: UIMessage[] }) {
