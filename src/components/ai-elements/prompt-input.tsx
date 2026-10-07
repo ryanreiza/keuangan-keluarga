@@ -155,7 +155,7 @@ const captureScreenshot = async (): Promise<File | null> => {
 
     const timestamp = new Date()
       .toISOString()
-      .replaceAll(/[:.]/g, "-")
+      .split(/[:.]/g).join( "-")
       .replace("T", "_")
       .replace("Z", "");
 
