@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Conversation,
   ConversationContent,
@@ -29,10 +31,70 @@ const SUGGESTIONS = [
   "Gimana biar utangku cepet lunas?",
 ];
 
+type Filters = { from: string; to: string; accountId: string };
+const ALL = "all";
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const defaultFilters = (): Filters => {
+  const n = new Date();
+  return { from: iso(new Date(n.getFullYear(), n.getMonth() - 5, 1)), to: iso(n), accountId: ALL };
+};
+
+function ScopeBar({ filters, setFilters, disabled }: { filters: Filters; setFilters: (f: Filters) => void; disabled: boolean }) {
+  const { user } = useAuth();
+  const [accounts, setAccounts] = useState<{ id: string; name: string; bank_name: string }[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("accounts").select("id,name,bank_name").eq("user_id", user.id).order("name")
+      .then(({ data }) => setAccounts(data ?? []));
+  }, [user]);
+  const n = new Date();
+  const presets: [string, () => Partial<Filters>][] = [
+    ["Bulan ini", () => ({ from: iso(new Date(n.getFullYear(), n.getMonth(), 1)), to: iso(n) })],
+    ["Bulan lalu", () => ({ from: iso(new Date(n.getFullYear(), n.getMonth() - 1, 1)), to: iso(new Date(n.getFullYear(), n.getMonth(), 0)) })],
+    ["3 bulan", () => ({ from: iso(new Date(n.getFullYear(), n.getMonth() - 2, 1)), to: iso(n) })],
+    ["6 bulan", () => ({ from: iso(new Date(n.getFullYear(), n.getMonth() - 5, 1)), to: iso(n) })],
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 md:p-4 flex flex-col lg:flex-row lg:items-end gap-3">
+      <div className="flex flex-wrap gap-1.5">
+        {presets.map(([label, fn]) => (
+          <Button key={label} type="button" size="sm" variant="outline" disabled={disabled}
+            onClick={() => setFilters({ ...filters, ...fn() })}>{label}</Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 flex-1">
+        <label className="text-xs text-muted-foreground space-y-1">
+          <span>Dari tanggal</span>
+          <Input type="date" value={filters.from} max={filters.to} disabled={disabled}
+            onChange={(e) => e.target.value && setFilters({ ...filters, from: e.target.value })} />
+        </label>
+        <label className="text-xs text-muted-foreground space-y-1">
+          <span>Sampai tanggal</span>
+          <Input type="date" value={filters.to} min={filters.from} disabled={disabled}
+            onChange={(e) => e.target.value && setFilters({ ...filters, to: e.target.value })} />
+        </label>
+        <div className="text-xs text-muted-foreground space-y-1 col-span-2 sm:col-span-1">
+          <span>Rekening</span>
+          <Select value={filters.accountId} disabled={disabled} onValueChange={(v) => setFilters({ ...filters, accountId: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Semua rekening</SelectItem>
+              {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name} ({a.bank_name})</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChatWindow({ initialMessages }: { initialMessages: UIMessage[] }) {
   const { toast } = useToast();
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     id: "finance-assistant",
@@ -45,6 +107,10 @@ function ChatWindow({ initialMessages }: { initialMessages: UIMessage[] }) {
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           Authorization: `Bearer ${data.session?.access_token ?? ""}`,
         };
+      },
+      body: () => {
+        const f = filtersRef.current;
+        return { filters: { from: f.from, to: f.to, accountId: f.accountId === ALL ? undefined : f.accountId } };
       },
     }),
     onError: (err) => {
@@ -79,7 +145,9 @@ function ChatWindow({ initialMessages }: { initialMessages: UIMessage[] }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-14rem)] md:h-[calc(100dvh-12rem)] min-h-[420px] rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+    <div className="space-y-3">
+    <ScopeBar filters={filters} setFilters={setFilters} disabled={busy} />
+    <div className="flex flex-col h-[calc(100dvh-20rem)] md:h-[calc(100dvh-18rem)] min-h-[420px] rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
       <Conversation className="flex-1">
         <ConversationContent className="px-4 md:px-8 py-6">
           {messages.length === 0 && (
