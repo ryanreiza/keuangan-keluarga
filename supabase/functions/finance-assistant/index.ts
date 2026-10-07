@@ -18,19 +18,29 @@ const json = (status: number, body: unknown) =>
 const rp = (n: number) => "Rp" + Math.round(Number(n) || 0).toLocaleString("id-ID");
 
 // deno-lint-ignore no-explicit-any
-async function buildContext(sb: any, userId: string) {
+type Filters = { from?: string; to?: string; accountId?: string };
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const UUID_RE = /^[0-9a-f-]{36}$/i;
+
+// deno-lint-ignore no-explicit-any
+async function buildContext(sb: any, userId: string, f: Filters) {
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
-  const start = new Date(year, now.getMonth() - 5, 1).toISOString().slice(0, 10);
+  const start = f.from ?? new Date(year, now.getMonth() - 5, 1).toISOString().slice(0, 10);
+  const end = f.to ?? now.toISOString().slice(0, 10);
+
+  let txQ = sb.from("transactions")
+    .select("amount,type,transaction_date,description,category_id,savings_goal_id,debt_id")
+    .eq("user_id", userId).gte("transaction_date", start).lte("transaction_date", end);
+  if (f.accountId) txQ = txQ.or(`account_id.eq.${f.accountId},destination_account_id.eq.${f.accountId}`);
+  let accQ = sb.from("accounts").select("name,bank_name,current_balance,is_active").eq("user_id", userId);
+  if (f.accountId) accQ = accQ.eq("id", f.accountId);
 
   const [cats, accs, txs, goals, debts, incomes, fixed, allocs, budgets] = await Promise.all([
     sb.from("categories").select("id,name,type").eq("user_id", userId),
-    sb.from("accounts").select("name,bank_name,current_balance,is_active").eq("user_id", userId),
-    sb.from("transactions")
-      .select("amount,type,transaction_date,description,category_id,savings_goal_id,debt_id")
-      .eq("user_id", userId).gte("transaction_date", start)
-      .order("transaction_date", { ascending: false }).limit(3000),
+    accQ,
+    txQ.order("transaction_date", { ascending: false }).limit(3000),
     sb.from("savings_goals").select("name,target_amount,current_amount,target_date,is_achieved").eq("user_id", userId),
     sb.from("debts").select("creditor_name,total_amount,remaining_amount,monthly_payment,interest_rate,due_date,is_paid_off").eq("user_id", userId),
     sb.from("monthly_plan_incomes").select("category,amount").eq("user_id", userId).eq("month", month).eq("year", year),
@@ -69,12 +79,14 @@ async function buildContext(sb: any, userId: string) {
   const curKey = `${year}-${String(month).padStart(2, "0")}`;
   const curByCat = monthly.get(curKey)?.byCat ?? new Map();
 
+  const accLabel = f.accountId ? (accs.data?.[0] ? `${accs.data[0].name} saja` : "rekening terpilih") : "semua rekening";
   return `Tanggal hari ini: ${now.toISOString().slice(0, 10)}. Semua nilai dalam Rupiah.
+CAKUPAN ANALISIS yang dipilih pengguna: periode ${start} s.d. ${end}, ${accLabel}. Data transaksi di bawah hanya mencakup cakupan ini; sebutkan cakupan ini di jawaban bila relevan dan jangan menyimpulkan di luar cakupan.
 
 ## Rekening
 ${(accs.data ?? []).map((a: any) => `- ${a.name} (${a.bank_name})${a.is_active === false ? " [nonaktif]" : ""}: ${rp(a.current_balance)}`).join("\n") || "-"}
 
-## Ringkasan transaksi 6 bulan terakhir
+## Ringkasan transaksi per bulan dalam cakupan
 ${monthLines.join("\n") || "- Belum ada transaksi"}
 
 ## Transaksi terbaru (maks 40)
@@ -120,10 +132,16 @@ Deno.serve(async (req) => {
   const userId = userData.user.id;
 
   let messages: UIMessage[];
+  const filters: Filters = {};
   try {
     const body = await req.json();
     messages = body?.messages;
     if (!Array.isArray(messages) || messages.length === 0) throw new Error();
+    const f = body?.filters ?? {};
+    if (typeof f.from === "string" && DATE_RE.test(f.from)) filters.from = f.from;
+    if (typeof f.to === "string" && DATE_RE.test(f.to)) filters.to = f.to;
+    if (typeof f.accountId === "string" && UUID_RE.test(f.accountId)) filters.accountId = f.accountId;
+    if (filters.from && filters.to && filters.from > filters.to) return json(400, { error: "Tanggal mulai harus sebelum tanggal akhir." });
   } catch {
     return json(400, { error: "Permintaan tidak valid." });
   }
@@ -138,7 +156,7 @@ Deno.serve(async (req) => {
     if (error) console.error("save user message failed", error);
   }
 
-  const context = await buildContext(sb, userId);
+  const context = await buildContext(sb, userId, filters);
   const instructions = `Kamu adalah "Penasihat Keuangan Keluarga", asisten keuangan rumah tangga di aplikasi Keuangan Keluarga.
 Pengguna akan bertanya dengan bahasa sehari-hari, santai, singkatan, atau bahasa gaul (contoh: "duit gue abis buat apa aja sih?", "bulan ini boros gak?", "jajan kebanyakan ya?", "50rb", "1,5jt"). Pahami maksudnya, tafsirkan kata seperti "jajan", "makan", "belanja", "cicilan", "nabung" ke kategori yang paling cocok di data, dan pahami waktu relatif ("bulan ini", "kemarin", "bulan lalu", "minggu ini") berdasarkan tanggal hari ini.
 Jawab dalam Bahasa Indonesia sehari-hari yang hangat, jelas, dan ringkas, hindari istilah keuangan yang rumit (jelaskan singkat bila terpaksa). Gunakan format Rupiah (contoh: Rp1.250.000).
