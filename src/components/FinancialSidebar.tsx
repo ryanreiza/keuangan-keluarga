@@ -14,7 +14,8 @@ import {
   FileBarChart,
   Eye,
   EyeOff,
-} , MessageCircleQuestion } from "lucide-react";
+  MessageCircleQuestion,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
