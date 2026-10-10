@@ -233,6 +233,7 @@ function ChatWindow({ initialMessages }: { initialMessages: UIMessage[] }) {
         </PromptInput>
       </div>
     </div>
+    </div>
   );
 }
 
