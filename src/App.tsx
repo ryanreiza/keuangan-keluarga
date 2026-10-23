@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Transactions = lazy(() => import("./pages/Transactions"));
+const QuickCapture = lazy(() => import("./pages/QuickCapture"));
 const Categories = lazy(() => import("./pages/Categories"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const AccountDashboard = lazy(() => import("./pages/AccountDashboard"));
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
                 <Route path="/transactions" element={<ProtectedPage><Transactions /></ProtectedPage>} />
+                <Route path="/capture" element={<ProtectedPage><QuickCapture /></ProtectedPage>} />
                 <Route path="/categories" element={<ProtectedPage><Categories /></ProtectedPage>} />
                 <Route path="/accounts" element={<ProtectedPage><Accounts /></ProtectedPage>} />
                 <Route path="/account-dashboard" element={<ProtectedPage><AccountDashboard /></ProtectedPage>} />
