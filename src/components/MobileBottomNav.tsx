@@ -11,6 +11,7 @@ import {
   FileBarChart,
   MoreHorizontal,
   MessageCircleQuestion,
+  Sparkles,
 } from "lucide-react";
 import {
   Sheet,
@@ -29,6 +30,7 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
+  { title: "Catat Cepat", url: "/capture", icon: Sparkles, description: "Chat, suara, foto struk" },
   { title: "Target Bulanan", url: "/monthly-plan", icon: Target, description: "Rencana alokasi bulanan" },
   { title: "Penasihat AI", url: "/assistant", icon: MessageCircleQuestion, description: "Tanya soal keuangan" },
   { title: "Kategori", url: "/categories", icon: PieChart, description: "Kelola kategori" },

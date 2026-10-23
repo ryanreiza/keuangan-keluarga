@@ -1,2 +1,3 @@
 
 - AI chat (Penasihat AI) runs in the `finance-assistant` edge function; it builds user finance context server-side with the caller JWT (RLS) and persists UIMessages in `ai_chat_messages`. Why: keeps AI key and prompts server-side and data scoped per user.
+- Smart transaction capture (chat text / voice note / receipt photo) runs in the `transaction-capture` edge function: it transcribes audio via `/v1/audio/transcriptions` and extracts drafts with `openai/gpt-6-astra` structured output, matching categories/accounts server-side with the caller JWT. Why: one server boundary holds all gateway calls, size limits and matching logic; the browser never touches LOVABLE_API_KEY.

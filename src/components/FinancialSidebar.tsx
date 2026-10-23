@@ -9,6 +9,7 @@ import {
   Calendar,
   BarChart3,
   Receipt,
+  Sparkles,
   Building2,
   LogOut,
   FileBarChart,
@@ -42,6 +43,7 @@ const overviewItems = [
 
 const managementItems = [
   { title: "Transaksi", url: "/transactions", icon: Receipt },
+  { title: "Catat Cepat", url: "/capture", icon: Sparkles },
   { title: "Kategori", url: "/categories", icon: PieChart },
   { title: "Rekening Bank", url: "/accounts", icon: Building2 },
   { title: "Dashboard Rekening", url: "/account-dashboard", icon: Wallet },

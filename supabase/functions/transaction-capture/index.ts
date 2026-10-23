@@ -44,26 +44,20 @@ class HttpError extends Error {
 const rp = (n: number) => "Rp" + Math.round(Number(n) || 0).toLocaleString("id-ID");
 
 // ---------- Structured output schema (strict-compatible: flat, all required, nullable optionals) ----------
-const DraftSchema = z
-  .object({
-    transactions: z
-      .array(
-        z
-          .object({
-            description: z.string(),
-            amount: z.number(),
-            type: z.enum(["income", "expense"]),
-            date: z.string().nullable(),
-            category_name: z.string().nullable(),
-            account_name: z.string().nullable(),
-            note: z.string().nullable(),
-          })
-          .strict(),
-      )
-      .strict(),
-    summary: z.string().nullable(),
-  })
-  .strict();
+const DraftSchema = z.strictObject({
+  transactions: z.array(
+    z.strictObject({
+      description: z.string(),
+      amount: z.number(),
+      type: z.enum(["income", "expense"]),
+      date: z.string().nullable(),
+      category_name: z.string().nullable(),
+      account_name: z.string().nullable(),
+      note: z.string().nullable(),
+    }),
+  ),
+  summary: z.string().nullable(),
+});
 
 type RawDraft = z.infer<typeof DraftSchema>["transactions"][number];
 
