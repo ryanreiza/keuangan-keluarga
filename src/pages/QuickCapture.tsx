@@ -172,7 +172,7 @@ export default function QuickCapture() {
       note: d.note ?? null,
     }));
     setDrafts(mapped);
-    if (mapped.length === 0) {
+    if (mapped.length === 0 && !data.summary) {
       toast({
         title: "Tidak ada transaksi terbaca",
         description: "Coba tulis atau ucapkan lebih jelas, atau pastikan foto struk terang dan utuh.",
@@ -231,18 +231,19 @@ export default function QuickCapture() {
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const cleanMime = mimeType.split(";")[0];
+        const blob = new Blob(chunksRef.current, { type: cleanMime });
         if (blob.size < 2048) {
           toast({ title: "Rekaman kosong", description: "Silakan rekam ulang.", variant: "destructive" });
           return;
         }
         const reader = new FileReader();
         reader.onload = () => {
-          analyze({ mode: "audio", audioBase64: String(reader.result), audioMime: mimeType });
+          analyze({ mode: "audio", audioBase64: String(reader.result), audioMime: cleanMime });
         };
         reader.readAsDataURL(blob);
       };
-      recorder.start();
+      recorder.start(250);
       recorderRef.current = recorder;
       setRecording(true);
       setRecordSeconds(0);
