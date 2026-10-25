@@ -79,6 +79,7 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
   if (bytes.length < 2048) {
     throw new HttpError(400, "Rekaman terlalu pendek atau kosong. Silakan rekam ulang.");
   }
+  mime = (mime.split(";")[0] || "audio/webm").trim();
   const ext = /mp4|m4a/.test(mime) ? "m4a" : /ogg/.test(mime) ? "ogg" : "webm";
 
   const form = new FormData();
@@ -86,7 +87,6 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
   form.append("file", new Blob([bytes], { type: mime }), `audio.${ext}`);
   form.append("response_format", "json");
   form.append("stream", "true");
-  form.append("languages", "id");
 
   const resp = await fetch(`${GATEWAY_BASE}/audio/transcriptions`, {
     method: "POST",
@@ -110,6 +110,7 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
 
   const contentType = resp.headers.get("content-type") ?? "";
   let transcript = "";
+  let deltas = "";
   if (contentType.includes("text/event-stream")) {
     for (const block of bodyText.split("\n\n")) {
       const dataLine = block
@@ -121,8 +122,8 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
       try {
         const evt = JSON.parse(dataLine);
         if (evt?.type === "transcript.text.done" && typeof evt.text === "string") transcript = evt.text;
-        else if (evt?.type === "transcript.text.delta" && typeof evt.delta === "string" && !transcript) {
-          transcript += evt.delta;
+        else if (evt?.type === "transcript.text.delta" && typeof evt.delta === "string") {
+          deltas += evt.delta;
         }
       } catch {
         /* ignore malformed block */
@@ -137,7 +138,7 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
     }
   }
 
-  transcript = transcript.trim();
+  transcript = (transcript || deltas).trim();
   if (!transcript) throw new HttpError(422, "Rekaman tidak berhasil dibaca. Coba rekam lagi lebih dekat ke mikrofon.");
   return transcript;
 }
@@ -164,13 +165,14 @@ ${catLines.join("\n") || "- (belum ada kategori)"}
 REKENING PENGGUNA (pilih NAMA PERSIS dari daftar ini untuk account_name bila pengguna menyebut rekening/sumber dana; kalau tidak disebut, isi null):
 ${accLines.join("\n") || "- (belum ada rekening)"}
 
-MODE STRUK (foto):
+MODE STRUK / BUKTI TRANSAKSI (foto):
+- Terima semua jenis bukti uang keluar/masuk: struk belanja, nota, kwitansi, invoice, bukti transfer m-banking/e-wallet, tagihan.
 - Baca teks struk dengan teliti (OCR): nama toko/merchant, tanggal, rincian item, pajak, dan GRAND TOTAL.
 - Satu struk biasanya menjadi SATU transaksi: description = nama merchant, amount = grand total (bukan subtotal per item), date = tanggal di struk (format YYYY-MM-DD; jika tidak terbaca, hari ini).
 - Hanya pecah menjadi beberapa transaksi (maksimal 5) jika struk jelas berisi beberapa pembelian yang benar-benar berbeda tujuan dan totalnya tetap terbagi rapi.
 - category_name = tebakan kategori terbaik dari item di struk; account_name = null kecuali metode pembayaran di struk cocok dengan daftar rekening.
 - note = ringkasan singkat isi struk (2-3 item utama).
-- Jika gambar bukan struk belanja atau teks tidak terbaca, kembalikan transactions kosong dan jelaskan di summary.`;
+- Jika gambar sama sekali tidak memuat nominal transaksi atau teks tidak terbaca, kembalikan transactions kosong dan jelaskan singkat di summary.`;
 }
 
 // ---------- Category / account matching ----------
@@ -236,7 +238,6 @@ Deno.serve(async (req) => {
     imageDataUrl = typeof body?.imageDataUrl === "string" ? body.imageDataUrl : "";
     if (!["text", "audio", "image"].includes(mode)) throw new Error("mode tidak dikenal");
     if (mode === "text" && !text) throw new Error("teks kosong");
-    if (mode === "text" && !isBase64(text)) throw new Error("teks tidak valid");
     if (mode === "audio") {
       if (!audioB64 || audioB64.length > AUDIO_B64_MAX) throw new Error("audio tidak valid / terlalu besar");
       if (!/^audio\//.test(audioMime)) throw new Error("tipe audio tidak didukung");
