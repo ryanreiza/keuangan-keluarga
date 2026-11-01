@@ -1,5 +1,5 @@
 import { parseTranscriptionResponse } from "./stt-parse.ts";
-import { assertEquals as assertEq } from "https://deno.land/std@0.224.0/assert/assert_equals.ts"; // deno-lint-ignore-line
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/assert_equals.ts";
 import { assert } from "https://deno.land/std@0.224.0/assert/assert.ts";
 
 Deno.test("parses SSE transcript with \\r\\n separators (gateway format)", () => {
