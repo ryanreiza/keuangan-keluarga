@@ -13,6 +13,7 @@ import {
   createLovableAiGatewayRunIdFetch,
   getLovableAiGatewayRunId,
 } from "../_shared/run-id.ts";
+import { parseTranscriptionResponse } from "./stt-parse.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -109,37 +110,11 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
   }
 
   const contentType = resp.headers.get("content-type") ?? "";
-  let transcript = "";
-  let deltas = "";
-  if (contentType.includes("text/event-stream")) {
-    for (const block of bodyText.split("\n\n")) {
-      const dataLine = block
-        .split("\n")
-        .filter((l) => l.startsWith("data:"))
-        .map((l) => l.slice(5).trim())
-        .join("");
-      if (!dataLine || dataLine === "[DONE]") continue;
-      try {
-        const evt = JSON.parse(dataLine);
-        if (evt?.type === "transcript.text.done" && typeof evt.text === "string") transcript = evt.text;
-        else if (evt?.type === "transcript.text.delta" && typeof evt.delta === "string") {
-          deltas += evt.delta;
-        }
-      } catch {
-        /* ignore malformed block */
-      }
-    }
-  } else {
-    try {
-      const parsed = JSON.parse(bodyText);
-      if (typeof parsed?.text === "string") transcript = parsed.text;
-    } catch {
-      /* ignore */
-    }
+  const transcript = parseTranscriptionResponse(bodyText, contentType);
+  if (!transcript) {
+    console.error("transcription parsed empty; status", resp.status, "ct", contentType, "head", bodyText.slice(0, 200));
+    throw new HttpError(422, "Rekaman tidak berhasil dibaca. Coba rekam lagi lebih dekat ke mikrofon.");
   }
-
-  transcript = (transcript || deltas).trim();
-  if (!transcript) throw new HttpError(422, "Rekaman tidak berhasil dibaca. Coba rekam lagi lebih dekat ke mikrofon.");
   return transcript;
 }
 
