@@ -13,6 +13,7 @@ import {
   createLovableAiGatewayRunIdFetch,
   getLovableAiGatewayRunId,
 } from "../_shared/run-id.ts";
+import { parseTranscriptionResponse } from "./stt-parse.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -109,36 +110,7 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
   }
 
   const contentType = resp.headers.get("content-type") ?? "";
-  let transcript = "";
-  let deltas = "";
-  // SSE events may be separated by \n\n or \r\n\r\n (gateway uses \r\n) —
-  // parse line-by-line instead of block-splitting so both work.
-  const isSse = contentType.includes("text/event-stream") || bodyText.includes("data:");
-  if (isSse) {
-    for (const line of bodyText.split(/\r?\n/)) {
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      try {
-        const evt = JSON.parse(payload);
-        if (evt?.type === "transcript.text.done" && typeof evt.text === "string") transcript = evt.text;
-        else if (evt?.type === "transcript.text.delta" && typeof evt.delta === "string") {
-          deltas += evt.delta;
-        }
-      } catch {
-        /* ignore malformed line */
-      }
-    }
-  } else {
-    try {
-      const parsed = JSON.parse(bodyText);
-      if (typeof parsed?.text === "string") transcript = parsed.text;
-    } catch {
-      /* ignore */
-    }
-  }
-
-  transcript = (transcript || deltas).trim();
+  const transcript = parseTranscriptionResponse(bodyText, contentType);
   if (!transcript) {
     console.error("transcription parsed empty; status", resp.status, "ct", contentType, "head", bodyText.slice(0, 200));
     throw new HttpError(422, "Rekaman tidak berhasil dibaca. Coba rekam lagi lebih dekat ke mikrofon.");
