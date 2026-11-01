@@ -111,22 +111,22 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
   const contentType = resp.headers.get("content-type") ?? "";
   let transcript = "";
   let deltas = "";
-  if (contentType.includes("text/event-stream")) {
-    for (const block of bodyText.split("\n\n")) {
-      const dataLine = block
-        .split("\n")
-        .filter((l) => l.startsWith("data:"))
-        .map((l) => l.slice(5).trim())
-        .join("");
-      if (!dataLine || dataLine === "[DONE]") continue;
+  // SSE events may be separated by \n\n or \r\n\r\n (gateway uses \r\n) —
+  // parse line-by-line instead of block-splitting so both work.
+  const isSse = contentType.includes("text/event-stream") || bodyText.includes("data:");
+  if (isSse) {
+    for (const line of bodyText.split(/\r?\n/)) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
       try {
-        const evt = JSON.parse(dataLine);
+        const evt = JSON.parse(payload);
         if (evt?.type === "transcript.text.done" && typeof evt.text === "string") transcript = evt.text;
         else if (evt?.type === "transcript.text.delta" && typeof evt.delta === "string") {
           deltas += evt.delta;
         }
       } catch {
-        /* ignore malformed block */
+        /* ignore malformed line */
       }
     }
   } else {
@@ -139,7 +139,10 @@ async function transcribeAudio(apiKey: string, b64: string, mime: string, signal
   }
 
   transcript = (transcript || deltas).trim();
-  if (!transcript) throw new HttpError(422, "Rekaman tidak berhasil dibaca. Coba rekam lagi lebih dekat ke mikrofon.");
+  if (!transcript) {
+    console.error("transcription parsed empty; status", resp.status, "ct", contentType, "head", bodyText.slice(0, 200));
+    throw new HttpError(422, "Rekaman tidak berhasil dibaca. Coba rekam lagi lebih dekat ke mikrofon.");
+  }
   return transcript;
 }
 
