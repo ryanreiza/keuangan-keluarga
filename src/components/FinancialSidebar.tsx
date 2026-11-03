@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { QuickCaptureDialog } from "@/components/QuickCaptureDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import {
@@ -137,6 +138,11 @@ export function FinancialSidebar() {
             </div>
           </div>
         )}
+
+        {/* Quick Capture */}
+        <div className={isCollapsed ? "flex justify-center pt-4" : "px-3 pt-4"}>
+          <QuickCaptureDialog collapsed={isCollapsed} />
+        </div>
 
         {/* Overview */}
         <SidebarGroup className="px-3 pt-4">
