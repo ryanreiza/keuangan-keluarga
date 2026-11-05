@@ -19,6 +19,7 @@ const Categories = lazy(() => import("./pages/Categories"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const AccountDashboard = lazy(() => import("./pages/AccountDashboard"));
 const Savings = lazy(() => import("./pages/Savings"));
+const Gold = lazy(() => import("./pages/Gold"));
 const Debts = lazy(() => import("./pages/Debts"));
 const Annual = lazy(() => import("./pages/Annual"));
 const MonthlyPlan = lazy(() => import("./pages/MonthlyPlan"));
