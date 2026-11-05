@@ -155,6 +155,102 @@ export type Database = {
         }
         Relationships: []
       }
+      gold_accounts: {
+        Row: {
+          created_at: string
+          grams: number
+          id: string
+          institution: string | null
+          name: string
+          notes: string | null
+          total_cost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grams?: number
+          id?: string
+          institution?: string | null
+          name: string
+          notes?: string | null
+          total_cost?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grams?: number
+          id?: string
+          institution?: string | null
+          name?: string
+          notes?: string | null
+          total_cost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gold_transactions: {
+        Row: {
+          cost_basis: number | null
+          created_at: string
+          gold_account_id: string
+          grams: number
+          id: string
+          notes: string | null
+          price_per_gram: number
+          total_amount: number
+          transaction_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cost_basis?: number | null
+          created_at?: string
+          gold_account_id: string
+          grams: number
+          id?: string
+          notes?: string | null
+          price_per_gram: number
+          total_amount: number
+          transaction_id?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cost_basis?: number | null
+          created_at?: string
+          gold_account_id?: string
+          grams?: number
+          id?: string
+          notes?: string | null
+          price_per_gram?: number
+          total_amount?: number
+          transaction_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gold_transactions_gold_account_id_fkey"
+            columns: ["gold_account_id"]
+            isOneToOne: false
+            referencedRelation: "gold_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gold_transactions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_budgets: {
         Row: {
           category_id: string | null
@@ -349,6 +445,7 @@ export type Database = {
           created_at: string
           currency: string | null
           full_name: string | null
+          gold_price_per_gram: number | null
           id: string
           updated_at: string
           user_id: string
@@ -357,6 +454,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           full_name?: string | null
+          gold_price_per_gram?: number | null
           id?: string
           updated_at?: string
           user_id: string
@@ -365,6 +463,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           full_name?: string | null
+          gold_price_per_gram?: number | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -493,7 +592,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      record_gold_purchase: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_category_id: string
+          p_description?: string
+          p_gold_account_id: string
+          p_grams: number
+          p_transaction_date?: string
+        }
+        Returns: Json
+      }
+      record_gold_sale: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_category_id: string
+          p_description?: string
+          p_gold_account_id: string
+          p_grams: number
+          p_transaction_date?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
