@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.update_gold_account() FROM PUBLIC, anon, authenticated;
