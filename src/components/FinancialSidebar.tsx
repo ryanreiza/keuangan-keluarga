@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   MessageCircleQuestion,
+  Gem,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,7 @@ const managementItems = [
   { title: "Rekening Bank", url: "/accounts", icon: Building2 },
   { title: "Dashboard Rekening", url: "/account-dashboard", icon: Wallet },
   { title: "Pelacak Tabungan", url: "/savings", icon: Target },
+  { title: "Tabungan Emas", url: "/gold", icon: Gem },
   { title: "Pelacak Utang", url: "/debts", icon: TrendingDown },
 ];
 

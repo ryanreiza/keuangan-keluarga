@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
   MessageCircleQuestion,
   Sparkles,
+  Gem,
 } from "lucide-react";
 import {
   Sheet,
@@ -36,6 +37,7 @@ const moreNavItems = [
   { title: "Kategori", url: "/categories", icon: PieChart, description: "Kelola kategori" },
   { title: "Dashboard Rekening", url: "/account-dashboard", icon: Wallet, description: "Ringkasan per rekening" },
   { title: "Pelacak Utang", url: "/debts", icon: TrendingDown, description: "Kelola utang" },
+  { title: "Tabungan Emas", url: "/gold", icon: Gem, description: "Beli & jual emas" },
   { title: "Tahunan", url: "/annual", icon: Calendar, description: "Analisis tahunan" },
   { title: "Laporan", url: "/reports", icon: FileBarChart, description: "Laporan budget" },
 ];
