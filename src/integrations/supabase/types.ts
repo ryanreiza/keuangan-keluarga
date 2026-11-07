@@ -446,6 +446,7 @@ export type Database = {
           currency: string | null
           full_name: string | null
           gold_price_per_gram: number | null
+          gold_price_source: string
           gold_price_updated_at: string | null
           id: string
           updated_at: string
@@ -456,6 +457,7 @@ export type Database = {
           currency?: string | null
           full_name?: string | null
           gold_price_per_gram?: number | null
+          gold_price_source?: string
           gold_price_updated_at?: string | null
           id?: string
           updated_at?: string
@@ -466,6 +468,7 @@ export type Database = {
           currency?: string | null
           full_name?: string | null
           gold_price_per_gram?: number | null
+          gold_price_source?: string
           gold_price_updated_at?: string | null
           id?: string
           updated_at?: string

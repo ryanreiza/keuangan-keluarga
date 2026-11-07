@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS gold_price_source text NOT NULL DEFAULT 'manual';
