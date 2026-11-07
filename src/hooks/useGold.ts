@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 
 export interface GoldAccount {
   id: string;
@@ -60,9 +61,42 @@ export const useGold = () => {
   const [goldAccounts, setGoldAccounts] = useState<GoldAccount[]>([]);
   const [goldTransactions, setGoldTransactions] = useState<GoldTransaction[]>([]);
   const [goldPricePerGram, setGoldPricePerGram] = useState<number>(0);
+  const [goldPriceUpdatedAt, setGoldPriceUpdatedAt] = useState<string | null>(null);
+  const [goldPriceSource, setGoldPriceSource] = useState<string>('manual');
   const [loading, setLoading] = useState(true);
+  const autoRefreshStarted = useRef(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const refreshGoldPrice = async (showErrorToast = true) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('gold-price-refresh', { body: {} });
+      if (error) {
+        const details = error instanceof FunctionsHttpError
+          ? await error.context.text()
+          : error.message;
+        throw new Error(details || 'Harga emas belum berhasil diperbarui.');
+      }
+      if (!data || typeof data.pricePerGram !== 'number' || data.pricePerGram <= 0) {
+        throw new Error('Sumber harga emas mengembalikan nilai yang tidak valid.');
+      }
+
+      setGoldPricePerGram(data.pricePerGram);
+      setGoldPriceUpdatedAt(data.quotedAt ?? null);
+      setGoldPriceSource(data.source ?? 'xaus');
+      return { data, error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Harga emas belum berhasil diperbarui.';
+      if (showErrorToast) {
+        toast({
+          title: 'Harga emas belum diperbarui',
+          description: 'Harga terakhir tetap digunakan. Silakan coba lagi nanti.',
+          variant: 'destructive',
+        });
+      }
+      return { error: message };
+    }
+  };
 
   const fetchGold = async () => {
     if (!user) return;
@@ -82,7 +116,7 @@ export const useGold = () => {
           .limit(200),
         supabase
           .from('profiles')
-          .select('gold_price_per_gram')
+          .select('gold_price_per_gram, gold_price_updated_at, gold_price_source')
           .eq('user_id', user.id)
           .single(),
       ]);
@@ -94,6 +128,24 @@ export const useGold = () => {
       setGoldTransactions(txRes.data || []);
       if (!profileRes.error && profileRes.data) {
         setGoldPricePerGram(profileRes.data.gold_price_per_gram ?? 0);
+        setGoldPriceUpdatedAt(profileRes.data.gold_price_updated_at ?? null);
+        setGoldPriceSource(profileRes.data.gold_price_source ?? 'manual');
+
+        const updatedAt = profileRes.data.gold_price_updated_at
+          ? Date.parse(profileRes.data.gold_price_updated_at)
+          : 0;
+        const stale = !Number.isFinite(updatedAt) || Date.now() - updatedAt >= 24 * 60 * 60 * 1000;
+        if (stale && !autoRefreshStarted.current) {
+          autoRefreshStarted.current = true;
+          const result = await refreshGoldPrice(false);
+          if (result.error) {
+            toast({
+              title: 'Harga emas belum diperbarui',
+              description: 'Harga terakhir tetap digunakan. Anda dapat mencoba memperbarui lagi nanti.',
+              variant: 'destructive',
+            });
+          }
+        }
       }
     } catch (error: any) {
       toast({
@@ -260,12 +312,18 @@ export const useGold = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ gold_price_per_gram: price })
+        .update({
+          gold_price_per_gram: price,
+          gold_price_updated_at: new Date().toISOString(),
+          gold_price_source: 'manual',
+        })
         .eq('user_id', user.id);
 
       if (error) throw error;
 
       setGoldPricePerGram(price);
+      setGoldPriceUpdatedAt(new Date().toISOString());
+      setGoldPriceSource('manual');
       toast({
         title: "Harga emas diperbarui",
         description: `Rp ${price.toLocaleString('id-ID')} per gram tersimpan.`,
@@ -312,6 +370,8 @@ export const useGold = () => {
     goldAccounts,
     goldTransactions,
     goldPricePerGram,
+    goldPriceUpdatedAt,
+    goldPriceSource,
     loading,
     createGoldAccount,
     updateGoldAccount,
@@ -319,6 +379,7 @@ export const useGold = () => {
     recordPurchase,
     recordSale,
     updateGoldPrice,
+    refreshGoldPrice,
     refetch: fetchGold,
   };
 };

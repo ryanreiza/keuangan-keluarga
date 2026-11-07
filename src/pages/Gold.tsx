@@ -10,6 +10,7 @@ import {
   Scale,
   TrendingUp,
   TrendingDown,
+  RefreshCw,
   ShoppingBag,
   Banknote,
   Info,
@@ -87,6 +88,8 @@ export default function Gold() {
     goldAccounts,
     goldTransactions,
     goldPricePerGram,
+    goldPriceUpdatedAt,
+    goldPriceSource,
     loading,
     createGoldAccount,
     updateGoldAccount,
@@ -94,6 +97,7 @@ export default function Gold() {
     recordPurchase,
     recordSale,
     updateGoldPrice,
+    refreshGoldPrice,
   } = useGold();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
@@ -105,6 +109,7 @@ export default function Gold() {
   // Harga emas saat ini
   const [priceInput, setPriceInput] = useState(0);
   const [savingPrice, setSavingPrice] = useState(false);
+  const [refreshingPrice, setRefreshingPrice] = useState(false);
   useEffect(() => setPriceInput(goldPricePerGram), [goldPricePerGram]);
 
   // Form tempat emas (tersembunyi secara default)
@@ -261,6 +266,22 @@ export default function Gold() {
     setSavingPrice(false);
   };
 
+  const handleRefreshPrice = async () => {
+    setRefreshingPrice(true);
+    await refreshGoldPrice();
+    setRefreshingPrice(false);
+  };
+
+  const priceUpdatedLabel = goldPriceUpdatedAt
+    ? new Date(goldPriceUpdatedAt).toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -308,11 +329,15 @@ export default function Gold() {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">Harga Emas Saat Ini</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Per gram — dipakai menghitung nilai & untung/rugi berjalan. Perbarui sesuai harga pasar.
+                Acuan spot IDR per gram untuk nilai portofolio; bukan harga ritel atau buyback.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {goldPriceSource === "xaus" ? "Sumber: XAU spot" : "Sumber: input manual"}
+                {priceUpdatedLabel ? ` · Diperbarui ${priceUpdatedLabel}` : " · Belum ada waktu pembaruan"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <div className="flex-1 md:w-52">
               <MoneyInput
                 id="gold-price"
@@ -322,11 +347,21 @@ export default function Gold() {
               />
             </div>
             <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={handleRefreshPrice}
+              disabled={refreshingPrice}
+              aria-label="Perbarui harga emas dari sumber online"
+            >
+              {refreshingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span className="ml-2">Perbarui</span>
+            </Button>
+            <Button
               className="bg-gradient-primary text-primary-foreground hover:opacity-90 rounded-xl"
               onClick={handleSavePrice}
               disabled={savingPrice || priceInput <= 0}
             >
-              {savingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan"}
+              {savingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan manual"}
             </Button>
           </div>
         </CardContent>
